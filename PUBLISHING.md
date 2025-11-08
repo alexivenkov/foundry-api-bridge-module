@@ -39,11 +39,11 @@ git commit -m "Initial commit: Foundry API Bridge v3.0.0
 
 ```bash
 # Add remote
-git remote add origin https://github.com/alexivenkov/foundry-api-bridge.git
+git remote add origin git@github.com:alexivenkov/foundry-api-bridge-module.git
 
-# Push to main branch
-git branch -M main
-git push -u origin main
+# Push to master branch
+git branch -M master
+git push -u origin master
 ```
 
 ## Creating a Release
@@ -71,7 +71,7 @@ git push -u origin main
    - Attach the ZIP to the release
 
 3. **Check the release:**
-   - Go to https://github.com/alexivenkov/foundry-api-bridge/releases
+   - Go to https://github.com/alexivenkov/foundry-api-bridge-module/releases
    - You should see `Release v3.0.0` with `foundry-api-bridge.zip` attached
 
 ### Method 2: Manual Release (Alternative)
@@ -91,7 +91,7 @@ If you prefer to create releases manually:
    ```
 
 3. **Create GitHub Release:**
-   - Go to https://github.com/alexivenkov/foundry-api-bridge/releases
+   - Go to https://github.com/alexivenkov/foundry-api-bridge-module/releases
    - Click **"Create a new release"**
    - Tag: `v3.0.0`
    - Title: `Release v3.0.0`
@@ -106,7 +106,7 @@ After publishing, test that the module can be installed via manifest URL:
 1. **In Foundry VTT:**
    - Go to **Add-on Modules**
    - Click **Install Module**
-   - Paste: `https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge/main/dist/module.json`
+   - Paste: `https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge-module/master/dist/module.json`
    - Click **Install**
 
 2. **Verify:**
@@ -152,7 +152,7 @@ Add new version section:
 git add .
 git commit -m "Release v3.1.0"
 git tag v3.1.0
-git push origin main
+git push origin master
 git push origin v3.1.0
 ```
 
@@ -186,7 +186,7 @@ These files are **IGNORED** (generated during build):
 
 ### GitHub Actions fails
 
-- Check workflow logs at https://github.com/alexivenkov/foundry-api-bridge/actions
+- Check workflow logs at https://github.com/alexivenkov/foundry-api-bridge-module/actions
 - Ensure tests pass: `npm test`
 - Ensure build works: `npm run build`
 

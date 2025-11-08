@@ -20,7 +20,7 @@
   "styles": [
     "styles/config-form.css"
   ],
-  "url": "https://github.com/alexivenkov/foundry-api-bridge",
-  "manifest": "https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge/main/dist/module.json",
-  "download": "https://github.com/alexivenkov/foundry-api-bridge/releases/latest/download/foundry-api-bridge.zip"
+  "url": "https://github.com/alexivenkov/foundry-api-bridge-module",
+  "manifest": "https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge-module/master/dist/module.json",
+  "download": "https://github.com/alexivenkov/foundry-api-bridge-module/releases/latest/download/foundry-api-bridge.zip"
 }

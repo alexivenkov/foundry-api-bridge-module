@@ -34,7 +34,7 @@ This module automatically collects data from your Foundry VTT world and sends it
 2. Click **Install Module**
 3. Paste this manifest URL:
    ```
-   https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge/main/dist/module.json
+   https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge-module/master/dist/module.json
    ```
 4. Click **Install**
 5. Enable the module in your world
@@ -42,7 +42,7 @@ This module automatically collects data from your Foundry VTT world and sends it
 
 ### Method 2: Manual Installation
 
-1. Download the latest release from [GitHub Releases](https://github.com/alexivenkov/foundry-api-bridge/releases)
+1. Download the latest release from [GitHub Releases](https://github.com/alexivenkov/foundry-api-bridge-module/releases)
 2. Extract to `Data/modules/foundry-api-bridge/`
 3. Restart Foundry VTT
 4. Enable the module in your world

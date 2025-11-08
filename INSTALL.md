@@ -9,7 +9,7 @@
 3. Click **"Install Module"** button
 4. In the **"Manifest URL"** field, paste:
    ```
-   https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge/main/dist/module.json
+   https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge-module/master/dist/module.json
    ```
 5. Click **"Install"**
 6. Enable the module in your world
@@ -33,9 +33,9 @@ Replace `alexivenkov` with your actual GitHub username:
     "maximum": "13"
   },
   "esmodules": ["module.js"],
-  "url": "https://github.com/alexivenkov/foundry-api-bridge",
-  "manifest": "https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge/main/dist/module.json",
-  "download": "https://github.com/alexivenkov/foundry-api-bridge/archive/refs/heads/main.zip"
+  "url": "https://github.com/alexivenkov/foundry-api-bridge-module",
+  "manifest": "https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge-module/master/dist/module.json",
+  "download": "https://github.com/alexivenkov/foundry-api-bridge-module/archive/refs/heads/main.zip"
 }
 ```
 
@@ -53,14 +53,14 @@ npm run build
 # Commit and push
 git add dist/module.json
 git commit -m "Update manifest URLs"
-git push origin main
+git push origin master
 ```
 
 #### Step 3: Test the manifest URL
 
 Before sharing, test that the URL works:
 ```
-https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge/main/dist/module.json
+https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge-module/master/dist/module.json
 ```
 
 Open this URL in browser - you should see JSON content.
@@ -101,7 +101,7 @@ cd ..
 ```json
 {
   ...
-  "download": "https://github.com/alexivenkov/foundry-api-bridge/releases/download/v3.0.0/foundry-api-bridge-v3.0.0.zip"
+  "download": "https://github.com/alexivenkov/foundry-api-bridge-module/releases/download/v3.0.0/foundry-api-bridge-v3.0.0.zip"
 }
 ```
 
@@ -315,19 +315,19 @@ await FoundryAPIBridge.loadAndSendCompendium('dnd5e.monsters')
 
 1. **Manifest URL** (for users to install):
    ```
-   https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge/main/dist/module.json
+   https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge-module/master/dist/module.json
    ```
 
 2. **Repository URL** (in module.json):
    ```
-   https://github.com/alexivenkov/foundry-api-bridge
+   https://github.com/alexivenkov/foundry-api-bridge-module
    ```
 
 3. **Download URL** (in module.json):
    ```
-   https://github.com/alexivenkov/foundry-api-bridge/releases/download/v3.0.0/foundry-api-bridge-v3.0.0.zip
+   https://github.com/alexivenkov/foundry-api-bridge-module/releases/download/v3.0.0/foundry-api-bridge-v3.0.0.zip
    ```
    or
    ```
-   https://github.com/alexivenkov/foundry-api-bridge/archive/refs/heads/main.zip
+   https://github.com/alexivenkov/foundry-api-bridge-module/archive/refs/heads/main.zip
    ```

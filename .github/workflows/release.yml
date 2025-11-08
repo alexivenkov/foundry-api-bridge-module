@@ -51,14 +51,14 @@ jobs:
 
             **Manifest URL:**
             ```
-            https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge/main/dist/module.json
+            https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge-module/master/dist/module.json
             ```
 
             Or download the ZIP and extract to `Data/modules/foundry-api-bridge/`
 
             ### Changes
 
-            See [CHANGELOG.md](https://github.com/alexivenkov/foundry-api-bridge/blob/main/CHANGELOG.md)
+            See [CHANGELOG.md](https://github.com/alexivenkov/foundry-api-bridge-module/blob/master/CHANGELOG.md)
           files: foundry-api-bridge.zip
           draft: false
           prerelease: false
