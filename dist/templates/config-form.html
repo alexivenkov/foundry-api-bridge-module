@@ -1,0 +1,89 @@
+<link rel="stylesheet" href="modules/foundry-api-bridge/styles/config-form.css">
+
+<form class="foundry-api-bridge-config-form">
+  <!-- API Server Settings -->
+  <div class="section">
+    <h2>API Server Settings</h2>
+
+    <div class="form-grid">
+      <div class="form-group full-width">
+        <label for="apiServerUrl">Server URL</label>
+        <input type="text" name="apiServer.url" id="apiServerUrl" value="{{config.apiServer.url}}" placeholder="http://localhost:3001" />
+      </div>
+
+      <div class="form-group">
+        <label for="updateInterval">Update Interval (ms)</label>
+        <input type="number" name="apiServer.updateInterval" id="updateInterval" value="{{config.apiServer.updateInterval}}" min="1000" step="1000" />
+      </div>
+
+      <div class="form-group">
+        <label for="worldDataEndpoint">World Data Endpoint</label>
+        <input type="text" name="apiServer.endpoints.worldData" id="worldDataEndpoint" value="{{config.apiServer.endpoints.worldData}}" placeholder="/update" />
+      </div>
+
+      <div class="form-group full-width">
+        <label for="compendiumEndpoint">Compendium Endpoint</label>
+        <input type="text" name="apiServer.endpoints.compendium" id="compendiumEndpoint" value="{{config.apiServer.endpoints.compendium}}" placeholder="/update-compendium" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div class="section">
+    <h2>Features</h2>
+
+    <div class="checkbox-group">
+      <label class="checkbox-label">
+        <input type="checkbox" name="features.collectWorldData" {{#if config.features.collectWorldData}}checked{{/if}} />
+        <span>Collect World Data</span>
+      </label>
+
+      <label class="checkbox-label">
+        <input type="checkbox" name="features.periodicUpdates" {{#if config.features.periodicUpdates}}checked{{/if}} />
+        <span>Enable Periodic Updates</span>
+      </label>
+
+      <label class="checkbox-label">
+        <input type="checkbox" name="features.autoLoadCompendium" {{#if config.features.autoLoadCompendium}}checked{{/if}} />
+        <span>Auto-load Compendium on Ready</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Logging -->
+  <div class="section">
+    <h2>Logging</h2>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" name="logging.enabled" {{#if config.logging.enabled}}checked{{/if}} />
+          <span>Enable Logging</span>
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label for="logLevel">Log Level</label>
+        <select name="logging.level" id="logLevel">
+          <option value="debug" {{#if (eq config.logging.level "debug")}}selected{{/if}}>Debug</option>
+          <option value="info" {{#if (eq config.logging.level "info")}}selected{{/if}}>Info</option>
+          <option value="warn" {{#if (eq config.logging.level "warn")}}selected{{/if}}>Warn</option>
+          <option value="error" {{#if (eq config.logging.level "error")}}selected{{/if}}>Error</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Note -->
+  <div class="note-box">
+    <p>
+      <strong>Note:</strong> Compendium auto-load list can be configured via Console:<br/>
+      <code>game.settings.get('foundry-api-bridge', 'config').compendium.autoLoad</code>
+    </p>
+  </div>
+
+  <!-- Submit Button -->
+  <button type="submit" name="submit">
+    <i class="fas fa-save"></i> Save Configuration
+  </button>
+</form>

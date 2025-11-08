@@ -1,0 +1,35 @@
+{
+  "$schema": "./config.schema.json",
+  "apiServer": {
+    "url": "http://localhost:3001",
+    "updateInterval": 5000,
+    "endpoints": {
+      "worldData": "/update",
+      "compendium": "/update-compendium"
+    }
+  },
+  "features": {
+    "autoLoadCompendium": true,
+    "collectWorldData": true,
+    "periodicUpdates": true
+  },
+  "compendium": {
+    "autoLoad": [
+      "dnd5e.monsters",
+      "world.ddb-oota-ddb-monsters",
+      "world.ddb-oota-ddb-spells",
+      "dnd5e.spells",
+      "dnd5e.items",
+      "world.ddb-oota-ddb-items",
+      "dnd5e.classfeatures",
+      "dnd5e.races",
+      "dnd5e.classes",
+      "dnd5e.subclasses",
+      "dnd5e.monsterfeatures"
+    ]
+  },
+  "logging": {
+    "enabled": true,
+    "level": "info"
+  }
+}

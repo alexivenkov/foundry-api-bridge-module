@@ -1,0 +1,37 @@
+{
+  "name": "foundry-api-bridge",
+  "version": "3.0.0",
+  "description": "HTTP REST API bridge for external access to Foundry VTT world data",
+  "type": "module",
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "tsc --noEmit && vite build && npm run copy-config",
+    "copy-config": "cp config/config.schema.json dist/config.schema.json",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "type-check": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "keywords": [
+    "foundry-vtt",
+    "foundry",
+    "api",
+    "bridge",
+    "dnd",
+    "tabletop"
+  ],
+  "author": "AI DM Project",
+  "license": "MIT",
+  "devDependencies": {
+    "@league-of-foundry-developers/foundry-vtt-types": "^12.331.5",
+    "@types/jest": "^29.5.14",
+    "eslint": "^9.17.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.18.2",
+    "vite": "^5.4.11"
+  }
+}

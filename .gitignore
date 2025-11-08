@@ -1,0 +1,39 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+original/*
+
+node_modules
+dist/*.js
+dist/*.js.map
+dist/*.d.ts
+dist/*.d.ts.map
+!dist/module.json
+coverage
+*.local
+env.js
+
+# User configuration
+config/config.json
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# AI
+.claude
+.serena
+playwright-output
+.mcp.json

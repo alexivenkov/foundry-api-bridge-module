@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build module
+        run: npm run build
+
+      - name: Create release package
+        run: |
+          cd dist
+          zip -r ../foundry-api-bridge.zip .
+          cd ..
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release v${{ steps.get_version.outputs.VERSION }}
+          body: |
+            ## Foundry API Bridge v${{ steps.get_version.outputs.VERSION }}
+
+            ### Installation
+
+            **Manifest URL:**
+            ```
+            https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge/main/dist/module.json
+            ```
+
+            Or download the ZIP and extract to `Data/modules/foundry-api-bridge/`
+
+            ### Changes
+
+            See [CHANGELOG.md](https://github.com/alexivenkov/foundry-api-bridge/blob/main/CHANGELOG.md)
+          files: foundry-api-bridge.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

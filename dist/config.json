@@ -1,0 +1,23 @@
+{
+  "$schema": "./config.schema.json",
+  "apiServer": {
+    "url": "http://localhost:3001",
+    "updateInterval": 5000,
+    "endpoints": {
+      "worldData": "/update",
+      "compendium": "/update-compendium"
+    }
+  },
+  "features": {
+    "autoLoadCompendium": false,
+    "collectWorldData": true,
+    "periodicUpdates": true
+  },
+  "compendium": {
+    "autoLoad": []
+  },
+  "logging": {
+    "enabled": true,
+    "level": "info"
+  }
+}

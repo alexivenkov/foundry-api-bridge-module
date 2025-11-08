@@ -1,0 +1,98 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/alexivenkov/foundry-api-bridge/config.schema.json",
+  "title": "Foundry API Bridge Configuration",
+  "description": "Configuration schema for Foundry API Bridge module",
+  "type": "object",
+  "required": ["apiServer", "features", "compendium"],
+  "properties": {
+    "apiServer": {
+      "type": "object",
+      "description": "API server connection settings",
+      "required": ["url"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "API server URL",
+          "pattern": "^https?://",
+          "examples": ["http://localhost:3001", "https://api.example.com"]
+        },
+        "updateInterval": {
+          "type": "integer",
+          "description": "Update interval in milliseconds",
+          "minimum": 1000,
+          "default": 5000
+        },
+        "endpoints": {
+          "type": "object",
+          "description": "API endpoints",
+          "properties": {
+            "worldData": {
+              "type": "string",
+              "description": "Endpoint for world data updates",
+              "default": "/update"
+            },
+            "compendium": {
+              "type": "string",
+              "description": "Endpoint for compendium updates",
+              "default": "/update-compendium"
+            }
+          }
+        }
+      }
+    },
+    "features": {
+      "type": "object",
+      "description": "Feature toggles",
+      "properties": {
+        "autoLoadCompendium": {
+          "type": "boolean",
+          "description": "Automatically load compendium on startup",
+          "default": true
+        },
+        "collectWorldData": {
+          "type": "boolean",
+          "description": "Collect world data (journals, actors, scenes, items)",
+          "default": true
+        },
+        "periodicUpdates": {
+          "type": "boolean",
+          "description": "Enable periodic data updates",
+          "default": true
+        }
+      }
+    },
+    "compendium": {
+      "type": "object",
+      "description": "Compendium configuration",
+      "properties": {
+        "autoLoad": {
+          "type": "array",
+          "description": "List of compendium IDs to auto-load on startup",
+          "items": {
+            "type": "string",
+            "description": "Compendium collection ID (e.g., 'dnd5e.monsters')"
+          },
+          "default": []
+        }
+      }
+    },
+    "logging": {
+      "type": "object",
+      "description": "Logging configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable logging",
+          "default": true
+        },
+        "level": {
+          "type": "string",
+          "description": "Logging level",
+          "enum": ["debug", "info", "warn", "error"],
+          "default": "info"
+        }
+      }
+    }
+  }
+}
