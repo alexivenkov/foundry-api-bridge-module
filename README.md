@@ -67,6 +67,7 @@ After installation, configure the module via Foundry UI:
   - Collect World Data
   - Enable Periodic Updates
   - Auto-load Compendium on Ready
+- **Compendia Auto-Load** - Select which compendium packs to load automatically with checkboxes
 - **Logging** - Enable/disable logging and set log level
 
 ## API Server Requirements

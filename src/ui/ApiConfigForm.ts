@@ -27,18 +27,32 @@ declare class FormApplication {
 }
 
 function parseFormData(formData: Record<string, unknown>): ModuleConfig {
-  const logLevel = String(formData['logging.level'] ?? DEFAULT_CONFIG.logging.level);
+  const logLevelRaw = formData['logging.level'];
+  const logLevel = typeof logLevelRaw === 'string' ? logLevelRaw : DEFAULT_CONFIG.logging.level;
   const validLogLevel = ['debug', 'info', 'warn', 'error'].includes(logLevel)
     ? (logLevel as 'debug' | 'info' | 'warn' | 'error')
     : DEFAULT_CONFIG.logging.level;
 
+  // Parse selected compendia from checkboxes
+  const autoLoad: string[] = [];
+  Object.keys(formData).forEach(key => {
+    if (key.startsWith('compendium.') && formData[key] === true) {
+      const packId = key.replace('compendium.', '');
+      autoLoad.push(packId);
+    }
+  });
+
+  const urlRaw = formData['apiServer.url'];
+  const worldDataRaw = formData['apiServer.endpoints.worldData'];
+  const compendiumRaw = formData['apiServer.endpoints.compendium'];
+
   const config: ModuleConfig = {
     apiServer: {
-      url: String(formData['apiServer.url'] ?? DEFAULT_CONFIG.apiServer.url),
+      url: typeof urlRaw === 'string' ? urlRaw : DEFAULT_CONFIG.apiServer.url,
       updateInterval: Number(formData['apiServer.updateInterval'] ?? DEFAULT_CONFIG.apiServer.updateInterval),
       endpoints: {
-        worldData: String(formData['apiServer.endpoints.worldData'] ?? DEFAULT_CONFIG.apiServer.endpoints.worldData),
-        compendium: String(formData['apiServer.endpoints.compendium'] ?? DEFAULT_CONFIG.apiServer.endpoints.compendium)
+        worldData: typeof worldDataRaw === 'string' ? worldDataRaw : DEFAULT_CONFIG.apiServer.endpoints.worldData,
+        compendium: typeof compendiumRaw === 'string' ? compendiumRaw : DEFAULT_CONFIG.apiServer.endpoints.compendium
       }
     },
     features: {
@@ -47,7 +61,7 @@ function parseFormData(formData: Record<string, unknown>): ModuleConfig {
       periodicUpdates: Boolean(formData['features.periodicUpdates'])
     },
     compendium: {
-      autoLoad: (getConfig().compendium.autoLoad) || []
+      autoLoad
     },
     logging: {
       enabled: Boolean(formData['logging.enabled']),
@@ -77,13 +91,100 @@ export class ApiConfigForm extends FormApplication {
 
   override getData(): Record<string, unknown> {
     const config = getConfig();
+
+    // Collect available compendia with document counts
+    const availableCompendia: Array<{
+      id: string;
+      label: string;
+      type: string;
+      isChecked: boolean;
+      documentCount: number;
+    }> = [];
+
+    if (game.packs) {
+      game.packs.forEach(pack => {
+        availableCompendia.push({
+          id: pack.collection,
+          label: pack.metadata.label,
+          type: pack.metadata.type,
+          isChecked: config.compendium.autoLoad.includes(pack.collection),
+          documentCount: pack.index.size
+        });
+      });
+
+      // Sort by: checked first, then by label
+      availableCompendia.sort((a, b) => {
+        if (a.isChecked !== b.isChecked) {
+          return a.isChecked ? -1 : 1;
+        }
+        return a.label.localeCompare(b.label);
+      });
+    }
+
     return {
-      config
+      config,
+      availableCompendia
     };
   }
 
   override activateListeners(html: JQuery): void {
     super.activateListeners(html);
+
+    // Update counter on checkbox change
+    const updateCounter = (): void => {
+      const checkboxes = html.find('.compendium-checkbox');
+      const checked = checkboxes.filter(':checked').length;
+      const total = checkboxes.length;
+      const counter = html.find('#compendiumCounter');
+      counter.text(`${String(checked)} of ${String(total)} selected`);
+    };
+
+    // Initial counter update
+    updateCounter();
+
+    // Search functionality
+    const searchInput = html.find('#compendiumSearch');
+    const compendiumItems = html.find('.compendium-item');
+
+    searchInput.on('input', (event) => {
+      const searchTerm = (event.target as HTMLInputElement).value.toLowerCase();
+
+      compendiumItems.each((_, item) => {
+        const $item = $(item);
+        const name = ($item.data('name') as string || '').toLowerCase();
+        const id = ($item.data('id') as string || '').toLowerCase();
+        const type = ($item.data('type') as string || '').toLowerCase();
+
+        const matches = name.includes(searchTerm) ||
+                       id.includes(searchTerm) ||
+                       type.includes(searchTerm);
+
+        if (matches) {
+          $item.removeClass('hidden');
+        } else {
+          $item.addClass('hidden');
+        }
+      });
+    });
+
+    // Select All button
+    html.find('#selectAllBtn').on('click', () => {
+      const visibleCheckboxes = html.find('.compendium-item:not(.hidden) .compendium-checkbox');
+      visibleCheckboxes.prop('checked', true);
+      updateCounter();
+    });
+
+    // Deselect All button
+    html.find('#deselectAllBtn').on('click', () => {
+      const visibleCheckboxes = html.find('.compendium-item:not(.hidden) .compendium-checkbox');
+      visibleCheckboxes.prop('checked', false);
+      updateCounter();
+    });
+
+    // Update counter when any checkbox changes
+    html.find('.compendium-checkbox').on('change', () => {
+      updateCounter();
+    });
   }
 
   protected override async _updateObject(_event: Event, formData: Record<string, unknown>): Promise<void> {
@@ -96,5 +197,22 @@ export class ApiConfigForm extends FormApplication {
     await setConfig(newConfig);
 
     console.log('Foundry API Bridge | Configuration saved successfully');
+
+    // Trigger compendium auto-load if enabled and compendia are selected
+    if (newConfig.features.autoLoadCompendium && newConfig.compendium.autoLoad.length > 0) {
+      console.log('Foundry API Bridge | Triggering compendium auto-load...');
+
+      try {
+        await window.FoundryAPIBridge.autoLoadCompendium();
+        if (ui.notifications) {
+          ui.notifications.info(`Successfully loaded ${String(newConfig.compendium.autoLoad.length)} compendium pack(s)`);
+        }
+      } catch (error: unknown) {
+        console.error('Foundry API Bridge | Error during auto-load:', error);
+        if (ui.notifications) {
+          ui.notifications.error('Failed to load compendia. Check console for details.');
+        }
+      }
+    }
   }
 }

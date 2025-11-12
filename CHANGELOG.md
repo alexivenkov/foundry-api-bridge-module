@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.0] - 2025-11-12
+
+### Added
+- ✨ **Premium UI Compendium Selection** - Beautiful, user-friendly interface for selecting compendia
+  - 🔍 **Live search/filter** - Instant search across name, ID, and type
+  - ✅ **Bulk actions** - "Select All" and "Deselect All" buttons (respects search filter)
+  - 📊 **Live counter** - Shows "X of Y selected" in real-time
+  - 🎨 **Rich compendium cards** - Icons, type badges, and document counts
+  - 🏷️ **Color-coded badges** - Visual distinction by document type (Actor/Item/Journal/etc.)
+  - 📈 **Document counts** - See how many documents each compendium contains
+  - 🎯 **Smart sorting** - Checked items appear first, then alphabetically
+  - ✨ **Smooth animations** - Hover effects and transitions
+  - ♿ **Accessibility** - Keyboard navigation and screen reader support
+- 📋 Detailed compendium setup guide (COMPENDIUM_SETUP.md)
+- 📖 Comprehensive UI improvements guide (UI_IMPROVEMENTS.md)
+- 🎨 Professional CSS styling with Foundry VTT design language
+
+### Changed
+- Settings form now displays available compendia with full metadata
+- Compendium selection automatically triggers auto-load on save
+- Improved user feedback with notifications after configuration save
+- Enhanced visual hierarchy and spacing throughout the form
+
+### Fixed
+- **Empty compendium list by default** - Users can now easily select compendia through UI instead of console commands
+- Improved readability with monospace IDs and clear labels
+
 ## [3.0.0] - 2024-11-08
 
 ### Added

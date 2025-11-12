@@ -50,6 +50,75 @@
     </div>
   </div>
 
+  <!-- Compendia Selection -->
+  <div class="section">
+    <h2>
+      <i class="fas fa-book"></i> Compendia Auto-Load
+      <span class="compendium-counter" id="compendiumCounter">0 selected</span>
+    </h2>
+
+    <p class="section-description">
+      <i class="fas fa-info-circle"></i>
+      Select which compendium packs to automatically load and send to the API server when world is ready
+    </p>
+
+    {{#if availableCompendia}}
+      <!-- Search and Bulk Actions -->
+      <div class="compendium-controls">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input
+            type="text"
+            id="compendiumSearch"
+            placeholder="Search compendia..."
+            autocomplete="off"
+          />
+        </div>
+        <div class="bulk-actions">
+          <button type="button" class="bulk-btn" id="selectAllBtn">
+            <i class="fas fa-check-double"></i> Select All
+          </button>
+          <button type="button" class="bulk-btn" id="deselectAllBtn">
+            <i class="fas fa-times"></i> Deselect All
+          </button>
+        </div>
+      </div>
+
+      <!-- Compendia List -->
+      <div class="compendium-list" id="compendiumList">
+        {{#each availableCompendia}}
+          <label class="compendium-item" data-name="{{this.label}}" data-id="{{this.id}}" data-type="{{this.type}}">
+            <input
+              type="checkbox"
+              name="compendium.{{this.id}}"
+              class="compendium-checkbox"
+              {{#if this.isChecked}}checked{{/if}}
+            />
+            <span class="compendium-info">
+              <span class="compendium-label">
+                <i class="fas {{#if (eq this.type 'Actor')}}fa-user{{else}}{{#if (eq this.type 'Item')}}fa-suitcase{{else}}{{#if (eq this.type 'JournalEntry')}}fa-book-open{{else}}fa-folder{{/if}}{{/if}}{{/if}}"></i>
+                {{this.label}}
+              </span>
+              <span class="compendium-meta">
+                <span class="compendium-id">{{this.id}}</span>
+                <span class="compendium-type-badge compendium-type-{{this.type}}">{{this.type}}</span>
+                {{#if this.documentCount}}
+                  <span class="compendium-count-badge">{{this.documentCount}} docs</span>
+                {{/if}}
+              </span>
+            </span>
+          </label>
+        {{/each}}
+      </div>
+    {{else}}
+      <div class="no-compendia">
+        <i class="fas fa-inbox"></i>
+        <p>No compendia available</p>
+        <p class="help-text">Install compendium modules (like D&D 5e SRD) to see them here</p>
+      </div>
+    {{/if}}
+  </div>
+
   <!-- Logging -->
   <div class="section">
     <h2>Logging</h2>
@@ -72,14 +141,6 @@
         </select>
       </div>
     </div>
-  </div>
-
-  <!-- Note -->
-  <div class="note-box">
-    <p>
-      <strong>Note:</strong> Compendium auto-load list can be configured via Console:<br/>
-      <code>game.settings.get('foundry-api-bridge', 'config').compendium.autoLoad</code>
-    </p>
   </div>
 
   <!-- Submit Button -->

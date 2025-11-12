@@ -6,7 +6,7 @@ import { UpdateLoop } from './core/UpdateLoop';
 import { registerSettings, registerMenu } from './settings/SettingsManager';
 import type { WorldData, CompendiumData } from './types/foundry';
 
-console.log('Foundry API Bridge | Loading module v3.0.0...');
+console.log('Foundry API Bridge | Loading module v3.1.0...');
 
 let updateLoop: UpdateLoop | null = null;
 let apiClient: ApiClient | null = null;
