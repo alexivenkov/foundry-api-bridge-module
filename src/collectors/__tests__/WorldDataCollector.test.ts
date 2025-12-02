@@ -41,9 +41,11 @@ const mockGame = {
           name: 'Sword',
           type: 'weapon',
           img: 'sword.png',
-          system: { damage: '1d8' }
+          system: { damage: '1d8' },
+          toObject: () => ({ system: { damage: '1d8' } })
         }]
-      ])
+      ]),
+      toObject: () => ({ system: { hp: 10 } })
     }]
   ]),
   scenes: new Map([
@@ -66,7 +68,8 @@ const mockGame = {
       type: 'consumable',
       img: 'potion.png',
       folder: { name: 'Items' },
-      system: { uses: 1 }
+      system: { uses: 1 },
+      toObject: () => ({ system: { uses: 1 } })
     }]
   ]),
   packs: new Map([

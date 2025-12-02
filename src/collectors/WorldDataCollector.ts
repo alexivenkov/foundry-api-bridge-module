@@ -86,7 +86,7 @@ export class WorldDataCollector {
           name: item.name,
           type: typeof itemType === 'string' ? itemType : String(itemType),
           img: item.img ?? '',
-          system: item.system as Record<string, unknown>
+          system: item.toObject(false).system as Record<string, unknown>
         });
       });
 
@@ -97,7 +97,7 @@ export class WorldDataCollector {
         type: actor.type,
         folder: (actor.folder?.name) ?? null,
         img: actor.img ?? '',
-        system: actor.system as Record<string, unknown>,
+        system: actor.toObject(false).system as Record<string, unknown>,
         items
       });
     });
@@ -140,7 +140,7 @@ export class WorldDataCollector {
         type: item.type,
         img: item.img ?? '',
         folder: (item.folder?.name) ?? null,
-        system: item.system as Record<string, unknown>
+        system: item.toObject(false).system as Record<string, unknown>
       });
     });
 
