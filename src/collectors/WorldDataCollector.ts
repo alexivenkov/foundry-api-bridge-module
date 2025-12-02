@@ -97,7 +97,7 @@ export class WorldDataCollector {
         type: actor.type,
         folder: (actor.folder?.name) ?? null,
         img: actor.img ?? '',
-        system: actor.toObject(false).system as Record<string, unknown>,
+        system: actor.getRollData() as Record<string, unknown>,
         items
       });
     });

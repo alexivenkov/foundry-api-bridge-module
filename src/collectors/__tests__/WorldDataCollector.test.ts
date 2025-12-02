@@ -45,7 +45,7 @@ const mockGame = {
           toObject: () => ({ system: { damage: '1d8' } })
         }]
       ]),
-      toObject: () => ({ system: { hp: 10 } })
+      getRollData: () => ({ hp: 10 })
     }]
   ]),
   scenes: new Map([
