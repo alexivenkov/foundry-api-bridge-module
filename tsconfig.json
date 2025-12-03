@@ -1,12 +1,16 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
     "target": "ES2022",
     "lib": ["ES2022", "DOM"],
     "moduleDetection": "force",
     "module": "ES2022",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
-    "types": ["@league-of-foundry-developers/foundry-vtt-types"],
+    "types": ["@league-of-foundry-developers/foundry-vtt-types", "jest", "node"],
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
@@ -38,5 +42,5 @@
     "skipLibCheck": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "original", "**/__tests__/**", "**/*.test.ts"]
+  "exclude": ["node_modules", "dist", "original"]
 }

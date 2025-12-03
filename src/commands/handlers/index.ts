@@ -1,0 +1,1 @@
+export { rollDiceHandler } from '@/commands/handlers/RollDiceHandler';

@@ -1,5 +1,5 @@
-import { ApiClient } from '../ApiClient';
-import type { WorldData, CompendiumData } from '../../types/foundry';
+import { ApiClient } from '@/api/ApiClient';
+import type { WorldData, CompendiumData } from '@/types/foundry';
 
 global.fetch = jest.fn();
 const mockFetch = global.fetch as jest.Mock;

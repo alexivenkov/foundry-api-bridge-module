@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.0] - 2025-12-03
+
+### Added
+- 🔌 **WebSocket bidirectional communication** - Execute commands in Foundry from external server
+  - Auto-reconnecting WebSocket client with configurable retry logic
+  - Type-safe command router with handler registration
+  - `roll-dice` command for dice rolls via Foundry Roll API
+- 🎲 **Dice rolling via WebSocket**
+  - Support for any Foundry dice formula (`1d20+5`, `2d6kh1`, etc.)
+  - Optional chat output with flavor text
+  - Critical/fumble detection on d20 rolls
+  - Detailed dice results (individual die values)
+- ⚙️ **WebSocket configuration** in settings UI
+  - Enable/disable WebSocket
+  - Server URL configuration
+  - Reconnect interval and max attempts
+- 📁 **Import path aliases** - Clean imports with `@/` prefix
+- 📄 **CLAUDE.md** - AI assistant guidance for codebase
+
+### Changed
+- Architecture extended for bidirectional communication (REST out, WebSocket in)
+- Test coverage increased to 111 tests
+- `DeepPartial<T>` type for flexible partial configurations
+
+### Technical
+- `src/transport/WebSocketClient.ts` - WebSocket with auto-reconnect and DI for testing
+- `src/commands/CommandRouter.ts` - Type-safe command dispatch
+- `src/commands/handlers/RollDiceHandler.ts` - Foundry Roll API integration
+- `src/commands/types.ts` - Command/Response type definitions
+- `tsconfig.json` - Path aliases (`@/*` → `src/*`)
+
 ## [3.1.0] - 2025-11-12
 
 ### Added

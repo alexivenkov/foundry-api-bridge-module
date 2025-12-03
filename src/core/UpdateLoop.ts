@@ -1,5 +1,5 @@
-import type { WorldDataCollector } from '../collectors/WorldDataCollector';
-import type { ApiClient } from '../api/ApiClient';
+import type { WorldDataCollector } from '@/collectors/WorldDataCollector';
+import type { ApiClient } from '@/api/ApiClient';
 
 export class UpdateLoop {
   private timerId: ReturnType<typeof setInterval> | null = null;
@@ -39,7 +39,7 @@ export class UpdateLoop {
 
   private sendUpdate(): void {
     const data = this.collector.collect();
-    this.apiClient.sendWorldData(this.endpoint, data).catch(error => {
+    this.apiClient.sendWorldData(this.endpoint, data).catch((error: unknown) => {
       console.error("Failed to send world data:", error instanceof Error ? error.message : String(error));
     });
   }

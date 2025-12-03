@@ -1,9 +1,9 @@
-import type { ModuleConfig } from './types';
-import { DEFAULT_CONFIG } from './defaults';
-import { loadConfigFromUrl } from './loader';
-import { validateConfig } from './validator';
-import { mergeWithDefaults } from './merger';
-import { getConfig as getSettingsConfig, setConfig as setSettingsConfig } from '../settings/SettingsManager';
+import type { ModuleConfig } from '@/config/types';
+import { DEFAULT_CONFIG } from '@/config/defaults';
+import { loadConfigFromUrl } from '@/config/loader';
+import { validateConfig } from '@/config/validator';
+import { mergeWithDefaults } from '@/config/merger';
+import { getConfig as getSettingsConfig, setConfig as setSettingsConfig } from '@/settings/SettingsManager';
 
 export class ConfigManager {
   private static instance: ConfigManager | null = null;

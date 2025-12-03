@@ -1,7 +1,7 @@
-import { UpdateLoop } from '../UpdateLoop';
-import type { WorldDataCollector } from '../../collectors/WorldDataCollector';
-import type { ApiClient } from '../../api/ApiClient';
-import type { WorldData } from '../../types/foundry';
+import { UpdateLoop } from '@/core/UpdateLoop';
+import type { WorldDataCollector } from '@/collectors/WorldDataCollector';
+import type { ApiClient } from '@/api/ApiClient';
+import type { WorldData } from '@/types/foundry';
 
 describe('UpdateLoop', () => {
   let mockCollector: jest.Mocked<WorldDataCollector>;

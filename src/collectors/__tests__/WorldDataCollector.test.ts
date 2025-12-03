@@ -1,4 +1,4 @@
-import { WorldDataCollector } from '../WorldDataCollector';
+import { WorldDataCollector } from '@/collectors/WorldDataCollector';
 
 const mockGame = {
   world: {

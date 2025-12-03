@@ -1,6 +1,6 @@
-import { mergeWithDefaults } from '../merger';
-import { DEFAULT_CONFIG } from '../defaults';
-import type { ModuleConfig } from '../types';
+import { mergeWithDefaults } from '@/config/merger';
+import { DEFAULT_CONFIG } from '@/config/defaults';
+import type { ModuleConfig, DeepPartial } from '@/config/types';
 
 describe('mergeWithDefaults', () => {
   it('returns defaults when user config is empty', () => {
@@ -62,7 +62,7 @@ describe('mergeWithDefaults', () => {
   });
 
   it('handles multiple overrides', () => {
-    const userConfig: Partial<ModuleConfig> = {
+    const userConfig: DeepPartial<ModuleConfig> = {
       apiServer: {
         url: 'http://custom:4000',
         updateInterval: 10000,

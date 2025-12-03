@@ -37,3 +37,4 @@ config/config.json
 .serena
 playwright-output
 .mcp.json
+CLAUDE.md

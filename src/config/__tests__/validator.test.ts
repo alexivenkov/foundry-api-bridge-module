@@ -1,5 +1,5 @@
-import { validateConfig } from '../validator';
-import type { ModuleConfig } from '../types';
+import { validateConfig } from '@/config/validator';
+import type { ModuleConfig } from '@/config/types';
 
 const validConfig: ModuleConfig = {
   apiServer: {
@@ -9,6 +9,12 @@ const validConfig: ModuleConfig = {
       worldData: '/update',
       compendium: '/update-compendium'
     }
+  },
+  webSocket: {
+    enabled: true,
+    url: 'ws://localhost:3001/ws',
+    reconnectInterval: 5000,
+    maxReconnectAttempts: 10
   },
   features: {
     autoLoadCompendium: true,
@@ -48,6 +54,27 @@ describe('validateConfig', () => {
     const invalid = {
       ...validConfig,
       apiServer: { ...validConfig.apiServer, url: 123 }
+    };
+    expect(validateConfig(invalid)).toBe(false);
+  });
+
+  it('returns false when webSocket is missing', () => {
+    const invalid = { ...validConfig, webSocket: undefined };
+    expect(validateConfig(invalid)).toBe(false);
+  });
+
+  it('returns false when webSocket.url is not string', () => {
+    const invalid = {
+      ...validConfig,
+      webSocket: { ...validConfig.webSocket, url: 123 }
+    };
+    expect(validateConfig(invalid)).toBe(false);
+  });
+
+  it('returns false when webSocket.enabled is not boolean', () => {
+    const invalid = {
+      ...validConfig,
+      webSocket: { ...validConfig.webSocket, enabled: 'yes' }
     };
     expect(validateConfig(invalid)).toBe(false);
   });

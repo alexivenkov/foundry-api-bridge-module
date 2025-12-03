@@ -1,4 +1,4 @@
-import type { ModuleConfig } from './types';
+import type { ModuleConfig } from '@/config/types';
 
 export const DEFAULT_CONFIG: ModuleConfig = {
   apiServer: {
@@ -8,6 +8,12 @@ export const DEFAULT_CONFIG: ModuleConfig = {
       worldData: '/update',
       compendium: '/update-compendium'
     }
+  },
+  webSocket: {
+    enabled: true,
+    url: 'ws://localhost:3001/ws',
+    reconnectInterval: 5000,
+    maxReconnectAttempts: 10
   },
   features: {
     autoLoadCompendium: true,

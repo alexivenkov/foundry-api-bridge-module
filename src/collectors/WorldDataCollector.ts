@@ -6,7 +6,7 @@ import type {
   SceneData,
   ItemData,
   CompendiumMetadata
-} from '../types/foundry';
+} from '@/types/foundry';
 
 export class WorldDataCollector {
   collect(): WorldData {
@@ -157,7 +157,7 @@ export class WorldDataCollector {
         id: pack.collection,
         label: pack.metadata.label,
         type: pack.metadata.type,
-        system: pack.metadata.system ?? '',
+        system: pack.metadata.system,
         packageName: pack.metadata.packageName,
         documentCount: pack.index.size
       });

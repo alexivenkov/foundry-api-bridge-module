@@ -1,5 +1,5 @@
-import type { ModuleConfig } from '../config/types';
-import { DEFAULT_CONFIG } from '../config/defaults';
+import type { ModuleConfig } from '@/config/types';
+import { DEFAULT_CONFIG } from '@/config/defaults';
 
 const MODULE_ID = 'foundry-api-bridge';
 const CONFIG_KEY = 'config';
@@ -22,7 +22,7 @@ export async function registerMenu(): Promise<void> {
     throw new Error('game.settings is not available');
   }
 
-  const { ApiConfigForm } = await import('../ui/ApiConfigForm');
+  const { ApiConfigForm } = await import('@/ui/ApiConfigForm');
 
   game.settings.registerMenu(MODULE_ID, 'configMenu', {
     name: 'Configure Module',

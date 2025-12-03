@@ -1,5 +1,5 @@
-import type { CompendiumMetadata, CompendiumData, CompendiumDocument } from '../types/foundry';
-import type { ApiClient } from '../api/ApiClient';
+import type { CompendiumMetadata, CompendiumData, CompendiumDocument } from '@/types/foundry';
+import type { ApiClient } from '@/api/ApiClient';
 
 export class CompendiumCollector {
   collectMetadata(): CompendiumMetadata[] {
@@ -12,7 +12,7 @@ export class CompendiumCollector {
         id: pack.collection,
         label: pack.metadata.label,
         type: pack.metadata.type,
-        system: pack.metadata.system ?? '',
+        system: pack.metadata.system,
         packageName: pack.metadata.packageName,
         documentCount: pack.index.size
       });
@@ -40,7 +40,7 @@ export class CompendiumCollector {
         id: pack.collection,
         label: pack.metadata.label,
         type: pack.metadata.type,
-        system: pack.metadata.system ?? '',
+        system: pack.metadata.system,
         documentCount: documents.length,
         documents: []
       };

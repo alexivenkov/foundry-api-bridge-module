@@ -1,4 +1,4 @@
-import type { ModuleConfig } from './types';
+import type { ModuleConfig } from '@/config/types';
 
 export function validateConfig(config: unknown): config is ModuleConfig {
   if (typeof config !== 'object' || config === null) {
@@ -9,6 +9,7 @@ export function validateConfig(config: unknown): config is ModuleConfig {
 
   return (
     hasApiServerConfig(c['apiServer']) &&
+    hasWebSocketConfig(c['webSocket']) &&
     hasFeaturesConfig(c['features']) &&
     hasCompendiumConfig(c['compendium']) &&
     hasLoggingConfig(c['logging'])
@@ -28,6 +29,19 @@ function hasApiServerConfig(value: unknown): boolean {
     endpoints !== null &&
     typeof (endpoints as Record<string, unknown>)['worldData'] === 'string' &&
     typeof (endpoints as Record<string, unknown>)['compendium'] === 'string'
+  );
+}
+
+function hasWebSocketConfig(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) return false;
+
+  const ws = value as Record<string, unknown>;
+
+  return (
+    typeof ws['enabled'] === 'boolean' &&
+    typeof ws['url'] === 'string' &&
+    typeof ws['reconnectInterval'] === 'number' &&
+    typeof ws['maxReconnectAttempts'] === 'number'
   );
 }
 

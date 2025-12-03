@@ -1,5 +1,5 @@
-import { CompendiumCollector } from '../CompendiumCollector';
-import type { ApiClient } from '../../api/ApiClient';
+import { CompendiumCollector } from '@/collectors/CompendiumCollector';
+import type { ApiClient } from '@/api/ApiClient';
 
 const mockPack = {
   collection: 'dnd5e.monsters',

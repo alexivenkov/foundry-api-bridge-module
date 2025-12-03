@@ -1,7 +1,7 @@
-import type { ModuleConfig } from './types';
+import type { ModuleConfig, DeepPartial } from '@/config/types';
 
 export function mergeWithDefaults(
-  userConfig: Partial<ModuleConfig>,
+  userConfig: DeepPartial<ModuleConfig>,
   defaults: ModuleConfig
 ): ModuleConfig {
   return deepMerge(defaults, userConfig) as ModuleConfig;

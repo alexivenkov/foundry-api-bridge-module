@@ -1,5 +1,10 @@
+export type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P] | undefined;
+};
+
 export interface ModuleConfig {
   apiServer: ApiServerConfig;
+  webSocket: WebSocketConfig;
   features: FeaturesConfig;
   compendium: CompendiumConfig;
   logging: LoggingConfig;
@@ -12,6 +17,13 @@ export interface ApiServerConfig {
     worldData: string;
     compendium: string;
   };
+}
+
+export interface WebSocketConfig {
+  enabled: boolean;
+  url: string;
+  reconnectInterval: number;
+  maxReconnectAttempts: number;
 }
 
 export interface FeaturesConfig {

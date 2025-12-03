@@ -1,7 +1,7 @@
-import type { ModuleConfig } from '../config/types';
-import { getConfig, setConfig } from '../settings/SettingsManager';
-import { validateConfig } from '../config/validator';
-import { DEFAULT_CONFIG } from '../config/defaults';
+import type { ModuleConfig } from '@/config/types';
+import { getConfig, setConfig } from '@/settings/SettingsManager';
+import { validateConfig } from '@/config/validator';
+import { DEFAULT_CONFIG } from '@/config/defaults';
 
 interface FormApplicationOptions {
   title?: string;
@@ -46,6 +46,8 @@ function parseFormData(formData: Record<string, unknown>): ModuleConfig {
   const worldDataRaw = formData['apiServer.endpoints.worldData'];
   const compendiumRaw = formData['apiServer.endpoints.compendium'];
 
+  const wsUrlRaw = formData['webSocket.url'];
+
   const config: ModuleConfig = {
     apiServer: {
       url: typeof urlRaw === 'string' ? urlRaw : DEFAULT_CONFIG.apiServer.url,
@@ -54,6 +56,12 @@ function parseFormData(formData: Record<string, unknown>): ModuleConfig {
         worldData: typeof worldDataRaw === 'string' ? worldDataRaw : DEFAULT_CONFIG.apiServer.endpoints.worldData,
         compendium: typeof compendiumRaw === 'string' ? compendiumRaw : DEFAULT_CONFIG.apiServer.endpoints.compendium
       }
+    },
+    webSocket: {
+      enabled: Boolean(formData['webSocket.enabled'] ?? DEFAULT_CONFIG.webSocket.enabled),
+      url: typeof wsUrlRaw === 'string' ? wsUrlRaw : DEFAULT_CONFIG.webSocket.url,
+      reconnectInterval: Number(formData['webSocket.reconnectInterval'] ?? DEFAULT_CONFIG.webSocket.reconnectInterval),
+      maxReconnectAttempts: Number(formData['webSocket.maxReconnectAttempts'] ?? DEFAULT_CONFIG.webSocket.maxReconnectAttempts)
     },
     features: {
       autoLoadCompendium: Boolean(formData['features.autoLoadCompendium']),

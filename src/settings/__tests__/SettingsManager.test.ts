@@ -1,12 +1,11 @@
-import { DEFAULT_CONFIG } from '../../config/defaults';
-import type { ModuleConfig } from '../../config/types';
+import { DEFAULT_CONFIG } from '@/config/defaults';
+import type { ModuleConfig } from '@/config/types';
 
-jest.mock('../../ui/ApiConfigForm', () => ({
+jest.mock('@/ui/ApiConfigForm', () => ({
   ApiConfigForm: class MockApiConfigForm {}
 }));
 
-import { registerSettings, registerMenu, getConfig, setConfig, resetToDefaults } from '../SettingsManager';
-import { ApiConfigForm } from '../../ui/ApiConfigForm';
+import { registerSettings, registerMenu, getConfig, setConfig, resetToDefaults } from '@/settings/SettingsManager';
 
 const mockSettings = {
   register: jest.fn(),

@@ -1,11 +1,11 @@
-import { ConfigManager } from '../ConfigManager';
-import { loadConfigFromUrl } from '../loader';
-import { DEFAULT_CONFIG } from '../defaults';
-import type { ModuleConfig } from '../types';
-import { getConfig, setConfig } from '../../settings/SettingsManager';
+import { ConfigManager } from '@/config/ConfigManager';
+import { loadConfigFromUrl } from '@/config/loader';
+import { DEFAULT_CONFIG } from '@/config/defaults';
+import type { ModuleConfig } from '@/config/types';
+import { getConfig, setConfig } from '@/settings/SettingsManager';
 
-jest.mock('../loader');
-jest.mock('../../settings/SettingsManager');
+jest.mock('@/config/loader');
+jest.mock('@/settings/SettingsManager');
 
 const mockLoadConfigFromUrl = loadConfigFromUrl as jest.MockedFunction<typeof loadConfigFromUrl>;
 const mockGetConfig = getConfig as jest.MockedFunction<typeof getConfig>;
@@ -69,11 +69,17 @@ describe('ConfigManager', () => {
     });
 
     it('should handle migration errors gracefully', async () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
       mockLoadConfigFromUrl.mockRejectedValue(new Error('File not found'));
 
       await expect(ConfigManager.migrateFromFile('missing.json')).resolves.not.toThrow();
 
       expect(mockSetConfig).not.toHaveBeenCalled();
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Failed to migrate config from file:',
+        expect.any(Error)
+      );
+      consoleWarnSpy.mockRestore();
     });
   });
 

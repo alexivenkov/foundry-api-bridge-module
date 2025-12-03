@@ -1,4 +1,4 @@
-import type { WorldData, CompendiumData } from '../types/foundry';
+import type { WorldData, CompendiumData } from '@/types/foundry';
 
 export class ApiClient {
   constructor(private baseUrl: string) {}

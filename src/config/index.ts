@@ -1,9 +1,9 @@
-export { ConfigManager } from './ConfigManager';
-export { DEFAULT_CONFIG } from './defaults';
+export { ConfigManager } from '@/config/ConfigManager';
+export { DEFAULT_CONFIG } from '@/config/defaults';
 export type {
   ModuleConfig,
   ApiServerConfig,
   FeaturesConfig,
   CompendiumConfig,
   LoggingConfig
-} from './types';
+} from '@/config/types';

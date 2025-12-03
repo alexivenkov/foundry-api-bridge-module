@@ -1,4 +1,4 @@
-import { isValidUrl, isValidPackId } from '../validation';
+import { isValidUrl, isValidPackId } from '@/utils/validation';
 
 describe('isValidUrl', () => {
   it('returns true for valid HTTP URL', () => {

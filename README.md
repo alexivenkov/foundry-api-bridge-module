@@ -14,6 +14,8 @@ This module automatically collects data from your Foundry VTT world and sends it
 
 - 🔄 **Real-time World Data Sync** - Automatically collects and sends world data (journals, actors, scenes, items)
 - 📚 **Compendium Support** - Load and send D&D 5e compendia (monsters, spells, items, etc.)
+- 🔌 **WebSocket Bidirectional Communication** - Execute commands in Foundry from external server
+- 🎲 **Dice Rolling** - Roll dice via WebSocket using Foundry Roll API
 - ⚙️ **UI Configuration** - Easy configuration via Foundry settings menu
 - 🔧 **TypeScript** - Fully typed with strict type checking
 - 🎯 **Foundry v11-13** - Compatible with modern Foundry versions
@@ -115,6 +117,43 @@ Receives compendium data.
   }
 }
 ```
+
+## WebSocket Communication
+
+The module can connect to your server via WebSocket for bidirectional communication. Foundry acts as a **client**, your Node.js server acts as a **server**.
+
+### Configuration
+
+Enable in Foundry settings:
+- **Enable WebSocket** - Toggle connection
+- **Server URL** - WebSocket endpoint (e.g., `ws://localhost:3001/ws`)
+- **Reconnect Interval** - Retry delay in ms (default: 5000)
+- **Max Reconnect Attempts** - Limit retries (default: 10)
+
+### Protocol
+
+Commands and responses are JSON messages:
+
+**Command (server → Foundry):**
+```json
+{ "type": "roll-dice", "id": "uuid", "payload": { "formula": "1d20+5" } }
+```
+
+**Response (Foundry → server):**
+```json
+{ "type": "roll-dice", "id": "uuid", "success": true, "result": { "total": 18, "formula": "1d20+5", "dice": [{"faces": 20, "results": [13]}] } }
+```
+
+### Available Commands
+
+| Command | Payload | Description |
+|---------|---------|-------------|
+| `roll-dice` | `{ formula, toChat?, flavor? }` | Execute dice roll via Foundry Roll API |
+
+**roll-dice options:**
+- `formula` - Dice formula (`1d20`, `2d6+3`, `4d6kh3`, `2d20kh1` for advantage)
+- `toChat` - Show result in Foundry chat (default: false)
+- `flavor` - Chat message flavor text
 
 ## License
 

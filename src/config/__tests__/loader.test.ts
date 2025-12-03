@@ -1,4 +1,4 @@
-import { loadConfigFromUrl } from '../loader';
+import { loadConfigFromUrl } from '@/config/loader';
 
 global.fetch = jest.fn();
 
