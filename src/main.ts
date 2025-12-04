@@ -5,7 +5,7 @@ import { CompendiumCollector } from '@/collectors/CompendiumCollector';
 import { UpdateLoop } from '@/core/UpdateLoop';
 import { registerSettings, registerMenu } from '@/settings/SettingsManager';
 import { WebSocketClient } from '@/transport';
-import { CommandRouter, rollDiceHandler } from '@/commands';
+import { CommandRouter, rollDiceHandler, rollSkillHandler } from '@/commands';
 import type { WorldData, CompendiumData, CompendiumMetadata } from '@/types/foundry';
 
 console.log('Foundry API Bridge | Loading module v4.0.0...');
@@ -73,6 +73,7 @@ Hooks.once('ready', () => {
 function initializeWebSocket(wsConfig: { url: string; reconnectInterval: number; maxReconnectAttempts: number }): void {
   commandRouter = new CommandRouter();
   commandRouter.register('roll-dice', rollDiceHandler);
+  commandRouter.register('roll-skill', rollSkillHandler);
 
   wsClient = new WebSocketClient({
     url: wsConfig.url,

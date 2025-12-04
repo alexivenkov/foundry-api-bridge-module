@@ -24,7 +24,7 @@ This module automatically collects data from your Foundry VTT world and sends it
 
 - **TypeScript 5.6** - Strict type checking, no `any` types
 - **Vite 5.4** - Modern build system
-- **Jest 29** - Unit testing (77 tests)
+- **Jest 29** - Unit testing
 - **ESLint 9** - Strict linting with typescript-eslint
 - **Foundry VTT Types** - Full type support for Foundry API
 
@@ -136,7 +136,7 @@ Commands and responses are JSON messages:
 
 **Command (server → Foundry):**
 ```json
-{ "type": "roll-dice", "id": "uuid", "payload": { "formula": "1d20+5" } }
+{ "type": "roll-dice", "id": "uuid", "params": { "formula": "1d20+5" } }
 ```
 
 **Response (Foundry → server):**
@@ -146,14 +146,43 @@ Commands and responses are JSON messages:
 
 ### Available Commands
 
-| Command | Payload | Description |
-|---------|---------|-------------|
-| `roll-dice` | `{ formula, toChat?, flavor? }` | Execute dice roll via Foundry Roll API |
+| Command | Params | Description |
+|---------|--------|-------------|
+| `roll-dice` | `{ formula, showInChat?, flavor? }` | Execute dice roll via Foundry Roll API |
+| `roll-skill` | `{ actorId, skill, showInChat? }` | Roll skill check for actor (D&D 5e) |
 
-**roll-dice options:**
+**roll-dice params:**
 - `formula` - Dice formula (`1d20`, `2d6+3`, `4d6kh3`, `2d20kh1` for advantage)
-- `toChat` - Show result in Foundry chat (default: false)
+- `showInChat` - Show result in Foundry chat (default: false)
 - `flavor` - Chat message flavor text
+
+**roll-skill params:**
+- `actorId` - Actor ID to roll for
+- `skill` - Skill abbreviation (see table below)
+- `showInChat` - Show result in Foundry chat (default: false)
+
+**D&D 5e Skill Keys:**
+| Key | Skill | Key | Skill |
+|-----|-------|-----|-------|
+| `acr` | Acrobatics | `med` | Medicine |
+| `ani` | Animal Handling | `nat` | Nature |
+| `arc` | Arcana | `prc` | Perception |
+| `ath` | Athletics | `prf` | Performance |
+| `dec` | Deception | `per` | Persuasion |
+| `his` | History | `rel` | Religion |
+| `ins` | Insight | `slt` | Sleight of Hand |
+| `itm` | Intimidation | `ste` | Stealth |
+| `inv` | Investigation | `sur` | Survival |
+
+**Example roll-skill command:**
+```json
+{ "type": "roll-skill", "id": "uuid", "params": { "actorId": "abc123", "skill": "ste", "showInChat": true } }
+```
+
+**Example response:**
+```json
+{ "id": "uuid", "success": true, "data": { "total": 18, "formula": "1d20 + 7", "dice": [{"type": "d20", "count": 1, "results": [11]}], "isCritical": false } }
+```
 
 ## License
 
