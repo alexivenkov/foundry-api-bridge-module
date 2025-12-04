@@ -49,6 +49,8 @@ export interface RollSaveParams {
 export interface RollAttackParams {
   actorId: string;
   itemId: string;
+  advantage?: boolean;
+  disadvantage?: boolean;
   showInChat?: boolean;
 }
 

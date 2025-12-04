@@ -1,6 +1,6 @@
 {
   "name": "foundry-api-bridge",
-  "version": "4.3.0",
+  "version": "4.4.0",
   "description": "HTTP REST API bridge for external access to Foundry VTT world data",
   "type": "module",
   "scripts": {

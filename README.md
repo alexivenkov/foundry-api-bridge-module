@@ -152,6 +152,7 @@ Commands and responses are JSON messages:
 | `roll-skill` | `{ actorId, skill, showInChat? }` | Roll skill check for actor (D&D 5e) |
 | `roll-save` | `{ actorId, ability, showInChat? }` | Roll saving throw for actor (D&D 5e) |
 | `roll-ability` | `{ actorId, ability, showInChat? }` | Roll ability check for actor (D&D 5e) |
+| `roll-attack` | `{ actorId, itemId, advantage?, disadvantage?, showInChat? }` | Roll attack with weapon/spell (D&D 5e) |
 
 **roll-dice params:**
 - `formula` - Dice formula (`1d20`, `2d6+3`, `4d6kh3`, `2d20kh1` for advantage)
@@ -199,6 +200,18 @@ Commands and responses are JSON messages:
 **Example roll-ability command:**
 ```json
 { "type": "roll-ability", "id": "uuid", "params": { "actorId": "abc123", "ability": "int", "showInChat": true } }
+```
+
+**roll-attack params:**
+- `actorId` - Actor ID to roll for
+- `itemId` - Weapon/spell item ID (get from actor's items list)
+- `advantage` - Roll with advantage (default: false)
+- `disadvantage` - Roll with disadvantage (default: false)
+- `showInChat` - Show result in Foundry chat (default: false)
+
+**Example roll-attack command:**
+```json
+{ "type": "roll-attack", "id": "uuid", "params": { "actorId": "abc123", "itemId": "weapon456", "advantage": true, "showInChat": true } }
 ```
 
 **Example response:**
