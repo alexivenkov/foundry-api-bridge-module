@@ -151,6 +151,7 @@ Commands and responses are JSON messages:
 | `roll-dice` | `{ formula, showInChat?, flavor? }` | Execute dice roll via Foundry Roll API |
 | `roll-skill` | `{ actorId, skill, showInChat? }` | Roll skill check for actor (D&D 5e) |
 | `roll-save` | `{ actorId, ability, showInChat? }` | Roll saving throw for actor (D&D 5e) |
+| `roll-ability` | `{ actorId, ability, showInChat? }` | Roll ability check for actor (D&D 5e) |
 
 **roll-dice params:**
 - `formula` - Dice formula (`1d20`, `2d6+3`, `4d6kh3`, `2d20kh1` for advantage)
@@ -188,6 +189,16 @@ Commands and responses are JSON messages:
 **Example roll-save command:**
 ```json
 { "type": "roll-save", "id": "uuid", "params": { "actorId": "abc123", "ability": "dex", "showInChat": true } }
+```
+
+**roll-ability params:**
+- `actorId` - Actor ID to roll for
+- `ability` - Ability key: `str`, `dex`, `con`, `int`, `wis`, `cha`
+- `showInChat` - Show result in Foundry chat (default: false)
+
+**Example roll-ability command:**
+```json
+{ "type": "roll-ability", "id": "uuid", "params": { "actorId": "abc123", "ability": "int", "showInChat": true } }
 ```
 
 **Example response:**
