@@ -150,6 +150,7 @@ Commands and responses are JSON messages:
 |---------|--------|-------------|
 | `roll-dice` | `{ formula, showInChat?, flavor? }` | Execute dice roll via Foundry Roll API |
 | `roll-skill` | `{ actorId, skill, showInChat? }` | Roll skill check for actor (D&D 5e) |
+| `roll-save` | `{ actorId, ability, showInChat? }` | Roll saving throw for actor (D&D 5e) |
 
 **roll-dice params:**
 - `formula` - Dice formula (`1d20`, `2d6+3`, `4d6kh3`, `2d20kh1` for advantage)
@@ -179,9 +180,19 @@ Commands and responses are JSON messages:
 { "type": "roll-skill", "id": "uuid", "params": { "actorId": "abc123", "skill": "ste", "showInChat": true } }
 ```
 
+**roll-save params:**
+- `actorId` - Actor ID to roll for
+- `ability` - Ability key: `str`, `dex`, `con`, `int`, `wis`, `cha`
+- `showInChat` - Show result in Foundry chat (default: false)
+
+**Example roll-save command:**
+```json
+{ "type": "roll-save", "id": "uuid", "params": { "actorId": "abc123", "ability": "dex", "showInChat": true } }
+```
+
 **Example response:**
 ```json
-{ "id": "uuid", "success": true, "data": { "total": 18, "formula": "1d20 + 7", "dice": [{"type": "d20", "count": 1, "results": [11]}], "isCritical": false } }
+{ "id": "uuid", "success": true, "data": { "total": 14, "formula": "1d20 + 3", "dice": [{"type": "d20", "count": 1, "results": [11]}] } }
 ```
 
 ## License
