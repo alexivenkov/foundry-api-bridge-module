@@ -160,6 +160,8 @@ Commands and responses are JSON messages:
 | `create-journal-page` | `{ journalId, name, type?, content? }` | Add a page to existing journal |
 | `update-journal-page` | `{ journalId, pageId, name?, content? }` | Update journal page content |
 | `delete-journal-page` | `{ journalId, pageId }` | Delete a journal page |
+| `create-combat` | `{ sceneId?, activate? }` | Create a new combat encounter |
+| `add-combatant` | `{ actorId, combatId?, tokenId?, initiative?, hidden? }` | Add combatant to combat |
 
 **roll-dice params:**
 - `formula` - Dice formula (`1d20`, `2d6+3`, `4d6kh3`, `2d20kh1` for advantage)
@@ -285,6 +287,41 @@ Commands for creating, editing, and deleting journal entries and pages. Perfect 
 **delete-journal-page params:**
 - `journalId` - Parent journal ID (required)
 - `pageId` - Page ID to delete (required)
+
+### Combat Commands
+
+Commands for managing combat encounters. Create combat trackers, add combatants, and control initiative order.
+
+**create-combat params:**
+- `sceneId` - Scene ID to create combat in (optional, defaults to active scene)
+- `activate` - Make this the active combat (default: false)
+
+**Example create-combat command:**
+```json
+{ "type": "create-combat", "id": "uuid", "params": { "activate": true } }
+```
+
+**Response:**
+```json
+{ "id": "uuid", "success": true, "data": { "id": "combat123", "round": 0, "turn": 0, "started": false, "combatants": [], "current": null } }
+```
+
+**add-combatant params:**
+- `actorId` - Actor ID to add as combatant (required)
+- `combatId` - Combat ID to add to (optional, defaults to active combat)
+- `tokenId` - Token ID for the combatant (optional)
+- `initiative` - Pre-set initiative value (optional)
+- `hidden` - Hide combatant from players (default: false)
+
+**Example add-combatant command:**
+```json
+{ "type": "add-combatant", "id": "uuid", "params": { "actorId": "actor123", "initiative": 15, "hidden": false } }
+```
+
+**Response:**
+```json
+{ "id": "uuid", "success": true, "data": { "id": "combatant456", "actorId": "actor123", "tokenId": null, "name": "Goblin", "img": "icons/goblin.png", "initiative": 15, "defeated": false, "hidden": false } }
+```
 
 ## License
 

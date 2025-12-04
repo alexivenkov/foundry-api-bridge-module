@@ -26,7 +26,15 @@ export type CommandType =
   | 'delete-journal'
   | 'create-journal-page'
   | 'update-journal-page'
-  | 'delete-journal-page';
+  | 'delete-journal-page'
+  | 'create-combat'
+  | 'add-combatant'
+  | 'remove-combatant'
+  | 'start-combat'
+  | 'end-combat'
+  | 'next-turn'
+  | 'previous-turn'
+  | 'get-combat-state';
 
 export interface RollDiceParams {
   formula: string;
@@ -115,6 +123,29 @@ export interface DeleteJournalPageParams {
   pageId: string;
 }
 
+// Combat Commands
+export interface CreateCombatParams {
+  sceneId?: string;
+  activate?: boolean;
+}
+
+export interface AddCombatantParams {
+  combatId?: string;
+  actorId: string;
+  tokenId?: string;
+  initiative?: number;
+  hidden?: boolean;
+}
+
+export interface RemoveCombatantParams {
+  combatId?: string;
+  combatantId: string;
+}
+
+export interface CombatIdParams {
+  combatId?: string;
+}
+
 export interface RollResult {
   total: number;
   formula: string;
@@ -187,6 +218,27 @@ export interface DeleteResult {
   deleted: boolean;
 }
 
+// Combat Results
+export interface CombatantResult {
+  id: string;
+  actorId: string;
+  tokenId: string | null;
+  name: string;
+  img: string;
+  initiative: number | null;
+  defeated: boolean;
+  hidden: boolean;
+}
+
+export interface CombatResult {
+  id: string;
+  round: number;
+  turn: number;
+  started: boolean;
+  combatants: CombatantResult[];
+  current: CombatantResult | null;
+}
+
 export type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
 
 export const ABILITY_KEYS: readonly AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
@@ -211,6 +263,14 @@ export interface CommandParamsMap {
   'create-journal-page': CreateJournalPageParams;
   'update-journal-page': UpdateJournalPageParams;
   'delete-journal-page': DeleteJournalPageParams;
+  'create-combat': CreateCombatParams;
+  'add-combatant': AddCombatantParams;
+  'remove-combatant': RemoveCombatantParams;
+  'start-combat': CombatIdParams;
+  'end-combat': CombatIdParams;
+  'next-turn': CombatIdParams;
+  'previous-turn': CombatIdParams;
+  'get-combat-state': CombatIdParams;
 }
 
 export interface CommandResultMap {
@@ -229,4 +289,12 @@ export interface CommandResultMap {
   'create-journal-page': JournalPageResult;
   'update-journal-page': JournalPageResult;
   'delete-journal-page': DeleteResult;
+  'create-combat': CombatResult;
+  'add-combatant': CombatantResult;
+  'remove-combatant': DeleteResult;
+  'start-combat': CombatResult;
+  'end-combat': DeleteResult;
+  'next-turn': CombatResult;
+  'previous-turn': CombatResult;
+  'get-combat-state': CombatResult;
 }

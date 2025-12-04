@@ -12,3 +12,6 @@ export { deleteJournalHandler } from '@/commands/handlers/DeleteJournalHandler';
 export { createJournalPageHandler } from '@/commands/handlers/CreateJournalPageHandler';
 export { updateJournalPageHandler } from '@/commands/handlers/UpdateJournalPageHandler';
 export { deleteJournalPageHandler } from '@/commands/handlers/DeleteJournalPageHandler';
+
+// Combat handlers
+export { createCombatHandler, addCombatantHandler } from '@/commands/handlers/combat';

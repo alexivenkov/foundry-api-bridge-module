@@ -18,11 +18,13 @@ import {
   deleteJournalHandler,
   createJournalPageHandler,
   updateJournalPageHandler,
-  deleteJournalPageHandler
+  deleteJournalPageHandler,
+  createCombatHandler,
+  addCombatantHandler
 } from '@/commands';
 import type { WorldData, CompendiumData, CompendiumMetadata } from '@/types/foundry';
 
-console.log('Foundry API Bridge | Loading module v4.5.0...');
+console.log('Foundry API Bridge | Loading module v4.7.0...');
 
 let updateLoop: UpdateLoop | null = null;
 let apiClient: ApiClient | null = null;
@@ -98,6 +100,8 @@ function initializeWebSocket(wsConfig: { url: string; reconnectInterval: number;
   commandRouter.register('create-journal-page', createJournalPageHandler);
   commandRouter.register('update-journal-page', updateJournalPageHandler);
   commandRouter.register('delete-journal-page', deleteJournalPageHandler);
+  commandRouter.register('create-combat', createCombatHandler);
+  commandRouter.register('add-combatant', addCombatantHandler);
 
   wsClient = new WebSocketClient({
     url: wsConfig.url,

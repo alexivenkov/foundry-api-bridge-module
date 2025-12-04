@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.7.0] - 2025-12-04
+
+### Added
+- ⚔️ **Combat Tracker commands** - Manage combat encounters via WebSocket
+  - `create-combat` - Create new combat encounter (optional scene, activate)
+  - `add-combatant` - Add combatant to combat (by actorId/tokenId, with initiative)
+- 📁 Combat handlers in separate folder (`src/commands/handlers/combat/`)
+- Shared combat types and helper functions (`combatTypes.ts`)
+
+### Changed
+- Test coverage increased to 197 tests
+
+### Technical
+- `src/commands/handlers/combat/CreateCombatHandler.ts` - Combat.create() integration
+- `src/commands/handlers/combat/AddCombatantHandler.ts` - createEmbeddedDocuments('Combatant')
+- `src/commands/handlers/combat/combatTypes.ts` - Foundry Combat/Combatant types
+
+## [4.5.0] - 2025-12-03
+
+### Added
+- 📓 **Journal commands** - Full CRUD for journal entries and pages via WebSocket
+  - `create-journal`, `update-journal`, `delete-journal`
+  - `create-journal-page`, `update-journal-page`, `delete-journal-page`
+- Support for text, image, and video page types
+- Folder organization for journals
+
+### Changed
+- Test coverage increased to 183 tests
+
 ## [4.0.0] - 2025-12-03
 
 ### Added
