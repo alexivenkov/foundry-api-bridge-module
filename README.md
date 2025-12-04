@@ -154,6 +154,12 @@ Commands and responses are JSON messages:
 | `roll-ability` | `{ actorId, ability, showInChat? }` | Roll ability check for actor (D&D 5e) |
 | `roll-attack` | `{ actorId, itemId, advantage?, disadvantage?, showInChat? }` | Roll attack with weapon/spell (D&D 5e) |
 | `roll-damage` | `{ actorId, itemId, critical?, showInChat? }` | Roll damage for weapon/spell (D&D 5e) |
+| `create-journal` | `{ name, folder?, content?, pageType? }` | Create a new journal entry |
+| `update-journal` | `{ journalId, name?, folder? }` | Update journal entry properties |
+| `delete-journal` | `{ journalId }` | Delete a journal entry |
+| `create-journal-page` | `{ journalId, name, type?, content? }` | Add a page to existing journal |
+| `update-journal-page` | `{ journalId, pageId, name?, content? }` | Update journal page content |
+| `delete-journal-page` | `{ journalId, pageId }` | Delete a journal page |
 
 **roll-dice params:**
 - `formula` - Dice formula (`1d20`, `2d6+3`, `4d6kh3`, `2d20kh1` for advantage)
@@ -230,6 +236,55 @@ Commands and responses are JSON messages:
 ```json
 { "id": "uuid", "success": true, "data": { "total": 14, "formula": "1d20 + 3", "dice": [{"type": "d20", "count": 1, "results": [11]}] } }
 ```
+
+### Journal Commands
+
+Commands for creating, editing, and deleting journal entries and pages. Perfect for AI-generated session notes, NPC descriptions, and quest logs.
+
+**create-journal params:**
+- `name` - Journal entry name (required)
+- `folder` - Folder ID to place journal in (optional)
+- `content` - Initial page content as HTML (optional)
+- `pageType` - Page type: `text`, `image`, or `video` (default: `text`)
+
+**Example create-journal command:**
+```json
+{ "type": "create-journal", "id": "uuid", "params": { "name": "Session 5 Notes", "content": "<h2>The Dragon's Lair</h2><p>The party entered the cave...</p>" } }
+```
+
+**Response:**
+```json
+{ "id": "uuid", "success": true, "data": { "id": "abc123", "name": "Session 5 Notes", "folder": null, "pages": [{"id": "page1", "name": "Session 5 Notes", "type": "text"}] } }
+```
+
+**update-journal params:**
+- `journalId` - Journal ID to update (required)
+- `name` - New journal name (optional)
+- `folder` - New folder ID (optional)
+
+**delete-journal params:**
+- `journalId` - Journal ID to delete (required)
+
+**create-journal-page params:**
+- `journalId` - Parent journal ID (required)
+- `name` - Page name (required)
+- `type` - Page type: `text`, `image`, or `video` (default: `text`)
+- `content` - Page content as HTML (optional, for text pages)
+
+**Example create-journal-page command:**
+```json
+{ "type": "create-journal-page", "id": "uuid", "params": { "journalId": "abc123", "name": "NPCs", "content": "<p>Bartender: Grok the Half-Orc</p>" } }
+```
+
+**update-journal-page params:**
+- `journalId` - Parent journal ID (required)
+- `pageId` - Page ID to update (required)
+- `name` - New page name (optional)
+- `content` - New content as HTML (optional)
+
+**delete-journal-page params:**
+- `journalId` - Parent journal ID (required)
+- `pageId` - Page ID to delete (required)
 
 ## License
 

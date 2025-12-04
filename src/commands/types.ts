@@ -20,7 +20,13 @@ export type CommandType =
   | 'roll-damage'
   | 'get-actors'
   | 'get-actor'
-  | 'send-chat-message';
+  | 'send-chat-message'
+  | 'create-journal'
+  | 'update-journal'
+  | 'delete-journal'
+  | 'create-journal-page'
+  | 'update-journal-page'
+  | 'delete-journal-page';
 
 export interface RollDiceParams {
   formula: string;
@@ -68,6 +74,45 @@ export interface GetActorParams {
 export interface SendChatMessageParams {
   content: string;
   speaker?: string;
+}
+
+// Journal Commands
+export type JournalPageType = 'text' | 'image' | 'video';
+
+export interface CreateJournalParams {
+  name: string;
+  folder?: string;
+  content?: string;
+  pageType?: JournalPageType;
+}
+
+export interface UpdateJournalParams {
+  journalId: string;
+  name?: string;
+  folder?: string;
+}
+
+export interface DeleteJournalParams {
+  journalId: string;
+}
+
+export interface CreateJournalPageParams {
+  journalId: string;
+  name: string;
+  type?: JournalPageType;
+  content?: string;
+}
+
+export interface UpdateJournalPageParams {
+  journalId: string;
+  pageId: string;
+  name?: string;
+  content?: string;
+}
+
+export interface DeleteJournalPageParams {
+  journalId: string;
+  pageId: string;
 }
 
 export interface RollResult {
@@ -124,7 +169,27 @@ export interface ItemSummary {
   img: string;
 }
 
+// Journal Results
+export interface JournalPageResult {
+  id: string;
+  name: string;
+  type: string;
+}
+
+export interface JournalResult {
+  id: string;
+  name: string;
+  folder: string | null;
+  pages: JournalPageResult[];
+}
+
+export interface DeleteResult {
+  deleted: boolean;
+}
+
 export type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
+
+export const ABILITY_KEYS: readonly AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 
 export type CommandHandler<TParams = unknown, TResult = unknown> = (
   params: TParams
@@ -140,6 +205,12 @@ export interface CommandParamsMap {
   'get-actors': Record<string, never>;
   'get-actor': GetActorParams;
   'send-chat-message': SendChatMessageParams;
+  'create-journal': CreateJournalParams;
+  'update-journal': UpdateJournalParams;
+  'delete-journal': DeleteJournalParams;
+  'create-journal-page': CreateJournalPageParams;
+  'update-journal-page': UpdateJournalPageParams;
+  'delete-journal-page': DeleteJournalPageParams;
 }
 
 export interface CommandResultMap {
@@ -152,4 +223,10 @@ export interface CommandResultMap {
   'get-actors': ActorListResult;
   'get-actor': ActorDetailResult;
   'send-chat-message': { sent: boolean };
+  'create-journal': JournalResult;
+  'update-journal': JournalResult;
+  'delete-journal': DeleteResult;
+  'create-journal-page': JournalPageResult;
+  'update-journal-page': JournalPageResult;
+  'delete-journal-page': DeleteResult;
 }

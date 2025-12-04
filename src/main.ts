@@ -5,7 +5,21 @@ import { CompendiumCollector } from '@/collectors/CompendiumCollector';
 import { UpdateLoop } from '@/core/UpdateLoop';
 import { registerSettings, registerMenu } from '@/settings/SettingsManager';
 import { WebSocketClient } from '@/transport';
-import { CommandRouter, rollDiceHandler, rollSkillHandler, rollSaveHandler, rollAbilityHandler, rollAttackHandler, rollDamageHandler } from '@/commands';
+import {
+  CommandRouter,
+  rollDiceHandler,
+  rollSkillHandler,
+  rollSaveHandler,
+  rollAbilityHandler,
+  rollAttackHandler,
+  rollDamageHandler,
+  createJournalHandler,
+  updateJournalHandler,
+  deleteJournalHandler,
+  createJournalPageHandler,
+  updateJournalPageHandler,
+  deleteJournalPageHandler
+} from '@/commands';
 import type { WorldData, CompendiumData, CompendiumMetadata } from '@/types/foundry';
 
 console.log('Foundry API Bridge | Loading module v4.5.0...');
@@ -78,6 +92,12 @@ function initializeWebSocket(wsConfig: { url: string; reconnectInterval: number;
   commandRouter.register('roll-ability', rollAbilityHandler);
   commandRouter.register('roll-attack', rollAttackHandler);
   commandRouter.register('roll-damage', rollDamageHandler);
+  commandRouter.register('create-journal', createJournalHandler);
+  commandRouter.register('update-journal', updateJournalHandler);
+  commandRouter.register('delete-journal', deleteJournalHandler);
+  commandRouter.register('create-journal-page', createJournalPageHandler);
+  commandRouter.register('update-journal-page', updateJournalPageHandler);
+  commandRouter.register('delete-journal-page', deleteJournalPageHandler);
 
   wsClient = new WebSocketClient({
     url: wsConfig.url,

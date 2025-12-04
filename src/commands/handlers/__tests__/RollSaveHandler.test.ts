@@ -1,4 +1,5 @@
 import { rollSaveHandler } from '@/commands/handlers/RollSaveHandler';
+import { ABILITY_KEYS } from '@/commands/types';
 import type { AbilityKey } from '@/commands/types';
 
 interface MockD20Roll {
@@ -34,8 +35,6 @@ const mockGame = {
 };
 
 (global as Record<string, unknown>)['game'] = mockGame;
-
-const ABILITY_KEYS: AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 
 describe('rollSaveHandler', () => {
   beforeEach(() => {

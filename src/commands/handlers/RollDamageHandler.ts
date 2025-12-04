@@ -1,27 +1,9 @@
-import type { RollDamageParams, RollResult, DiceResult } from '@/commands/types';
-
-interface FoundryDiceTerm {
-  faces?: number;
-  number?: number;
-  results?: Array<{ result: number }>;
-}
-
-interface FoundryDamageRoll {
-  total: number;
-  formula: string;
-  terms: FoundryDiceTerm[];
-}
+import type { RollDamageParams, RollResult } from '@/commands/types';
+import { extractDiceResults } from '@/commands/handlers/shared';
+import type { FoundryDamageRoll, RollDialogConfig, RollMessageConfig } from '@/commands/handlers/shared';
 
 interface DamageRollConfig {
   isCritical?: boolean;
-}
-
-interface RollDialogConfig {
-  configure: boolean;
-}
-
-interface RollMessageConfig {
-  create: boolean;
 }
 
 interface FoundryActivity {
@@ -68,22 +50,6 @@ interface FoundryGame {
 }
 
 declare const game: FoundryGame;
-
-function extractDiceResults(terms: FoundryDiceTerm[]): DiceResult[] {
-  const diceResults: DiceResult[] = [];
-
-  for (const term of terms) {
-    if (term.faces !== undefined && term.results !== undefined) {
-      diceResults.push({
-        type: `d${String(term.faces)}`,
-        count: term.number ?? 1,
-        results: term.results.map(r => r.result)
-      });
-    }
-  }
-
-  return diceResults;
-}
 
 export async function rollDamageHandler(params: RollDamageParams): Promise<RollResult> {
   const actor = game.actors.get(params.actorId);

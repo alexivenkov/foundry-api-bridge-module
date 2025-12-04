@@ -1,4 +1,6 @@
-import type { RollSkillParams, RollResult, DiceResult } from '@/commands/types';
+import type { RollSkillParams, RollResult } from '@/commands/types';
+import { extractDiceResults } from '@/commands/handlers/shared';
+import type { FoundryD20Roll, RollDialogConfig, RollMessageConfig } from '@/commands/handlers/shared';
 
 /**
  * D&D 5e skill abbreviations
@@ -10,31 +12,6 @@ export const SKILL_KEYS = [
 ] as const;
 
 export type SkillKey = (typeof SKILL_KEYS)[number];
-
-interface FoundryDiceTerm {
-  faces?: number;
-  number?: number;
-  results?: Array<{ result: number }>;
-}
-
-interface FoundryRoll {
-  total: number;
-  formula: string;
-  terms: FoundryDiceTerm[];
-}
-
-interface FoundryD20Roll extends FoundryRoll {
-  isCritical: boolean;
-  isFumble: boolean;
-}
-
-interface RollDialogConfig {
-  configure: boolean;
-}
-
-interface RollMessageConfig {
-  create: boolean;
-}
 
 interface FoundryActor {
   id: string;
@@ -58,22 +35,6 @@ declare const game: FoundryGame;
 
 function isValidSkillKey(skill: string): skill is SkillKey {
   return SKILL_KEYS.includes(skill as SkillKey);
-}
-
-function extractDiceResults(terms: FoundryDiceTerm[]): DiceResult[] {
-  const diceResults: DiceResult[] = [];
-
-  for (const term of terms) {
-    if (term.faces !== undefined && term.results !== undefined) {
-      diceResults.push({
-        type: `d${String(term.faces)}`,
-        count: term.number ?? 1,
-        results: term.results.map(r => r.result)
-      });
-    }
-  }
-
-  return diceResults;
 }
 
 export async function rollSkillHandler(params: RollSkillParams): Promise<RollResult> {

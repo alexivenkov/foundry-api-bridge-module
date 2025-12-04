@@ -1,4 +1,6 @@
 import type { RollDiceParams, RollResult, DiceResult } from '@/commands/types';
+import { extractDiceResults } from '@/commands/handlers/shared';
+import type { FoundryDiceTerm } from '@/commands/handlers/shared';
 
 interface FoundryRoll {
   evaluate(): Promise<FoundryRoll>;
@@ -8,33 +10,11 @@ interface FoundryRoll {
   terms: FoundryDiceTerm[];
 }
 
-interface FoundryDiceTerm {
-  faces?: number;
-  number?: number;
-  results?: Array<{ result: number }>;
-}
-
 interface RollConstructor {
   new (formula: string): FoundryRoll;
 }
 
 declare const Roll: RollConstructor;
-
-function extractDiceResults(terms: FoundryDiceTerm[]): DiceResult[] {
-  const diceResults: DiceResult[] = [];
-
-  for (const term of terms) {
-    if (term.faces !== undefined && term.results !== undefined) {
-      diceResults.push({
-        type: `d${String(term.faces)}`,
-        count: term.number ?? 1,
-        results: term.results.map(r => r.result)
-      });
-    }
-  }
-
-  return diceResults;
-}
 
 function checkCritical(dice: DiceResult[]): { isCritical: boolean; isFumble: boolean } {
   const d20 = dice.find(d => d.type === 'd20' && d.count === 1);
