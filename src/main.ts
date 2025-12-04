@@ -8,7 +8,7 @@ import { WebSocketClient } from '@/transport';
 import { CommandRouter, rollDiceHandler, rollSkillHandler } from '@/commands';
 import type { WorldData, CompendiumData, CompendiumMetadata } from '@/types/foundry';
 
-console.log('Foundry API Bridge | Loading module v4.0.0...');
+console.log('Foundry API Bridge | Loading module v4.1.0...');
 
 let updateLoop: UpdateLoop | null = null;
 let apiClient: ApiClient | null = null;
