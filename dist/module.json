@@ -2,7 +2,7 @@
   "id": "foundry-api-bridge",
   "title": "Foundry API Bridge",
   "description": "HTTP REST API bridge for external access to Foundry VTT world data. Enables AI DM and other external tools to read journals, actors, scenes, items, and compendium packs. Fully configurable via UI.",
-  "version": "4.4.0",
+  "version": "4.5.0",
   "authors": [
     {
       "name": "Alex Ivenkov",

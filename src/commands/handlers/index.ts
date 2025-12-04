@@ -3,3 +3,4 @@ export { rollSkillHandler, SKILL_KEYS, type SkillKey } from '@/commands/handlers
 export { rollSaveHandler } from '@/commands/handlers/RollSaveHandler';
 export { rollAbilityHandler } from '@/commands/handlers/RollAbilityHandler';
 export { rollAttackHandler } from '@/commands/handlers/RollAttackHandler';
+export { rollDamageHandler } from '@/commands/handlers/RollDamageHandler';

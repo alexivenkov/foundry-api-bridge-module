@@ -5,10 +5,10 @@ import { CompendiumCollector } from '@/collectors/CompendiumCollector';
 import { UpdateLoop } from '@/core/UpdateLoop';
 import { registerSettings, registerMenu } from '@/settings/SettingsManager';
 import { WebSocketClient } from '@/transport';
-import { CommandRouter, rollDiceHandler, rollSkillHandler, rollSaveHandler, rollAbilityHandler, rollAttackHandler } from '@/commands';
+import { CommandRouter, rollDiceHandler, rollSkillHandler, rollSaveHandler, rollAbilityHandler, rollAttackHandler, rollDamageHandler } from '@/commands';
 import type { WorldData, CompendiumData, CompendiumMetadata } from '@/types/foundry';
 
-console.log('Foundry API Bridge | Loading module v4.4.0...');
+console.log('Foundry API Bridge | Loading module v4.5.0...');
 
 let updateLoop: UpdateLoop | null = null;
 let apiClient: ApiClient | null = null;
@@ -77,6 +77,7 @@ function initializeWebSocket(wsConfig: { url: string; reconnectInterval: number;
   commandRouter.register('roll-save', rollSaveHandler);
   commandRouter.register('roll-ability', rollAbilityHandler);
   commandRouter.register('roll-attack', rollAttackHandler);
+  commandRouter.register('roll-damage', rollDamageHandler);
 
   wsClient = new WebSocketClient({
     url: wsConfig.url,
