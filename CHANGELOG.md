@@ -2,22 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
-## [4.7.0] - 2025-12-04
+## [4.8.0] - 2025-12-04
 
 ### Added
-- ⚔️ **Combat Tracker commands** - Manage combat encounters via WebSocket
+- ⚔️ **Combat Tracker commands** - Full combat encounter management via WebSocket
   - `create-combat` - Create new combat encounter (optional scene, activate)
   - `add-combatant` - Add combatant to combat (by actorId/tokenId, with initiative)
+  - `remove-combatant` - Remove combatant from combat
+  - `start-combat` - Start combat (begin round 1)
+  - `end-combat` - End and delete combat encounter
+  - `next-turn` - Advance to next turn in initiative order
+  - `previous-turn` - Go back to previous turn
+  - `get-combat-state` - Get current combat state with all combatants
+- 🎲 **Initiative commands** - Roll and manage initiative values
+  - `roll-initiative` - Roll initiative for specific combatants (with optional custom formula)
+  - `set-initiative` - Manually set initiative value for a combatant
+  - `roll-all-initiative` - Roll initiative for all combatants (or NPCs only)
+- 🎭 **Combatant update commands** - Update combatant properties
+  - `update-combatant` - Update combatant properties (initiative, defeated, hidden)
+  - `set-combatant-defeated` - Set combatant defeated status
+  - `toggle-combatant-visibility` - Toggle combatant visibility for players
 - 📁 Combat handlers in separate folder (`src/commands/handlers/combat/`)
 - Shared combat types and helper functions (`combatTypes.ts`)
 
 ### Changed
-- Test coverage increased to 197 tests
+- Test coverage increased to 256 tests
 
 ### Technical
-- `src/commands/handlers/combat/CreateCombatHandler.ts` - Combat.create() integration
-- `src/commands/handlers/combat/AddCombatantHandler.ts` - createEmbeddedDocuments('Combatant')
-- `src/commands/handlers/combat/combatTypes.ts` - Foundry Combat/Combatant types
+- 14 new handlers in `src/commands/handlers/combat/`
+- Foundry Combat API integration: startCombat, nextTurn, previousTurn, endCombat, rollInitiative, rollAll, rollNPC, setInitiative, combatant.update
+- CombatResult includes round, turn, started status, combatants array, current combatant
+- InitiativeRollResult returns array of results with combatantId, name, initiative
 
 ## [4.5.0] - 2025-12-03
 

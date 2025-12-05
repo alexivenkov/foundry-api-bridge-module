@@ -34,7 +34,13 @@ export type CommandType =
   | 'end-combat'
   | 'next-turn'
   | 'previous-turn'
-  | 'get-combat-state';
+  | 'get-combat-state'
+  | 'roll-initiative'
+  | 'set-initiative'
+  | 'roll-all-initiative'
+  | 'update-combatant'
+  | 'set-combatant-defeated'
+  | 'toggle-combatant-visibility';
 
 export interface RollDiceParams {
   formula: string;
@@ -144,6 +150,53 @@ export interface RemoveCombatantParams {
 
 export interface CombatIdParams {
   combatId?: string;
+}
+
+export interface RollInitiativeParams {
+  combatId?: string;
+  combatantIds: string[];
+  formula?: string;
+}
+
+export interface SetInitiativeParams {
+  combatId?: string;
+  combatantId: string;
+  initiative: number;
+}
+
+export interface RollAllInitiativeParams {
+  combatId?: string;
+  formula?: string;
+  npcsOnly?: boolean;
+}
+
+export interface UpdateCombatantParams {
+  combatId?: string;
+  combatantId: string;
+  initiative?: number;
+  defeated?: boolean;
+  hidden?: boolean;
+}
+
+export interface SetCombatantDefeatedParams {
+  combatId?: string;
+  combatantId: string;
+  defeated: boolean;
+}
+
+export interface ToggleCombatantVisibilityParams {
+  combatId?: string;
+  combatantId: string;
+}
+
+export interface InitiativeResult {
+  combatantId: string;
+  name: string;
+  initiative: number;
+}
+
+export interface InitiativeRollResult {
+  results: InitiativeResult[];
 }
 
 export interface RollResult {
@@ -271,6 +324,12 @@ export interface CommandParamsMap {
   'next-turn': CombatIdParams;
   'previous-turn': CombatIdParams;
   'get-combat-state': CombatIdParams;
+  'roll-initiative': RollInitiativeParams;
+  'set-initiative': SetInitiativeParams;
+  'roll-all-initiative': RollAllInitiativeParams;
+  'update-combatant': UpdateCombatantParams;
+  'set-combatant-defeated': SetCombatantDefeatedParams;
+  'toggle-combatant-visibility': ToggleCombatantVisibilityParams;
 }
 
 export interface CommandResultMap {
@@ -297,4 +356,10 @@ export interface CommandResultMap {
   'next-turn': CombatResult;
   'previous-turn': CombatResult;
   'get-combat-state': CombatResult;
+  'roll-initiative': InitiativeRollResult;
+  'set-initiative': CombatantResult;
+  'roll-all-initiative': InitiativeRollResult;
+  'update-combatant': CombatantResult;
+  'set-combatant-defeated': CombatantResult;
+  'toggle-combatant-visibility': CombatantResult;
 }

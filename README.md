@@ -162,6 +162,18 @@ Commands and responses are JSON messages:
 | `delete-journal-page` | `{ journalId, pageId }` | Delete a journal page |
 | `create-combat` | `{ sceneId?, activate? }` | Create a new combat encounter |
 | `add-combatant` | `{ actorId, combatId?, tokenId?, initiative?, hidden? }` | Add combatant to combat |
+| `remove-combatant` | `{ combatantId, combatId? }` | Remove combatant from combat |
+| `start-combat` | `{ combatId? }` | Start combat (begin round 1) |
+| `end-combat` | `{ combatId? }` | End and delete combat |
+| `next-turn` | `{ combatId? }` | Advance to next turn |
+| `previous-turn` | `{ combatId? }` | Go back to previous turn |
+| `get-combat-state` | `{ combatId? }` | Get current combat state |
+| `roll-initiative` | `{ combatantIds, combatId?, formula? }` | Roll initiative for specific combatants |
+| `set-initiative` | `{ combatantId, initiative, combatId? }` | Manually set initiative value |
+| `roll-all-initiative` | `{ combatId?, formula?, npcsOnly? }` | Roll initiative for all combatants |
+| `update-combatant` | `{ combatantId, combatId?, initiative?, defeated?, hidden? }` | Update combatant properties |
+| `set-combatant-defeated` | `{ combatantId, defeated, combatId? }` | Set combatant defeated status |
+| `toggle-combatant-visibility` | `{ combatantId, combatId? }` | Toggle combatant visibility |
 
 **roll-dice params:**
 - `formula` - Dice formula (`1d20`, `2d6+3`, `4d6kh3`, `2d20kh1` for advantage)
@@ -321,6 +333,160 @@ Commands for managing combat encounters. Create combat trackers, add combatants,
 **Response:**
 ```json
 { "id": "uuid", "success": true, "data": { "id": "combatant456", "actorId": "actor123", "tokenId": null, "name": "Goblin", "img": "icons/goblin.png", "initiative": 15, "defeated": false, "hidden": false } }
+```
+
+**remove-combatant params:**
+- `combatantId` - Combatant ID to remove (required)
+- `combatId` - Combat ID (optional, defaults to active combat)
+
+**Example remove-combatant command:**
+```json
+{ "type": "remove-combatant", "id": "uuid", "params": { "combatantId": "combatant456" } }
+```
+
+**start-combat params:**
+- `combatId` - Combat ID (optional, defaults to active combat)
+
+Starts the combat, setting round to 1 and turn to 0.
+
+**Example start-combat command:**
+```json
+{ "type": "start-combat", "id": "uuid", "params": {} }
+```
+
+**Response:**
+```json
+{ "id": "uuid", "success": true, "data": { "id": "combat123", "round": 1, "turn": 0, "started": true, "combatants": [...], "current": {...} } }
+```
+
+**end-combat params:**
+- `combatId` - Combat ID (optional, defaults to active combat)
+
+Ends and deletes the combat encounter.
+
+**Example end-combat command:**
+```json
+{ "type": "end-combat", "id": "uuid", "params": {} }
+```
+
+**next-turn / previous-turn params:**
+- `combatId` - Combat ID (optional, defaults to active combat)
+
+Advances or retreats the turn order. Combat must be started first.
+
+**Example next-turn command:**
+```json
+{ "type": "next-turn", "id": "uuid", "params": {} }
+```
+
+**get-combat-state params:**
+- `combatId` - Combat ID (optional, defaults to active combat)
+
+Returns the current state of the combat including all combatants.
+
+**Example get-combat-state command:**
+```json
+{ "type": "get-combat-state", "id": "uuid", "params": {} }
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "success": true,
+  "data": {
+    "id": "combat123",
+    "round": 2,
+    "turn": 3,
+    "started": true,
+    "combatants": [
+      { "id": "c1", "actorId": "a1", "tokenId": "t1", "name": "Fighter", "img": "...", "initiative": 18, "defeated": false, "hidden": false },
+      { "id": "c2", "actorId": "a2", "tokenId": "t2", "name": "Goblin", "img": "...", "initiative": 12, "defeated": false, "hidden": false }
+    ],
+    "current": { "id": "c2", "actorId": "a2", "tokenId": "t2", "name": "Goblin", "img": "...", "initiative": 12, "defeated": false, "hidden": false }
+  }
+}
+```
+
+### Initiative Commands
+
+Commands for rolling and managing initiative values.
+
+**roll-initiative params:**
+- `combatantIds` - Array of combatant IDs to roll initiative for (required)
+- `combatId` - Combat ID (optional, defaults to active combat)
+- `formula` - Custom initiative formula (optional, uses system default if not provided)
+
+**Example roll-initiative command:**
+```json
+{ "type": "roll-initiative", "id": "uuid", "params": { "combatantIds": ["combatant1", "combatant2"] } }
+```
+
+**Response:**
+```json
+{ "id": "uuid", "success": true, "data": { "results": [{ "combatantId": "combatant1", "name": "Fighter", "initiative": 18 }, { "combatantId": "combatant2", "name": "Wizard", "initiative": 12 }] } }
+```
+
+**set-initiative params:**
+- `combatantId` - Combatant ID to set initiative for (required)
+- `initiative` - Initiative value to set (required)
+- `combatId` - Combat ID (optional, defaults to active combat)
+
+**Example set-initiative command:**
+```json
+{ "type": "set-initiative", "id": "uuid", "params": { "combatantId": "combatant1", "initiative": 20 } }
+```
+
+**roll-all-initiative params:**
+- `combatId` - Combat ID (optional, defaults to active combat)
+- `formula` - Custom initiative formula (optional, uses system default if not provided)
+- `npcsOnly` - Roll only for NPC combatants (default: false)
+
+**Example roll-all-initiative command:**
+```json
+{ "type": "roll-all-initiative", "id": "uuid", "params": { "npcsOnly": true } }
+```
+
+**Response:**
+```json
+{ "id": "uuid", "success": true, "data": { "results": [{ "combatantId": "c1", "name": "Goblin", "initiative": 14 }, { "combatantId": "c2", "name": "Orc", "initiative": 8 }] } }
+```
+
+### Combatant Update Commands
+
+Commands for updating combatant properties like defeated status and visibility.
+
+**update-combatant params:**
+- `combatantId` - Combatant ID to update (required)
+- `combatId` - Combat ID (optional, defaults to active combat)
+- `initiative` - New initiative value (optional)
+- `defeated` - Set defeated status (optional)
+- `hidden` - Set visibility status (optional)
+
+**Example update-combatant command:**
+```json
+{ "type": "update-combatant", "id": "uuid", "params": { "combatantId": "c1", "defeated": true, "initiative": 10 } }
+```
+
+**set-combatant-defeated params:**
+- `combatantId` - Combatant ID to update (required)
+- `defeated` - Set defeated status (required)
+- `combatId` - Combat ID (optional, defaults to active combat)
+
+**Example set-combatant-defeated command:**
+```json
+{ "type": "set-combatant-defeated", "id": "uuid", "params": { "combatantId": "c1", "defeated": true } }
+```
+
+**toggle-combatant-visibility params:**
+- `combatantId` - Combatant ID to toggle visibility (required)
+- `combatId` - Combat ID (optional, defaults to active combat)
+
+Toggles the hidden status of a combatant. If visible, makes hidden. If hidden, makes visible.
+
+**Example toggle-combatant-visibility command:**
+```json
+{ "type": "toggle-combatant-visibility", "id": "uuid", "params": { "combatantId": "c1" } }
 ```
 
 ## License

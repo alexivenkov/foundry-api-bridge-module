@@ -20,11 +20,23 @@ import {
   updateJournalPageHandler,
   deleteJournalPageHandler,
   createCombatHandler,
-  addCombatantHandler
+  addCombatantHandler,
+  removeCombatantHandler,
+  startCombatHandler,
+  endCombatHandler,
+  nextTurnHandler,
+  previousTurnHandler,
+  getCombatStateHandler,
+  rollInitiativeHandler,
+  setInitiativeHandler,
+  rollAllInitiativeHandler,
+  updateCombatantHandler,
+  setCombatantDefeatedHandler,
+  toggleCombatantVisibilityHandler
 } from '@/commands';
 import type { WorldData, CompendiumData, CompendiumMetadata } from '@/types/foundry';
 
-console.log('Foundry API Bridge | Loading module v4.7.0...');
+console.log('Foundry API Bridge | Loading module v4.8.0...');
 
 let updateLoop: UpdateLoop | null = null;
 let apiClient: ApiClient | null = null;
@@ -102,6 +114,18 @@ function initializeWebSocket(wsConfig: { url: string; reconnectInterval: number;
   commandRouter.register('delete-journal-page', deleteJournalPageHandler);
   commandRouter.register('create-combat', createCombatHandler);
   commandRouter.register('add-combatant', addCombatantHandler);
+  commandRouter.register('remove-combatant', removeCombatantHandler);
+  commandRouter.register('start-combat', startCombatHandler);
+  commandRouter.register('end-combat', endCombatHandler);
+  commandRouter.register('next-turn', nextTurnHandler);
+  commandRouter.register('previous-turn', previousTurnHandler);
+  commandRouter.register('get-combat-state', getCombatStateHandler);
+  commandRouter.register('roll-initiative', rollInitiativeHandler);
+  commandRouter.register('set-initiative', setInitiativeHandler);
+  commandRouter.register('roll-all-initiative', rollAllInitiativeHandler);
+  commandRouter.register('update-combatant', updateCombatantHandler);
+  commandRouter.register('set-combatant-defeated', setCombatantDefeatedHandler);
+  commandRouter.register('toggle-combatant-visibility', toggleCombatantVisibilityHandler);
 
   wsClient = new WebSocketClient({
     url: wsConfig.url,

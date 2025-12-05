@@ -1,5 +1,11 @@
 import type { CombatantResult, CombatResult } from '@/commands/types';
 
+export interface CombatantUpdateData {
+  initiative?: number;
+  defeated?: boolean;
+  hidden?: boolean;
+}
+
 export interface FoundryCombatant {
   id: string;
   actorId: string;
@@ -9,12 +15,18 @@ export interface FoundryCombatant {
   initiative: number | null;
   defeated: boolean;
   hidden: boolean;
+  update(data: CombatantUpdateData): Promise<FoundryCombatant>;
 }
 
 export interface FoundryCombatantsCollection {
   get(id: string): FoundryCombatant | undefined;
   map<T>(callback: (combatant: FoundryCombatant) => T): T[];
   contents: FoundryCombatant[];
+}
+
+export interface RollInitiativeOptions {
+  formula?: string;
+  messageOptions?: Record<string, unknown>;
 }
 
 export interface FoundryCombat {
@@ -36,6 +48,10 @@ export interface FoundryCombat {
     data: FoundryCombatantCreateData[]
   ): Promise<FoundryCombatant[]>;
   deleteEmbeddedDocuments(type: 'Combatant', ids: string[]): Promise<unknown[]>;
+  rollInitiative(ids: string[], options?: RollInitiativeOptions): Promise<FoundryCombat>;
+  rollAll(options?: RollInitiativeOptions): Promise<FoundryCombat>;
+  rollNPC(options?: RollInitiativeOptions): Promise<FoundryCombat>;
+  setInitiative(id: string, value: number): Promise<void>;
 }
 
 export interface FoundryCombatantCreateData {
@@ -104,4 +120,12 @@ export function getActiveCombat(game: FoundryGame, combatId?: string): FoundryCo
     throw new Error('No active combat');
   }
   return activeCombat;
+}
+
+export function getCombatant(combat: FoundryCombat, combatantId: string): FoundryCombatant {
+  const combatant = combat.combatants.get(combatantId);
+  if (!combatant) {
+    throw new Error(`Combatant not found: ${combatantId}`);
+  }
+  return combatant;
 }

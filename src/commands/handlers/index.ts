@@ -14,4 +14,19 @@ export { updateJournalPageHandler } from '@/commands/handlers/UpdateJournalPageH
 export { deleteJournalPageHandler } from '@/commands/handlers/DeleteJournalPageHandler';
 
 // Combat handlers
-export { createCombatHandler, addCombatantHandler } from '@/commands/handlers/combat';
+export {
+  createCombatHandler,
+  addCombatantHandler,
+  removeCombatantHandler,
+  startCombatHandler,
+  endCombatHandler,
+  nextTurnHandler,
+  previousTurnHandler,
+  getCombatStateHandler,
+  rollInitiativeHandler,
+  setInitiativeHandler,
+  rollAllInitiativeHandler,
+  updateCombatantHandler,
+  setCombatantDefeatedHandler,
+  toggleCombatantVisibilityHandler
+} from '@/commands/handlers/combat';
