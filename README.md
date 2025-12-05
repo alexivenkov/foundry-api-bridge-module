@@ -174,6 +174,11 @@ Commands and responses are JSON messages:
 | `update-combatant` | `{ combatantId, combatId?, initiative?, defeated?, hidden? }` | Update combatant properties |
 | `set-combatant-defeated` | `{ combatantId, defeated, combatId? }` | Set combatant defeated status |
 | `toggle-combatant-visibility` | `{ combatantId, combatId? }` | Toggle combatant visibility |
+| `create-token` | `{ actorId, x, y, sceneId?, hidden?, elevation?, rotation?, scale? }` | Create token on scene |
+| `delete-token` | `{ tokenId, sceneId? }` | Delete token from scene |
+| `move-token` | `{ tokenId, x, y, sceneId?, elevation?, rotation?, animate? }` | Move token to new position |
+| `update-token` | `{ tokenId, sceneId?, hidden?, elevation?, rotation?, scale?, name?, displayName?, disposition?, lockRotation? }` | Update token properties |
+| `get-scene-tokens` | `{ sceneId? }` | Get all tokens from scene |
 
 **roll-dice params:**
 - `formula` - Dice formula (`1d20`, `2d6+3`, `4d6kh3`, `2d20kh1` for advantage)
@@ -487,6 +492,96 @@ Toggles the hidden status of a combatant. If visible, makes hidden. If hidden, m
 **Example toggle-combatant-visibility command:**
 ```json
 { "type": "toggle-combatant-visibility", "id": "uuid", "params": { "combatantId": "c1" } }
+```
+
+### Token Commands
+
+Commands for managing tokens on scenes. Create, move, update, and delete tokens programmatically.
+
+**create-token params:**
+- `actorId` - Actor ID to create token for (required)
+- `x` - X coordinate on the scene (required)
+- `y` - Y coordinate on the scene (required)
+- `sceneId` - Scene ID to create token in (optional, defaults to active scene)
+- `hidden` - Token visibility to players (default: false)
+- `elevation` - Token elevation in units (optional)
+- `rotation` - Token rotation in degrees (optional)
+- `scale` - Token scale multiplier (optional)
+
+**Example create-token command:**
+```json
+{ "type": "create-token", "id": "uuid", "params": { "actorId": "actor123", "x": 500, "y": 300, "hidden": true } }
+```
+
+**Response:**
+```json
+{ "id": "uuid", "success": true, "data": { "id": "token123", "name": "Goblin", "actorId": "actor123", "x": 500, "y": 300, "elevation": 0, "rotation": 0, "hidden": true, "img": "icons/goblin.png", "disposition": 1 } }
+```
+
+**delete-token params:**
+- `tokenId` - Token ID to delete (required)
+- `sceneId` - Scene ID (optional, defaults to active scene)
+
+**Example delete-token command:**
+```json
+{ "type": "delete-token", "id": "uuid", "params": { "tokenId": "token123" } }
+```
+
+**move-token params:**
+- `tokenId` - Token ID to move (required)
+- `x` - New X coordinate (required)
+- `y` - New Y coordinate (required)
+- `sceneId` - Scene ID (optional, defaults to active scene)
+- `elevation` - New elevation (optional)
+- `rotation` - New rotation in degrees (optional)
+- `animate` - Animate the movement (default: true)
+
+**Example move-token command:**
+```json
+{ "type": "move-token", "id": "uuid", "params": { "tokenId": "token123", "x": 600, "y": 400, "animate": true } }
+```
+
+**update-token params:**
+- `tokenId` - Token ID to update (required)
+- `sceneId` - Scene ID (optional, defaults to active scene)
+- `hidden` - Set visibility (optional)
+- `elevation` - Set elevation (optional)
+- `rotation` - Set rotation in degrees (optional)
+- `scale` - Set scale multiplier (optional)
+- `name` - Set token name (optional)
+- `displayName` - Set name display mode (optional)
+- `disposition` - Set disposition: -1 (hostile), 0 (neutral), 1 (friendly) (optional)
+- `lockRotation` - Lock rotation (optional)
+
+**Example update-token command:**
+```json
+{ "type": "update-token", "id": "uuid", "params": { "tokenId": "token123", "hidden": false, "disposition": -1 } }
+```
+
+**get-scene-tokens params:**
+- `sceneId` - Scene ID (optional, defaults to active scene)
+
+Returns all tokens on the specified scene.
+
+**Example get-scene-tokens command:**
+```json
+{ "type": "get-scene-tokens", "id": "uuid", "params": {} }
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "success": true,
+  "data": {
+    "sceneId": "scene123",
+    "sceneName": "Dungeon Level 1",
+    "tokens": [
+      { "id": "t1", "name": "Fighter", "actorId": "a1", "x": 500, "y": 300, "elevation": 0, "rotation": 0, "hidden": false, "img": "icons/fighter.png", "disposition": 1 },
+      { "id": "t2", "name": "Goblin", "actorId": "a2", "x": 700, "y": 400, "elevation": 0, "rotation": 0, "hidden": false, "img": "icons/goblin.png", "disposition": -1 }
+    ]
+  }
+}
 ```
 
 ## License

@@ -40,7 +40,12 @@ export type CommandType =
   | 'roll-all-initiative'
   | 'update-combatant'
   | 'set-combatant-defeated'
-  | 'toggle-combatant-visibility';
+  | 'toggle-combatant-visibility'
+  | 'create-token'
+  | 'delete-token'
+  | 'move-token'
+  | 'update-token'
+  | 'get-scene-tokens';
 
 export interface RollDiceParams {
   formula: string;
@@ -189,6 +194,50 @@ export interface ToggleCombatantVisibilityParams {
   combatantId: string;
 }
 
+// Token Commands
+export interface CreateTokenParams {
+  sceneId?: string;
+  actorId: string;
+  x: number;
+  y: number;
+  hidden?: boolean;
+  elevation?: number;
+  rotation?: number;
+  scale?: number;
+}
+
+export interface DeleteTokenParams {
+  sceneId?: string;
+  tokenId: string;
+}
+
+export interface MoveTokenParams {
+  sceneId?: string;
+  tokenId: string;
+  x: number;
+  y: number;
+  elevation?: number;
+  rotation?: number;
+  animate?: boolean;
+}
+
+export interface UpdateTokenParams {
+  sceneId?: string;
+  tokenId: string;
+  hidden?: boolean;
+  elevation?: number;
+  rotation?: number;
+  scale?: number;
+  name?: string;
+  displayName?: number;
+  disposition?: number;
+  lockRotation?: boolean;
+}
+
+export interface GetSceneTokensParams {
+  sceneId?: string;
+}
+
 export interface InitiativeResult {
   combatantId: string;
   name: string;
@@ -292,6 +341,26 @@ export interface CombatResult {
   current: CombatantResult | null;
 }
 
+// Token Results
+export interface TokenResult {
+  id: string;
+  name: string;
+  actorId: string | null;
+  x: number;
+  y: number;
+  elevation: number;
+  rotation: number;
+  hidden: boolean;
+  img: string;
+  disposition: number;
+}
+
+export interface SceneTokensResult {
+  sceneId: string;
+  sceneName: string;
+  tokens: TokenResult[];
+}
+
 export type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
 
 export const ABILITY_KEYS: readonly AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
@@ -330,6 +399,11 @@ export interface CommandParamsMap {
   'update-combatant': UpdateCombatantParams;
   'set-combatant-defeated': SetCombatantDefeatedParams;
   'toggle-combatant-visibility': ToggleCombatantVisibilityParams;
+  'create-token': CreateTokenParams;
+  'delete-token': DeleteTokenParams;
+  'move-token': MoveTokenParams;
+  'update-token': UpdateTokenParams;
+  'get-scene-tokens': GetSceneTokensParams;
 }
 
 export interface CommandResultMap {
@@ -362,4 +436,9 @@ export interface CommandResultMap {
   'update-combatant': CombatantResult;
   'set-combatant-defeated': CombatantResult;
   'toggle-combatant-visibility': CombatantResult;
+  'create-token': TokenResult;
+  'delete-token': DeleteResult;
+  'move-token': TokenResult;
+  'update-token': TokenResult;
+  'get-scene-tokens': SceneTokensResult;
 }

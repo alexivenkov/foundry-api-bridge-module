@@ -1,17 +1,17 @@
-import { createCombatHandler } from '../CreateCombatHandler';
-import { addCombatantHandler } from '../AddCombatantHandler';
-import { removeCombatantHandler } from '../RemoveCombatantHandler';
-import { startCombatHandler } from '../StartCombatHandler';
-import { endCombatHandler } from '../EndCombatHandler';
-import { nextTurnHandler } from '../NextTurnHandler';
-import { previousTurnHandler } from '../PreviousTurnHandler';
-import { getCombatStateHandler } from '../GetCombatStateHandler';
-import { rollInitiativeHandler } from '../RollInitiativeHandler';
-import { setInitiativeHandler } from '../SetInitiativeHandler';
-import { rollAllInitiativeHandler } from '../RollAllInitiativeHandler';
-import { updateCombatantHandler } from '../UpdateCombatantHandler';
-import { setCombatantDefeatedHandler } from '../SetCombatantDefeatedHandler';
-import { toggleCombatantVisibilityHandler } from '../ToggleCombatantVisibilityHandler';
+import { createCombatHandler } from '@/commands';
+import { addCombatantHandler } from '@/commands';
+import { removeCombatantHandler } from '@/commands';
+import { startCombatHandler } from '@/commands';
+import { endCombatHandler } from '@/commands';
+import { nextTurnHandler } from '@/commands';
+import { previousTurnHandler } from '@/commands';
+import { getCombatStateHandler } from '@/commands';
+import { rollInitiativeHandler } from '@/commands';
+import { setInitiativeHandler } from '@/commands';
+import { rollAllInitiativeHandler } from '@/commands';
+import { updateCombatantHandler } from '@/commands';
+import { setCombatantDefeatedHandler } from '@/commands';
+import { toggleCombatantVisibilityHandler } from '@/commands';
 
 interface MockCombatant {
   id: string;

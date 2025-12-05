@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.9.0] - 2025-12-05
+
+### Added
+- 🎭 **Token commands** - Full token management on scenes via WebSocket
+  - `create-token` - Create token on scene (actorId, x, y, optional: hidden, elevation, rotation, scale)
+  - `delete-token` - Delete token from scene
+  - `move-token` - Move token to new position (x, y, optional: elevation, rotation, animate)
+  - `update-token` - Update token properties (hidden, elevation, rotation, scale, name, displayName, disposition, lockRotation)
+  - `get-scene-tokens` - Get all tokens from scene (active or specific sceneId)
+- 📁 Token handlers in separate folder (`src/commands/handlers/token/`)
+- Shared token types and helper functions (`tokenTypes.ts`)
+
+### Changed
+- Test coverage increased to 278 tests
+
+### Technical
+- 5 new handlers in `src/commands/handlers/token/`
+- Foundry Token API integration: createEmbeddedDocuments, deleteEmbeddedDocuments, token.update, token.delete
+- TokenResult includes id, name, actorId, x, y, elevation, rotation, hidden, img, disposition
+- SceneTokensResult returns sceneId, sceneName, tokens array
+
 ## [4.8.0] - 2025-12-04
 
 ### Added

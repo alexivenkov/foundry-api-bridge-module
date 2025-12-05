@@ -30,3 +30,12 @@ export {
   setCombatantDefeatedHandler,
   toggleCombatantVisibilityHandler
 } from '@/commands/handlers/combat';
+
+// Token handlers
+export {
+  createTokenHandler,
+  deleteTokenHandler,
+  moveTokenHandler,
+  updateTokenHandler,
+  getSceneTokensHandler
+} from '@/commands/handlers/token';

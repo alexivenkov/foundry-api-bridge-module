@@ -3,8 +3,11 @@ import { getActiveCombat, mapCombatToResult, type FoundryGame } from './combatTy
 
 declare const game: FoundryGame;
 
-export async function getCombatStateHandler(params: CombatIdParams): Promise<CombatResult> {
-  const combat = getActiveCombat(game, params.combatId);
-
-  return mapCombatToResult(combat);
+export function getCombatStateHandler(params: CombatIdParams): Promise<CombatResult> {
+  try {
+    const combat = getActiveCombat(game, params.combatId);
+    return Promise.resolve(mapCombatToResult(combat));
+  } catch (error) {
+    return Promise.reject(error instanceof Error ? error : new Error(String(error)));
+  }
 }

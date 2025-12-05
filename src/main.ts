@@ -32,11 +32,16 @@ import {
   rollAllInitiativeHandler,
   updateCombatantHandler,
   setCombatantDefeatedHandler,
-  toggleCombatantVisibilityHandler
+  toggleCombatantVisibilityHandler,
+  createTokenHandler,
+  deleteTokenHandler,
+  moveTokenHandler,
+  updateTokenHandler,
+  getSceneTokensHandler
 } from '@/commands';
 import type { WorldData, CompendiumData, CompendiumMetadata } from '@/types/foundry';
 
-console.log('Foundry API Bridge | Loading module v4.8.0...');
+console.log('Foundry API Bridge | Loading module v4.9.0...');
 
 let updateLoop: UpdateLoop | null = null;
 let apiClient: ApiClient | null = null;
@@ -126,6 +131,11 @@ function initializeWebSocket(wsConfig: { url: string; reconnectInterval: number;
   commandRouter.register('update-combatant', updateCombatantHandler);
   commandRouter.register('set-combatant-defeated', setCombatantDefeatedHandler);
   commandRouter.register('toggle-combatant-visibility', toggleCombatantVisibilityHandler);
+  commandRouter.register('create-token', createTokenHandler);
+  commandRouter.register('delete-token', deleteTokenHandler);
+  commandRouter.register('move-token', moveTokenHandler);
+  commandRouter.register('update-token', updateTokenHandler);
+  commandRouter.register('get-scene-tokens', getSceneTokensHandler);
 
   wsClient = new WebSocketClient({
     url: wsConfig.url,
