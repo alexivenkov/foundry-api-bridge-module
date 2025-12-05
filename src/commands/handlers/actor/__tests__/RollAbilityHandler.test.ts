@@ -1,4 +1,6 @@
-import { rollSkillHandler, SKILL_KEYS } from '@/commands/handlers/RollSkillHandler';
+import { rollAbilityHandler } from '../RollAbilityHandler';
+import { ABILITY_KEYS } from '@/commands/types';
+import type { AbilityKey } from '@/commands/types';
 
 interface MockD20Roll {
   total: number;
@@ -23,7 +25,7 @@ const mockRoll: MockD20Roll = {
 const mockActor = {
   id: 'actor-123',
   name: 'Test Actor',
-  rollSkill: jest.fn()
+  rollAbilityCheck: jest.fn()
 };
 
 const mockGame = {
@@ -34,60 +36,60 @@ const mockGame = {
 
 (global as Record<string, unknown>)['game'] = mockGame;
 
-describe('rollSkillHandler', () => {
+describe('rollAbilityHandler', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGame.actors.get.mockReturnValue(mockActor);
-    mockActor.rollSkill.mockResolvedValue([mockRoll]);
-    mockRoll.total = 15;
-    mockRoll.formula = '1d20 + 5';
-    mockRoll.terms = [{ faces: 20, number: 1, results: [{ result: 10 }] }];
+    mockActor.rollAbilityCheck.mockResolvedValue([mockRoll]);
+    mockRoll.total = 16;
+    mockRoll.formula = '1d20 + 2';
+    mockRoll.terms = [{ faces: 20, number: 1, results: [{ result: 14 }] }];
     mockRoll.isCritical = false;
     mockRoll.isFumble = false;
   });
 
   describe('successful rolls', () => {
-    it('should roll skill and return result', async () => {
-      const result = await rollSkillHandler({
+    it('should roll ability check and return result', async () => {
+      const result = await rollAbilityHandler({
         actorId: 'actor-123',
-        skill: 'ste'
+        ability: 'str'
       });
 
       expect(mockGame.actors.get).toHaveBeenCalledWith('actor-123');
-      expect(mockActor.rollSkill).toHaveBeenCalledWith(
-        { skill: 'ste' },
+      expect(mockActor.rollAbilityCheck).toHaveBeenCalledWith(
+        { ability: 'str' },
         { configure: false },
         { create: false }
       );
       expect(result).toEqual({
-        total: 15,
-        formula: '1d20 + 5',
-        dice: [{ type: 'd20', count: 1, results: [10] }]
+        total: 16,
+        formula: '1d20 + 2',
+        dice: [{ type: 'd20', count: 1, results: [14] }]
       });
     });
 
     it('should send to chat when showInChat is true', async () => {
-      await rollSkillHandler({
+      await rollAbilityHandler({
         actorId: 'actor-123',
-        skill: 'prc',
+        ability: 'int',
         showInChat: true
       });
 
-      expect(mockActor.rollSkill).toHaveBeenCalledWith(
-        { skill: 'prc' },
+      expect(mockActor.rollAbilityCheck).toHaveBeenCalledWith(
+        { ability: 'int' },
         { configure: false },
         { create: true }
       );
     });
 
     it('should detect critical on natural 20', async () => {
-      mockRoll.total = 25;
+      mockRoll.total = 22;
       mockRoll.isCritical = true;
       mockRoll.terms = [{ faces: 20, number: 1, results: [{ result: 20 }] }];
 
-      const result = await rollSkillHandler({
+      const result = await rollAbilityHandler({
         actorId: 'actor-123',
-        skill: 'ath'
+        ability: 'dex'
       });
 
       expect(result.isCritical).toBe(true);
@@ -95,13 +97,13 @@ describe('rollSkillHandler', () => {
     });
 
     it('should detect fumble on natural 1', async () => {
-      mockRoll.total = 6;
+      mockRoll.total = 3;
       mockRoll.isFumble = true;
       mockRoll.terms = [{ faces: 20, number: 1, results: [{ result: 1 }] }];
 
-      const result = await rollSkillHandler({
+      const result = await rollAbilityHandler({
         actorId: 'actor-123',
-        skill: 'ste'
+        ability: 'con'
       });
 
       expect(result.isCritical).toBeUndefined();
@@ -114,38 +116,38 @@ describe('rollSkillHandler', () => {
       mockGame.actors.get.mockReturnValue(undefined);
 
       await expect(
-        rollSkillHandler({ actorId: 'non-existent', skill: 'ste' })
+        rollAbilityHandler({ actorId: 'non-existent', ability: 'str' })
       ).rejects.toThrow('Actor not found: non-existent');
     });
 
-    it('should throw error for invalid skill key', async () => {
+    it('should throw error for invalid ability key', async () => {
       await expect(
-        rollSkillHandler({ actorId: 'actor-123', skill: 'invalid' })
-      ).rejects.toThrow(/Invalid skill key: invalid/);
+        rollAbilityHandler({ actorId: 'actor-123', ability: 'invalid' as AbilityKey })
+      ).rejects.toThrow(/Invalid ability key: invalid/);
     });
 
     it('should throw error if roll returns empty array', async () => {
-      mockActor.rollSkill.mockResolvedValue([]);
+      mockActor.rollAbilityCheck.mockResolvedValue([]);
 
       await expect(
-        rollSkillHandler({ actorId: 'actor-123', skill: 'ste' })
-      ).rejects.toThrow('Skill roll returned no results');
+        rollAbilityHandler({ actorId: 'actor-123', ability: 'str' })
+      ).rejects.toThrow('Ability check roll returned no results');
     });
   });
 
-  describe('skill keys', () => {
-    it('should accept all valid D&D 5e skill keys', async () => {
-      for (const skill of SKILL_KEYS) {
-        mockActor.rollSkill.mockResolvedValue([mockRoll]);
+  describe('ability keys', () => {
+    it('should accept all valid D&D 5e ability keys', async () => {
+      for (const ability of ABILITY_KEYS) {
+        mockActor.rollAbilityCheck.mockResolvedValue([mockRoll]);
 
         await expect(
-          rollSkillHandler({ actorId: 'actor-123', skill })
+          rollAbilityHandler({ actorId: 'actor-123', ability })
         ).resolves.toBeDefined();
       }
     });
 
-    it('should have 18 skill keys (D&D 5e standard)', () => {
-      expect(SKILL_KEYS).toHaveLength(18);
+    it('should have 6 ability keys (D&D 5e standard)', () => {
+      expect(ABILITY_KEYS).toHaveLength(6);
     });
   });
 });

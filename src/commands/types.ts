@@ -20,6 +20,10 @@ export type CommandType =
   | 'roll-damage'
   | 'get-actors'
   | 'get-actor'
+  | 'create-actor'
+  | 'create-actor-from-compendium'
+  | 'update-actor'
+  | 'delete-actor'
   | 'send-chat-message'
   | 'create-journal'
   | 'update-journal'
@@ -88,6 +92,44 @@ export interface RollDamageParams {
 
 export interface GetActorParams {
   actorId: string;
+}
+
+// Actor Commands
+export interface CreateActorParams {
+  name: string;
+  type: string;
+  folder?: string;
+  img?: string;
+  system?: Record<string, unknown>;
+}
+
+export interface CreateActorFromCompendiumParams {
+  packId: string;
+  actorId: string;
+  name?: string;
+  folder?: string;
+}
+
+export interface UpdateActorParams {
+  actorId: string;
+  name?: string;
+  img?: string;
+  folder?: string;
+  system?: Record<string, unknown>;
+}
+
+export interface DeleteActorParams {
+  actorId: string;
+}
+
+// Actor Results
+export interface ActorResult {
+  id: string;
+  uuid: string;
+  name: string;
+  type: string;
+  img: string;
+  folder: string | null;
 }
 
 export interface SendChatMessageParams {
@@ -378,6 +420,10 @@ export interface CommandParamsMap {
   'roll-damage': RollDamageParams;
   'get-actors': Record<string, never>;
   'get-actor': GetActorParams;
+  'create-actor': CreateActorParams;
+  'create-actor-from-compendium': CreateActorFromCompendiumParams;
+  'update-actor': UpdateActorParams;
+  'delete-actor': DeleteActorParams;
   'send-chat-message': SendChatMessageParams;
   'create-journal': CreateJournalParams;
   'update-journal': UpdateJournalParams;
@@ -415,6 +461,10 @@ export interface CommandResultMap {
   'roll-damage': RollResult;
   'get-actors': ActorListResult;
   'get-actor': ActorDetailResult;
+  'create-actor': ActorResult;
+  'create-actor-from-compendium': ActorResult;
+  'update-actor': ActorResult;
+  'delete-actor': DeleteResult;
   'send-chat-message': { sent: boolean };
   'create-journal': JournalResult;
   'update-journal': JournalResult;

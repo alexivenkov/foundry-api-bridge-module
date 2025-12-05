@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.10.0] - 2025-12-05
+
+### Added
+- 🎭 **Actor CRUD commands** - Create, update, and delete actors via WebSocket
+  - `create-actor` - Create new actor (name, type, optional: folder, img, system data)
+  - `create-actor-from-compendium` - Import actor from compendium pack (packId, actorId, optional: name override, folder)
+  - `update-actor` - Update actor properties (name, img, folder, system data)
+  - `delete-actor` - Delete actor from world
+- 📁 Actor handlers in separate folder (`src/commands/handlers/actor/`)
+- Shared actor types and helper functions (`actorTypes.ts`)
+
+### Changed
+- Reorganized actor-related handlers into dedicated folder structure
+- Moved roll handlers (RollSkill, RollSave, RollAbility, RollAttack, RollDamage) to actor folder
+- Test coverage increased to 302 tests (24 new tests for actor CRUD)
+
+### Technical
+- 4 new handlers in `src/commands/handlers/actor/`
+- Foundry Actor API integration: Actor.create, actor.update, actor.delete, pack.getDocument
+- ActorResult includes id, uuid, name, type, img, folder
+- CreateActorFromCompendium validates pack type and copies actor data
+- DeleteResult returns { deleted: true }
+
 ## [4.9.0] - 2025-12-05
 
 ### Added

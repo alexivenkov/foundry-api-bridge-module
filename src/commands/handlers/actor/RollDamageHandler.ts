@@ -1,20 +1,19 @@
-import type { RollAttackParams, RollResult } from '@/commands/types';
-import { extractDiceResults } from '@/commands/handlers/shared';
-import type { FoundryD20Roll, RollDialogConfig, RollMessageConfig } from '@/commands/handlers/shared';
+import type { RollDamageParams, RollResult } from '@/commands/types';
+import { extractDiceResults } from './actorTypes';
+import type { FoundryDamageRoll, RollDialogConfig, RollMessageConfig } from './actorTypes';
 
-interface AttackRollConfig {
-  advantage?: boolean;
-  disadvantage?: boolean;
+interface DamageRollConfig {
+  isCritical?: boolean;
 }
 
 interface FoundryActivity {
   _id: string;
   type: string;
-  rollAttack(
-    config?: AttackRollConfig,
+  rollDamage(
+    config?: DamageRollConfig,
     dialog?: RollDialogConfig,
     message?: RollMessageConfig
-  ): Promise<FoundryD20Roll[] | null>;
+  ): Promise<FoundryDamageRoll[] | null>;
 }
 
 interface FoundryActivitiesCollection {
@@ -52,7 +51,7 @@ interface FoundryGame {
 
 declare const game: FoundryGame;
 
-export async function rollAttackHandler(params: RollAttackParams): Promise<RollResult> {
+export async function rollDamageHandler(params: RollDamageParams): Promise<RollResult> {
   const actor = game.actors.get(params.actorId);
 
   if (!actor) {
@@ -75,30 +74,26 @@ export async function rollAttackHandler(params: RollAttackParams): Promise<RollR
     throw new Error(`Item has no attack activity: ${item.name}`);
   }
 
-  const rollConfig: AttackRollConfig = {};
+  const rollConfig: DamageRollConfig = {};
 
-  if (params.advantage) {
-    rollConfig.advantage = true;
+  if (params.critical) {
+    rollConfig.isCritical = true;
   }
 
-  if (params.disadvantage) {
-    rollConfig.disadvantage = true;
-  }
-
-  const rolls = await attackActivity.rollAttack(
+  const rolls = await attackActivity.rollDamage(
     rollConfig,
     { configure: false },
     { create: params.showInChat ?? false }
   );
 
   if (!rolls || rolls.length === 0) {
-    throw new Error('Attack roll returned no results');
+    throw new Error('Damage roll returned no results');
   }
 
   const roll = rolls[0];
 
   if (!roll) {
-    throw new Error('Attack roll returned no results');
+    throw new Error('Damage roll returned no results');
   }
 
   const dice = extractDiceResults(roll.terms);
@@ -109,12 +104,8 @@ export async function rollAttackHandler(params: RollAttackParams): Promise<RollR
     dice
   };
 
-  if (roll.isCritical) {
+  if (params.critical) {
     result.isCritical = true;
-  }
-
-  if (roll.isFumble) {
-    result.isFumble = true;
   }
 
   return result;

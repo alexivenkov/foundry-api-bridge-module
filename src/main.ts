@@ -13,6 +13,10 @@ import {
   rollAbilityHandler,
   rollAttackHandler,
   rollDamageHandler,
+  createActorHandler,
+  createActorFromCompendiumHandler,
+  updateActorHandler,
+  deleteActorHandler,
   createJournalHandler,
   updateJournalHandler,
   deleteJournalHandler,
@@ -111,6 +115,10 @@ function initializeWebSocket(wsConfig: { url: string; reconnectInterval: number;
   commandRouter.register('roll-ability', rollAbilityHandler);
   commandRouter.register('roll-attack', rollAttackHandler);
   commandRouter.register('roll-damage', rollDamageHandler);
+  commandRouter.register('create-actor', createActorHandler);
+  commandRouter.register('create-actor-from-compendium', createActorFromCompendiumHandler);
+  commandRouter.register('update-actor', updateActorHandler);
+  commandRouter.register('delete-actor', deleteActorHandler);
   commandRouter.register('create-journal', createJournalHandler);
   commandRouter.register('update-journal', updateJournalHandler);
   commandRouter.register('delete-journal', deleteJournalHandler);

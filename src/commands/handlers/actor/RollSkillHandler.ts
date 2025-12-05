@@ -1,6 +1,6 @@
 import type { RollSkillParams, RollResult } from '@/commands/types';
-import { extractDiceResults } from '@/commands/handlers/shared';
-import type { FoundryD20Roll, RollDialogConfig, RollMessageConfig } from '@/commands/handlers/shared';
+import { extractDiceResults } from './actorTypes';
+import type { FoundryD20Roll, RollDialogConfig, RollMessageConfig } from './actorTypes';
 
 /**
  * D&D 5e skill abbreviations

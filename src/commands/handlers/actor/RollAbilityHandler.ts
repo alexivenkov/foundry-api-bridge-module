@@ -1,7 +1,7 @@
 import { ABILITY_KEYS } from '@/commands/types';
 import type { RollAbilityParams, RollResult, AbilityKey } from '@/commands/types';
-import { extractDiceResults } from '@/commands/handlers/shared';
-import type { FoundryD20Roll, RollDialogConfig, RollMessageConfig } from '@/commands/handlers/shared';
+import { extractDiceResults } from './actorTypes';
+import type { FoundryD20Roll, RollDialogConfig, RollMessageConfig } from './actorTypes';
 
 interface FoundryActor {
   id: string;

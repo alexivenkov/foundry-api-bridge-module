@@ -1,6 +1,6 @@
-import { rollDamageHandler } from '@/commands/handlers/RollDamageHandler';
+import { rollAttackHandler } from '../RollAttackHandler';
 
-interface MockDamageRoll {
+interface MockD20Roll {
   total: number;
   formula: string;
   terms: Array<{
@@ -8,18 +8,22 @@ interface MockDamageRoll {
     number?: number;
     results?: Array<{ result: number }>;
   }>;
+  isCritical: boolean;
+  isFumble: boolean;
 }
 
-const mockRoll: MockDamageRoll = {
+const mockRoll: MockD20Roll = {
   total: 0,
   formula: '',
-  terms: []
+  terms: [],
+  isCritical: false,
+  isFumble: false
 };
 
 const mockAttackActivity = {
   _id: 'attackCrossHandI',
   type: 'attack',
-  rollDamage: jest.fn()
+  rollAttack: jest.fn()
 };
 
 const mockItem = {
@@ -49,21 +53,23 @@ const mockGame = {
 
 (global as Record<string, unknown>)['game'] = mockGame;
 
-describe('rollDamageHandler', () => {
+describe('rollAttackHandler', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGame.actors.get.mockReturnValue(mockActor);
     mockActor.items.get.mockReturnValue(mockItem);
     mockItem.system.activities.find.mockReturnValue(mockAttackActivity);
-    mockAttackActivity.rollDamage.mockResolvedValue([mockRoll]);
-    mockRoll.total = 7;
-    mockRoll.formula = '1d6 + 3';
-    mockRoll.terms = [{ faces: 6, number: 1, results: [{ result: 4 }] }];
+    mockAttackActivity.rollAttack.mockResolvedValue([mockRoll]);
+    mockRoll.total = 18;
+    mockRoll.formula = '1d20 + 5';
+    mockRoll.terms = [{ faces: 20, number: 1, results: [{ result: 13 }] }];
+    mockRoll.isCritical = false;
+    mockRoll.isFumble = false;
   });
 
   describe('successful rolls', () => {
-    it('should roll damage and return result', async () => {
-      const result = await rollDamageHandler({
+    it('should roll attack and return result', async () => {
+      const result = await rollAttackHandler({
         actorId: 'actor-123',
         itemId: 'item-123'
       });
@@ -71,73 +77,86 @@ describe('rollDamageHandler', () => {
       expect(mockGame.actors.get).toHaveBeenCalledWith('actor-123');
       expect(mockActor.items.get).toHaveBeenCalledWith('item-123');
       expect(mockItem.system.activities.find).toHaveBeenCalled();
-      expect(mockAttackActivity.rollDamage).toHaveBeenCalledWith(
+      expect(mockAttackActivity.rollAttack).toHaveBeenCalledWith(
         {},
         { configure: false },
         { create: false }
       );
       expect(result).toEqual({
-        total: 7,
-        formula: '1d6 + 3',
-        dice: [{ type: 'd6', count: 1, results: [4] }]
+        total: 18,
+        formula: '1d20 + 5',
+        dice: [{ type: 'd20', count: 1, results: [13] }]
       });
     });
 
-    it('should pass isCritical to rollDamage', async () => {
-      const result = await rollDamageHandler({
+    it('should pass advantage to rollAttack', async () => {
+      await rollAttackHandler({
         actorId: 'actor-123',
         itemId: 'item-123',
-        critical: true
+        advantage: true
       });
 
-      expect(mockAttackActivity.rollDamage).toHaveBeenCalledWith(
-        { isCritical: true },
+      expect(mockAttackActivity.rollAttack).toHaveBeenCalledWith(
+        { advantage: true },
         { configure: false },
         { create: false }
       );
-      expect(result.isCritical).toBe(true);
+    });
+
+    it('should pass disadvantage to rollAttack', async () => {
+      await rollAttackHandler({
+        actorId: 'actor-123',
+        itemId: 'item-123',
+        disadvantage: true
+      });
+
+      expect(mockAttackActivity.rollAttack).toHaveBeenCalledWith(
+        { disadvantage: true },
+        { configure: false },
+        { create: false }
+      );
     });
 
     it('should send to chat when showInChat is true', async () => {
-      await rollDamageHandler({
+      await rollAttackHandler({
         actorId: 'actor-123',
         itemId: 'item-123',
         showInChat: true
       });
 
-      expect(mockAttackActivity.rollDamage).toHaveBeenCalledWith(
+      expect(mockAttackActivity.rollAttack).toHaveBeenCalledWith(
         {},
         { configure: false },
         { create: true }
       );
     });
 
-    it('should handle multiple dice in damage formula', async () => {
-      mockRoll.total = 14;
-      mockRoll.formula = '2d6 + 3';
-      mockRoll.terms = [{ faces: 6, number: 2, results: [{ result: 5 }, { result: 6 }] }];
+    it('should detect critical on natural 20', async () => {
+      mockRoll.total = 25;
+      mockRoll.isCritical = true;
+      mockRoll.terms = [{ faces: 20, number: 1, results: [{ result: 20 }] }];
 
-      const result = await rollDamageHandler({
+      const result = await rollAttackHandler({
         actorId: 'actor-123',
         itemId: 'item-123'
       });
 
-      expect(result.dice).toEqual([{ type: 'd6', count: 2, results: [5, 6] }]);
+      expect(result.isCritical).toBe(true);
+      expect(result.isFumble).toBeUndefined();
     });
 
-    it('should handle critical damage with doubled dice', async () => {
-      mockRoll.total = 18;
-      mockRoll.formula = '2d6 + 3';
-      mockRoll.terms = [{ faces: 6, number: 2, results: [{ result: 4 }, { result: 5 }, { result: 3 }, { result: 6 }] }];
+    it('should detect fumble on natural 1', async () => {
+      mockRoll.total = 6;
+      mockRoll.isFumble = true;
+      mockRoll.terms = [{ faces: 20, number: 1, results: [{ result: 1 }] }];
 
-      const result = await rollDamageHandler({
+      const result = await rollAttackHandler({
         actorId: 'actor-123',
-        itemId: 'item-123',
-        critical: true
+        itemId: 'item-123'
       });
 
-      expect(result.isCritical).toBe(true);
-      expect(result.total).toBe(18);
+      expect(result.isCritical).toBeUndefined();
+      expect(result.isFumble).toBe(true);
     });
   });
 
@@ -146,7 +165,7 @@ describe('rollDamageHandler', () => {
       mockGame.actors.get.mockReturnValue(undefined);
 
       await expect(
-        rollDamageHandler({ actorId: 'non-existent', itemId: 'item-123' })
+        rollAttackHandler({ actorId: 'non-existent', itemId: 'item-123' })
       ).rejects.toThrow('Actor not found: non-existent');
     });
 
@@ -154,7 +173,7 @@ describe('rollDamageHandler', () => {
       mockActor.items.get.mockReturnValue(undefined);
 
       await expect(
-        rollDamageHandler({ actorId: 'actor-123', itemId: 'non-existent' })
+        rollAttackHandler({ actorId: 'actor-123', itemId: 'non-existent' })
       ).rejects.toThrow('Item not found: non-existent');
     });
 
@@ -167,7 +186,7 @@ describe('rollDamageHandler', () => {
       });
 
       await expect(
-        rollDamageHandler({ actorId: 'actor-123', itemId: 'item-123' })
+        rollAttackHandler({ actorId: 'actor-123', itemId: 'item-123' })
       ).rejects.toThrow('Item has no activities: Broken Item');
     });
 
@@ -175,24 +194,24 @@ describe('rollDamageHandler', () => {
       mockItem.system.activities.find.mockReturnValue(undefined);
 
       await expect(
-        rollDamageHandler({ actorId: 'actor-123', itemId: 'item-123' })
+        rollAttackHandler({ actorId: 'actor-123', itemId: 'item-123' })
       ).rejects.toThrow('Item has no attack activity: Hand Crossbow');
     });
 
     it('should throw error if roll returns null', async () => {
-      mockAttackActivity.rollDamage.mockResolvedValue(null);
+      mockAttackActivity.rollAttack.mockResolvedValue(null);
 
       await expect(
-        rollDamageHandler({ actorId: 'actor-123', itemId: 'item-123' })
-      ).rejects.toThrow('Damage roll returned no results');
+        rollAttackHandler({ actorId: 'actor-123', itemId: 'item-123' })
+      ).rejects.toThrow('Attack roll returned no results');
     });
 
     it('should throw error if roll returns empty array', async () => {
-      mockAttackActivity.rollDamage.mockResolvedValue([]);
+      mockAttackActivity.rollAttack.mockResolvedValue([]);
 
       await expect(
-        rollDamageHandler({ actorId: 'actor-123', itemId: 'item-123' })
-      ).rejects.toThrow('Damage roll returned no results');
+        rollAttackHandler({ actorId: 'actor-123', itemId: 'item-123' })
+      ).rejects.toThrow('Attack roll returned no results');
     });
   });
 });
