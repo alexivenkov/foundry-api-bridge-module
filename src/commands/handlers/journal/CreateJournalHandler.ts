@@ -4,7 +4,7 @@ import {
   type JournalEntryConstructor,
   type FoundryJournalCreateData,
   type FoundryPageCreateData
-} from '@/commands/handlers/journalTypes';
+} from './journalTypes';
 
 declare const JournalEntry: JournalEntryConstructor;
 

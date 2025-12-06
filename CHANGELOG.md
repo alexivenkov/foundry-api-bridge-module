@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.11.0] - 2025-12-06
+
+### Changed
+- 📁 Reorganized journal handlers into dedicated folder (`src/commands/handlers/journal/`)
+- Clean handler structure: only `RollDiceHandler` remains in root, all domain handlers organized by folder
+
+### Technical
+- Moved 6 journal handlers to `src/commands/handlers/journal/`
+- Handler folders: `actor/`, `combat/`, `journal/`, `token/`
+- Shared types per domain: `actorTypes.ts`, `combatTypes.ts`, `journalTypes.ts`, `tokenTypes.ts`
+
 ## [4.10.0] - 2025-12-05
 
 ### Added

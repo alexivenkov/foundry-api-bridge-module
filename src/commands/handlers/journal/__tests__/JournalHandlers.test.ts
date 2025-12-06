@@ -1,9 +1,9 @@
-import { createJournalHandler } from '@/commands/handlers/CreateJournalHandler';
-import { updateJournalHandler } from '@/commands/handlers/UpdateJournalHandler';
-import { deleteJournalHandler } from '@/commands/handlers/DeleteJournalHandler';
-import { createJournalPageHandler } from '@/commands/handlers/CreateJournalPageHandler';
-import { updateJournalPageHandler } from '@/commands/handlers/UpdateJournalPageHandler';
-import { deleteJournalPageHandler } from '@/commands/handlers/DeleteJournalPageHandler';
+import { createJournalHandler } from '../CreateJournalHandler';
+import { updateJournalHandler } from '../UpdateJournalHandler';
+import { deleteJournalHandler } from '../DeleteJournalHandler';
+import { createJournalPageHandler } from '../CreateJournalPageHandler';
+import { updateJournalPageHandler } from '../UpdateJournalPageHandler';
+import { deleteJournalPageHandler } from '../DeleteJournalPageHandler';
 
 interface MockPage {
   id: string;

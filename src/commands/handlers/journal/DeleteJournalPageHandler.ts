@@ -1,5 +1,5 @@
 import type { DeleteJournalPageParams, DeleteResult } from '@/commands/types';
-import type { FoundryGame } from '@/commands/handlers/journalTypes';
+import type { FoundryGame } from './journalTypes';
 
 declare const game: FoundryGame;
 

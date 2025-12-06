@@ -3,7 +3,7 @@ import {
   mapJournalToResult,
   type FoundryGame,
   type FoundryJournalUpdateData
-} from '@/commands/handlers/journalTypes';
+} from './journalTypes';
 
 declare const game: FoundryGame;
 

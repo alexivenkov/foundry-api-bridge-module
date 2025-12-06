@@ -16,12 +16,14 @@ export {
 } from '@/commands/handlers/actor';
 
 // Journal handlers
-export { createJournalHandler } from '@/commands/handlers/CreateJournalHandler';
-export { updateJournalHandler } from '@/commands/handlers/UpdateJournalHandler';
-export { deleteJournalHandler } from '@/commands/handlers/DeleteJournalHandler';
-export { createJournalPageHandler } from '@/commands/handlers/CreateJournalPageHandler';
-export { updateJournalPageHandler } from '@/commands/handlers/UpdateJournalPageHandler';
-export { deleteJournalPageHandler } from '@/commands/handlers/DeleteJournalPageHandler';
+export {
+  createJournalHandler,
+  updateJournalHandler,
+  deleteJournalHandler,
+  createJournalPageHandler,
+  updateJournalPageHandler,
+  deleteJournalPageHandler
+} from '@/commands/handlers/journal';
 
 // Combat handlers
 export {
