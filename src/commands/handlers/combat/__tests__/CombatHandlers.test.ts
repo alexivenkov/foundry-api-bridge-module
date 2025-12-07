@@ -3,6 +3,7 @@ import { addCombatantHandler } from '@/commands';
 import { removeCombatantHandler } from '@/commands';
 import { startCombatHandler } from '@/commands';
 import { endCombatHandler } from '@/commands';
+import { deleteCombatHandler } from '@/commands';
 import { nextTurnHandler } from '@/commands';
 import { previousTurnHandler } from '@/commands';
 import { getCombatStateHandler } from '@/commands';
@@ -42,6 +43,7 @@ interface MockCombat {
   deleteEmbeddedDocuments: jest.Mock;
   startCombat: jest.Mock;
   endCombat: jest.Mock;
+  delete: jest.Mock;
   nextTurn: jest.Mock;
   previousTurn: jest.Mock;
   rollInitiative: jest.Mock;
@@ -86,6 +88,7 @@ const createMockCombat = (overrides: Partial<MockCombat> = {}): MockCombat => {
     deleteEmbeddedDocuments: jest.fn().mockResolvedValue([]),
     startCombat: jest.fn(),
     endCombat: jest.fn().mockResolvedValue(undefined),
+    delete: jest.fn().mockResolvedValue(undefined),
     nextTurn: jest.fn(),
     previousTurn: jest.fn(),
     rollInitiative: jest.fn(),
@@ -447,6 +450,34 @@ describe('Combat Handlers', () => {
 
       expect(mockGame.combats.get).toHaveBeenCalledWith('combat-123');
       expect(mockCombat.endCombat).toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteCombatHandler', () => {
+    it('throws error when no active combat', async () => {
+      mockGame.combat = null;
+
+      await expect(deleteCombatHandler({})).rejects.toThrow('No active combat');
+    });
+
+    it('deletes combat and returns deleted result', async () => {
+      const mockCombat = createMockCombat();
+      mockGame.combat = mockCombat;
+
+      const result = await deleteCombatHandler({});
+
+      expect(mockCombat.delete).toHaveBeenCalled();
+      expect(result).toEqual({ deleted: true });
+    });
+
+    it('deletes specified combat', async () => {
+      const mockCombat = createMockCombat();
+      mockGame.combats.get.mockReturnValue(mockCombat);
+
+      await deleteCombatHandler({ combatId: 'combat-123' });
+
+      expect(mockGame.combats.get).toHaveBeenCalledWith('combat-123');
+      expect(mockCombat.delete).toHaveBeenCalled();
     });
   });
 

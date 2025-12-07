@@ -36,6 +36,7 @@ export type CommandType =
   | 'remove-combatant'
   | 'start-combat'
   | 'end-combat'
+  | 'delete-combat'
   | 'next-turn'
   | 'previous-turn'
   | 'get-combat-state'
@@ -436,6 +437,7 @@ export interface CommandParamsMap {
   'remove-combatant': RemoveCombatantParams;
   'start-combat': CombatIdParams;
   'end-combat': CombatIdParams;
+  'delete-combat': CombatIdParams;
   'next-turn': CombatIdParams;
   'previous-turn': CombatIdParams;
   'get-combat-state': CombatIdParams;
@@ -477,6 +479,7 @@ export interface CommandResultMap {
   'remove-combatant': DeleteResult;
   'start-combat': CombatResult;
   'end-combat': DeleteResult;
+  'delete-combat': DeleteResult;
   'next-turn': CombatResult;
   'previous-turn': CombatResult;
   'get-combat-state': CombatResult;

@@ -3,6 +3,7 @@ export { addCombatantHandler } from './AddCombatantHandler';
 export { removeCombatantHandler } from './RemoveCombatantHandler';
 export { startCombatHandler } from './StartCombatHandler';
 export { endCombatHandler } from './EndCombatHandler';
+export { deleteCombatHandler } from './DeleteCombatHandler';
 export { nextTurnHandler } from './NextTurnHandler';
 export { previousTurnHandler } from './PreviousTurnHandler';
 export { getCombatStateHandler } from './GetCombatStateHandler';

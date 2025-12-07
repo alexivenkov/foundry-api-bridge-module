@@ -32,6 +32,7 @@ export {
   removeCombatantHandler,
   startCombatHandler,
   endCombatHandler,
+  deleteCombatHandler,
   nextTurnHandler,
   previousTurnHandler,
   getCombatStateHandler,
