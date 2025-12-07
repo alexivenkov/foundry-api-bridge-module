@@ -28,6 +28,7 @@ import {
   removeCombatantHandler,
   startCombatHandler,
   endCombatHandler,
+  deleteCombatHandler,
   nextTurnHandler,
   previousTurnHandler,
   getCombatStateHandler,
@@ -130,6 +131,7 @@ function initializeWebSocket(wsConfig: { url: string; reconnectInterval: number;
   commandRouter.register('remove-combatant', removeCombatantHandler);
   commandRouter.register('start-combat', startCombatHandler);
   commandRouter.register('end-combat', endCombatHandler);
+  commandRouter.register('delete-combat', deleteCombatHandler);
   commandRouter.register('next-turn', nextTurnHandler);
   commandRouter.register('previous-turn', previousTurnHandler);
   commandRouter.register('get-combat-state', getCombatStateHandler);
