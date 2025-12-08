@@ -50,7 +50,14 @@ export type CommandType =
   | 'delete-token'
   | 'move-token'
   | 'update-token'
-  | 'get-scene-tokens';
+  | 'get-scene-tokens'
+  | 'get-actor-items'
+  | 'use-item'
+  | 'get-actor-effects'
+  | 'toggle-actor-status'
+  | 'add-actor-effect'
+  | 'remove-actor-effect'
+  | 'update-actor-effect';
 
 export interface RollDiceParams {
   formula: string;
@@ -404,6 +411,152 @@ export interface SceneTokensResult {
   tokens: TokenResult[];
 }
 
+// Item Commands
+export interface GetActorItemsParams {
+  actorId: string;
+  type?: string;
+  equipped?: boolean;
+  hasActivities?: boolean;
+}
+
+export interface UseItemParams {
+  actorId: string;
+  itemId: string;
+  activityId?: string;
+  activityType?: string;
+  consume?: boolean;
+  scaling?: number;
+  showInChat?: boolean;
+}
+
+// Item Results
+export interface ItemDetailSummary {
+  id: string;
+  name: string;
+  type: string;
+  img: string;
+  equipped: boolean;
+  quantity: number;
+  hasActivities: boolean;
+  activityTypes: string[];
+}
+
+export interface ActorItemsResult {
+  actorId: string;
+  actorName: string;
+  items: ItemDetailSummary[];
+}
+
+export interface ActivityInfo {
+  id: string;
+  name: string;
+  type: string;
+}
+
+export interface UseItemResult {
+  itemId: string;
+  itemName: string;
+  itemType: string;
+  activityUsed?: ActivityInfo;
+  rolls: RollResult[];
+  chatMessageId?: string;
+}
+
+// Effect Commands
+export interface GetActorEffectsParams {
+  actorId: string;
+  includeDisabled?: boolean;
+}
+
+export interface EffectChangeData {
+  key: string;
+  value: string;
+  mode: number;
+}
+
+export interface EffectDurationData {
+  seconds?: number;
+  rounds?: number;
+  turns?: number;
+}
+
+export interface EffectSummary {
+  id: string;
+  name: string;
+  img: string;
+  disabled: boolean;
+  isTemporary: boolean;
+  statuses: string[];
+  origin: string | null;
+  changes?: EffectChangeData[];
+  duration?: EffectDurationData;
+}
+
+export interface ActorEffectsResult {
+  actorId: string;
+  actorName: string;
+  effects: EffectSummary[];
+  activeStatuses: string[];
+}
+
+export interface ToggleActorStatusParams {
+  actorId: string;
+  statusId: string;
+  active?: boolean;
+  overlay?: boolean;
+}
+
+export interface ToggleStatusResult {
+  actorId: string;
+  statusId: string;
+  active: boolean;
+  effectId?: string;
+}
+
+export interface AddActorEffectParams {
+  actorId: string;
+  name: string;
+  img?: string;
+  disabled?: boolean;
+  statuses?: string[];
+  changes?: EffectChangeData[];
+  duration?: EffectDurationData;
+  origin?: string;
+}
+
+export interface AddEffectResult {
+  actorId: string;
+  effectId: string;
+  name: string;
+}
+
+export interface RemoveActorEffectParams {
+  actorId: string;
+  effectId: string;
+}
+
+export interface RemoveEffectResult {
+  actorId: string;
+  effectId: string;
+  removed: boolean;
+}
+
+export interface UpdateActorEffectParams {
+  actorId: string;
+  effectId: string;
+  name?: string;
+  img?: string;
+  disabled?: boolean;
+  changes?: EffectChangeData[];
+  duration?: EffectDurationData;
+}
+
+export interface UpdateEffectResult {
+  actorId: string;
+  effectId: string;
+  name: string;
+}
+
 export type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
 
 export const ABILITY_KEYS: readonly AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
@@ -452,6 +605,13 @@ export interface CommandParamsMap {
   'move-token': MoveTokenParams;
   'update-token': UpdateTokenParams;
   'get-scene-tokens': GetSceneTokensParams;
+  'get-actor-items': GetActorItemsParams;
+  'use-item': UseItemParams;
+  'get-actor-effects': GetActorEffectsParams;
+  'toggle-actor-status': ToggleActorStatusParams;
+  'add-actor-effect': AddActorEffectParams;
+  'remove-actor-effect': RemoveActorEffectParams;
+  'update-actor-effect': UpdateActorEffectParams;
 }
 
 export interface CommandResultMap {
@@ -494,4 +654,11 @@ export interface CommandResultMap {
   'move-token': TokenResult;
   'update-token': TokenResult;
   'get-scene-tokens': SceneTokensResult;
+  'get-actor-items': ActorItemsResult;
+  'use-item': UseItemResult;
+  'get-actor-effects': ActorEffectsResult;
+  'toggle-actor-status': ToggleStatusResult;
+  'add-actor-effect': AddEffectResult;
+  'remove-actor-effect': RemoveEffectResult;
+  'update-actor-effect': UpdateEffectResult;
 }

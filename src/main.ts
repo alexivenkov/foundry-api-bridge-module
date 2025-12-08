@@ -42,11 +42,18 @@ import {
   deleteTokenHandler,
   moveTokenHandler,
   updateTokenHandler,
-  getSceneTokensHandler
+  getSceneTokensHandler,
+  getActorItemsHandler,
+  useItemHandler,
+  getActorEffectsHandler,
+  toggleActorStatusHandler,
+  addActorEffectHandler,
+  removeActorEffectHandler,
+  updateActorEffectHandler
 } from '@/commands';
 import type { WorldData, CompendiumData, CompendiumMetadata } from '@/types/foundry';
 
-console.log('Foundry API Bridge | Loading module v4.9.0...');
+console.log('Foundry API Bridge | Loading module v4.13.0...');
 
 let updateLoop: UpdateLoop | null = null;
 let apiClient: ApiClient | null = null;
@@ -146,6 +153,13 @@ function initializeWebSocket(wsConfig: { url: string; reconnectInterval: number;
   commandRouter.register('move-token', moveTokenHandler);
   commandRouter.register('update-token', updateTokenHandler);
   commandRouter.register('get-scene-tokens', getSceneTokensHandler);
+  commandRouter.register('get-actor-items', getActorItemsHandler);
+  commandRouter.register('use-item', useItemHandler);
+  commandRouter.register('get-actor-effects', getActorEffectsHandler);
+  commandRouter.register('toggle-actor-status', toggleActorStatusHandler);
+  commandRouter.register('add-actor-effect', addActorEffectHandler);
+  commandRouter.register('remove-actor-effect', removeActorEffectHandler);
+  commandRouter.register('update-actor-effect', updateActorEffectHandler);
 
   wsClient = new WebSocketClient({
     url: wsConfig.url,

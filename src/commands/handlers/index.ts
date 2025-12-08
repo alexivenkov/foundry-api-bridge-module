@@ -52,3 +52,18 @@ export {
   updateTokenHandler,
   getSceneTokensHandler
 } from '@/commands/handlers/token';
+
+// Item handlers
+export {
+  getActorItemsHandler,
+  useItemHandler
+} from '@/commands/handlers/item';
+
+// Effect handlers
+export {
+  getActorEffectsHandler,
+  toggleActorStatusHandler,
+  addActorEffectHandler,
+  removeActorEffectHandler,
+  updateActorEffectHandler
+} from '@/commands/handlers/effect';
