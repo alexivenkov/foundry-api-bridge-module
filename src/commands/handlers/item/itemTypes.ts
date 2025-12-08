@@ -14,12 +14,18 @@ export interface FoundryRoll {
   isFumble?: boolean;
 }
 
+export interface ActivityConsumeConfig {
+  resources?: boolean;
+  spellSlot?: boolean;
+  action?: boolean;
+}
+
 export interface FoundryActivity {
   _id: string;
   name: string;
   type: string;
   use(
-    usage?: { consume?: boolean; scaling?: number },
+    usage?: { consume?: ActivityConsumeConfig | false; scaling?: number },
     dialog?: { configure?: boolean },
     message?: { create?: boolean }
   ): Promise<FoundryUsageResult | null>;

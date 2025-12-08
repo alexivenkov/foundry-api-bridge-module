@@ -240,7 +240,7 @@ describe('useItemHandler', () => {
       });
 
       expect(mockActivity.use).toHaveBeenCalledWith(
-        { consume: true, scaling: 3 },
+        { consume: { resources: true, spellSlot: true }, scaling: 3 },
         { configure: false },
         { create: false }
       );
@@ -254,7 +254,7 @@ describe('useItemHandler', () => {
       });
 
       expect(mockActivity.use).toHaveBeenCalledWith(
-        { consume: true },
+        { consume: { resources: true, spellSlot: true } },
         { configure: false },
         { create: true }
       );

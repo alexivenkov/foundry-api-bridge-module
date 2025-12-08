@@ -56,8 +56,13 @@ export async function useItemHandler(params: UseItemParams): Promise<UseItemResu
     targetActivity = activities[0];
   }
 
-  const usageConfig: { consume: boolean; scaling?: number } = {
-    consume: params.consume ?? true
+  const usageConfig: {
+    consume: { resources: boolean; spellSlot: boolean } | false;
+    scaling?: number;
+  } = {
+    consume: params.consume === false
+      ? false
+      : { resources: true, spellSlot: true }
   };
 
   if (params.scaling !== undefined) {

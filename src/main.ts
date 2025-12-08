@@ -53,7 +53,7 @@ import {
 } from '@/commands';
 import type { WorldData, CompendiumData, CompendiumMetadata } from '@/types/foundry';
 
-console.log('Foundry API Bridge | Loading module v4.13.0...');
+console.log('Foundry API Bridge | Loading module v4.13.1...');
 
 let updateLoop: UpdateLoop | null = null;
 let apiClient: ApiClient | null = null;
