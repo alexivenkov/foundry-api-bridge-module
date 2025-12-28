@@ -45,6 +45,10 @@ import {
   getSceneTokensHandler,
   getActorItemsHandler,
   useItemHandler,
+  addItemToActorHandler,
+  addItemFromCompendiumHandler,
+  updateActorItemHandler,
+  deleteActorItemHandler,
   getActorEffectsHandler,
   toggleActorStatusHandler,
   addActorEffectHandler,
@@ -53,7 +57,7 @@ import {
 } from '@/commands';
 import type { WorldData, CompendiumData, CompendiumMetadata } from '@/types/foundry';
 
-console.log('Foundry API Bridge | Loading module v4.13.1...');
+console.log('Foundry API Bridge | Loading module v4.14.0...');
 
 let updateLoop: UpdateLoop | null = null;
 let apiClient: ApiClient | null = null;
@@ -155,6 +159,10 @@ function initializeWebSocket(wsConfig: { url: string; reconnectInterval: number;
   commandRouter.register('get-scene-tokens', getSceneTokensHandler);
   commandRouter.register('get-actor-items', getActorItemsHandler);
   commandRouter.register('use-item', useItemHandler);
+  commandRouter.register('add-item-to-actor', addItemToActorHandler);
+  commandRouter.register('add-item-from-compendium', addItemFromCompendiumHandler);
+  commandRouter.register('update-actor-item', updateActorItemHandler);
+  commandRouter.register('delete-actor-item', deleteActorItemHandler);
   commandRouter.register('get-actor-effects', getActorEffectsHandler);
   commandRouter.register('toggle-actor-status', toggleActorStatusHandler);
   commandRouter.register('add-actor-effect', addActorEffectHandler);

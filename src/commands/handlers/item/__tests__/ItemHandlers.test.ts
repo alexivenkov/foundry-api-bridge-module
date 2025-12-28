@@ -226,7 +226,13 @@ describe('useItemHandler', () => {
       });
 
       expect(mockActivity.use).toHaveBeenCalledWith(
-        { consume: false },
+        {
+          consume: false,
+          scaling: false,
+          concentration: { begin: false },
+          create: { measuredTemplate: false },
+          event: { shiftKey: true }
+        },
         { configure: false },
         { create: false }
       );
@@ -240,7 +246,13 @@ describe('useItemHandler', () => {
       });
 
       expect(mockActivity.use).toHaveBeenCalledWith(
-        { consume: { resources: true, spellSlot: true }, scaling: 3 },
+        {
+          consume: { resources: true, spellSlot: true },
+          scaling: 3,
+          concentration: { begin: false },
+          create: { measuredTemplate: false },
+          event: { shiftKey: true }
+        },
         { configure: false },
         { create: false }
       );
@@ -254,7 +266,13 @@ describe('useItemHandler', () => {
       });
 
       expect(mockActivity.use).toHaveBeenCalledWith(
-        { consume: { resources: true, spellSlot: true } },
+        {
+          consume: { resources: true, spellSlot: true },
+          scaling: false,
+          concentration: { begin: false },
+          create: { measuredTemplate: false },
+          event: { shiftKey: true }
+        },
         { configure: false },
         { create: true }
       );
@@ -390,5 +408,295 @@ describe('useItemHandler', () => {
         })
       ).rejects.toThrow("No activity of type 'heal' found on item: Longsword");
     });
+  });
+});
+
+// Mock for CRUD handlers
+const mockCreatedItem = {
+  id: 'new-item-123',
+  name: 'New Sword',
+  type: 'weapon',
+  img: 'icons/weapons/swords/new-sword.png'
+};
+
+const mockCompendiumItem = {
+  id: 'compendium-item-456',
+  name: 'Compendium Sword',
+  type: 'weapon',
+  img: 'icons/weapons/swords/compendium-sword.png',
+  toObject: jest.fn().mockReturnValue({
+    name: 'Compendium Sword',
+    type: 'weapon',
+    img: 'icons/weapons/swords/compendium-sword.png',
+    system: { quantity: 1 }
+  })
+};
+
+const mockPack = {
+  collection: 'dnd5e.items',
+  metadata: { type: 'Item' },
+  getDocument: jest.fn()
+};
+
+const mockActorWithCrud = {
+  id: 'actor-123',
+  name: 'Test Hero',
+  items: {
+    contents: [mockWeapon, mockArmor, mockPotion],
+    get: jest.fn()
+  },
+  createEmbeddedDocuments: jest.fn(),
+  updateEmbeddedDocuments: jest.fn(),
+  deleteEmbeddedDocuments: jest.fn()
+};
+
+const mockGameWithPacks = {
+  actors: {
+    get: jest.fn()
+  },
+  packs: {
+    get: jest.fn()
+  }
+};
+
+import { addItemToActorHandler } from '../AddItemToActorHandler';
+import { addItemFromCompendiumHandler } from '../AddItemFromCompendiumHandler';
+import { updateActorItemHandler } from '../UpdateActorItemHandler';
+import { deleteActorItemHandler } from '../DeleteActorItemHandler';
+
+describe('addItemToActorHandler', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (globalThis as Record<string, unknown>)['game'] = mockGameWithPacks;
+    mockGameWithPacks.actors.get.mockReturnValue(mockActorWithCrud);
+    mockActorWithCrud.createEmbeddedDocuments.mockResolvedValue([mockCreatedItem]);
+  });
+
+  it('should create item on actor', async () => {
+    const result = await addItemToActorHandler({
+      actorId: 'actor-123',
+      name: 'New Sword',
+      type: 'weapon'
+    });
+
+    expect(mockActorWithCrud.createEmbeddedDocuments).toHaveBeenCalledWith('Item', [
+      { name: 'New Sword', type: 'weapon' }
+    ]);
+    expect(result.id).toBe('new-item-123');
+    expect(result.name).toBe('New Sword');
+    expect(result.actorId).toBe('actor-123');
+    expect(result.actorName).toBe('Test Hero');
+  });
+
+  it('should pass img and system data', async () => {
+    await addItemToActorHandler({
+      actorId: 'actor-123',
+      name: 'Magic Sword',
+      type: 'weapon',
+      img: 'icons/magic-sword.png',
+      system: { quantity: 2, rarity: 'rare' }
+    });
+
+    expect(mockActorWithCrud.createEmbeddedDocuments).toHaveBeenCalledWith('Item', [
+      {
+        name: 'Magic Sword',
+        type: 'weapon',
+        img: 'icons/magic-sword.png',
+        system: { quantity: 2, rarity: 'rare' }
+      }
+    ]);
+  });
+
+  it('should throw error if actor not found', async () => {
+    mockGameWithPacks.actors.get.mockReturnValue(undefined);
+
+    await expect(
+      addItemToActorHandler({ actorId: 'non-existent', name: 'Sword', type: 'weapon' })
+    ).rejects.toThrow('Actor not found: non-existent');
+  });
+});
+
+describe('addItemFromCompendiumHandler', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (globalThis as Record<string, unknown>)['game'] = mockGameWithPacks;
+    mockGameWithPacks.actors.get.mockReturnValue(mockActorWithCrud);
+    mockGameWithPacks.packs.get.mockReturnValue(mockPack);
+    mockPack.getDocument.mockResolvedValue(mockCompendiumItem);
+    mockActorWithCrud.createEmbeddedDocuments.mockResolvedValue([{
+      id: 'created-from-compendium',
+      name: 'Compendium Sword',
+      type: 'weapon',
+      img: 'icons/weapons/swords/compendium-sword.png'
+    }]);
+  });
+
+  it('should add item from compendium to actor', async () => {
+    const result = await addItemFromCompendiumHandler({
+      actorId: 'actor-123',
+      packId: 'dnd5e.items',
+      itemId: 'compendium-item-456'
+    });
+
+    expect(mockPack.getDocument).toHaveBeenCalledWith('compendium-item-456');
+    expect(mockActorWithCrud.createEmbeddedDocuments).toHaveBeenCalled();
+    expect(result.id).toBe('created-from-compendium');
+    expect(result.actorId).toBe('actor-123');
+  });
+
+  it('should override name if provided', async () => {
+    await addItemFromCompendiumHandler({
+      actorId: 'actor-123',
+      packId: 'dnd5e.items',
+      itemId: 'compendium-item-456',
+      name: 'Custom Name'
+    });
+
+    const callArgs = mockActorWithCrud.createEmbeddedDocuments.mock.calls[0] as [string, Record<string, unknown>[]];
+    expect(callArgs[1][0]?.['name']).toBe('Custom Name');
+  });
+
+  it('should set quantity if provided', async () => {
+    await addItemFromCompendiumHandler({
+      actorId: 'actor-123',
+      packId: 'dnd5e.items',
+      itemId: 'compendium-item-456',
+      quantity: 5
+    });
+
+    const callArgs = mockActorWithCrud.createEmbeddedDocuments.mock.calls[0] as [string, Record<string, unknown>[]];
+    const system = callArgs[1][0]?.['system'] as Record<string, unknown>;
+    expect(system['quantity']).toBe(5);
+  });
+
+  it('should throw error if pack not found', async () => {
+    mockGameWithPacks.packs.get.mockReturnValue(undefined);
+
+    await expect(
+      addItemFromCompendiumHandler({
+        actorId: 'actor-123',
+        packId: 'invalid-pack',
+        itemId: 'item-123'
+      })
+    ).rejects.toThrow('Compendium pack not found: invalid-pack');
+  });
+
+  it('should throw error if pack is not Item type', async () => {
+    mockGameWithPacks.packs.get.mockReturnValue({
+      ...mockPack,
+      metadata: { type: 'Actor' }
+    });
+
+    await expect(
+      addItemFromCompendiumHandler({
+        actorId: 'actor-123',
+        packId: 'dnd5e.monsters',
+        itemId: 'item-123'
+      })
+    ).rejects.toThrow('Compendium pack is not an Item pack: dnd5e.monsters');
+  });
+
+  it('should throw error if item not found in compendium', async () => {
+    mockPack.getDocument.mockResolvedValue(null);
+
+    await expect(
+      addItemFromCompendiumHandler({
+        actorId: 'actor-123',
+        packId: 'dnd5e.items',
+        itemId: 'non-existent'
+      })
+    ).rejects.toThrow('Item not found in compendium: non-existent');
+  });
+});
+
+describe('updateActorItemHandler', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (globalThis as Record<string, unknown>)['game'] = mockGameWithPacks;
+    mockGameWithPacks.actors.get.mockReturnValue(mockActorWithCrud);
+    mockActorWithCrud.items.get.mockReturnValue(mockWeapon);
+    mockActorWithCrud.updateEmbeddedDocuments.mockResolvedValue([{
+      id: 'weapon-123',
+      name: 'Updated Sword',
+      type: 'weapon',
+      img: 'icons/updated-sword.png'
+    }]);
+  });
+
+  it('should update item on actor', async () => {
+    const result = await updateActorItemHandler({
+      actorId: 'actor-123',
+      itemId: 'weapon-123',
+      name: 'Updated Sword'
+    });
+
+    expect(mockActorWithCrud.updateEmbeddedDocuments).toHaveBeenCalledWith('Item', [
+      { _id: 'weapon-123', name: 'Updated Sword' }
+    ]);
+    expect(result.name).toBe('Updated Sword');
+  });
+
+  it('should update system properties using dot notation', async () => {
+    await updateActorItemHandler({
+      actorId: 'actor-123',
+      itemId: 'weapon-123',
+      system: { quantity: 10 }
+    });
+
+    expect(mockActorWithCrud.updateEmbeddedDocuments).toHaveBeenCalledWith('Item', [
+      { _id: 'weapon-123', 'system.quantity': 10 }
+    ]);
+  });
+
+  it('should throw error if actor not found', async () => {
+    mockGameWithPacks.actors.get.mockReturnValue(undefined);
+
+    await expect(
+      updateActorItemHandler({ actorId: 'non-existent', itemId: 'weapon-123' })
+    ).rejects.toThrow('Actor not found: non-existent');
+  });
+
+  it('should throw error if item not found', async () => {
+    mockActorWithCrud.items.get.mockReturnValue(undefined);
+
+    await expect(
+      updateActorItemHandler({ actorId: 'actor-123', itemId: 'non-existent' })
+    ).rejects.toThrow('Item not found: non-existent');
+  });
+});
+
+describe('deleteActorItemHandler', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (globalThis as Record<string, unknown>)['game'] = mockGameWithPacks;
+    mockGameWithPacks.actors.get.mockReturnValue(mockActorWithCrud);
+    mockActorWithCrud.items.get.mockReturnValue(mockWeapon);
+    mockActorWithCrud.deleteEmbeddedDocuments.mockResolvedValue([mockWeapon]);
+  });
+
+  it('should delete item from actor', async () => {
+    const result = await deleteActorItemHandler({
+      actorId: 'actor-123',
+      itemId: 'weapon-123'
+    });
+
+    expect(mockActorWithCrud.deleteEmbeddedDocuments).toHaveBeenCalledWith('Item', ['weapon-123']);
+    expect(result.deleted).toBe(true);
+  });
+
+  it('should throw error if actor not found', async () => {
+    mockGameWithPacks.actors.get.mockReturnValue(undefined);
+
+    await expect(
+      deleteActorItemHandler({ actorId: 'non-existent', itemId: 'weapon-123' })
+    ).rejects.toThrow('Actor not found: non-existent');
+  });
+
+  it('should throw error if item not found', async () => {
+    mockActorWithCrud.items.get.mockReturnValue(undefined);
+
+    await expect(
+      deleteActorItemHandler({ actorId: 'actor-123', itemId: 'non-existent' })
+    ).rejects.toThrow('Item not found: non-existent');
   });
 });

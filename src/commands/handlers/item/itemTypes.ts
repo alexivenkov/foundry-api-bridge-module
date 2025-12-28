@@ -20,14 +20,30 @@ export interface ActivityConsumeConfig {
   action?: boolean;
 }
 
+export interface ActivityUsageConfig {
+  consume?: ActivityConsumeConfig | false;
+  scaling?: number | false;
+  concentration?: { begin?: boolean };
+  create?: { measuredTemplate?: boolean };
+  event?: { shiftKey?: boolean };
+}
+
+export interface ActivityDialogConfig {
+  configure?: boolean;
+}
+
+export interface ActivityMessageConfig {
+  create?: boolean;
+}
+
 export interface FoundryActivity {
   _id: string;
   name: string;
   type: string;
   use(
-    usage?: { consume?: ActivityConsumeConfig | false; scaling?: number },
-    dialog?: { configure?: boolean },
-    message?: { create?: boolean }
+    usage?: ActivityUsageConfig,
+    dialog?: ActivityDialogConfig,
+    message?: ActivityMessageConfig
   ): Promise<FoundryUsageResult | null>;
 }
 

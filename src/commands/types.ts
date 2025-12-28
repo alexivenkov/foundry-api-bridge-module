@@ -53,6 +53,10 @@ export type CommandType =
   | 'get-scene-tokens'
   | 'get-actor-items'
   | 'use-item'
+  | 'add-item-to-actor'
+  | 'add-item-from-compendium'
+  | 'update-actor-item'
+  | 'delete-actor-item'
   | 'get-actor-effects'
   | 'toggle-actor-status'
   | 'add-actor-effect'
@@ -462,6 +466,56 @@ export interface UseItemResult {
   chatMessageId?: string;
 }
 
+// Item CRUD Commands
+export interface ItemSystemData {
+  description?: { value: string };
+  quantity?: number;
+  weight?: { value: number; units?: string };
+  price?: { value: number; denomination?: string };
+  rarity?: string;
+  identified?: boolean;
+  equipped?: boolean;
+  attunement?: number;
+}
+
+export interface AddItemToActorParams {
+  actorId: string;
+  name: string;
+  type: string;
+  img?: string;
+  system?: ItemSystemData;
+}
+
+export interface AddItemFromCompendiumParams {
+  actorId: string;
+  packId: string;
+  itemId: string;
+  name?: string;
+  quantity?: number;
+}
+
+export interface UpdateActorItemParams {
+  actorId: string;
+  itemId: string;
+  name?: string;
+  img?: string;
+  system?: Partial<ItemSystemData>;
+}
+
+export interface DeleteActorItemParams {
+  actorId: string;
+  itemId: string;
+}
+
+export interface ItemResult {
+  id: string;
+  name: string;
+  type: string;
+  img: string;
+  actorId: string;
+  actorName: string;
+}
+
 // Effect Commands
 export interface GetActorEffectsParams {
   actorId: string;
@@ -607,6 +661,10 @@ export interface CommandParamsMap {
   'get-scene-tokens': GetSceneTokensParams;
   'get-actor-items': GetActorItemsParams;
   'use-item': UseItemParams;
+  'add-item-to-actor': AddItemToActorParams;
+  'add-item-from-compendium': AddItemFromCompendiumParams;
+  'update-actor-item': UpdateActorItemParams;
+  'delete-actor-item': DeleteActorItemParams;
   'get-actor-effects': GetActorEffectsParams;
   'toggle-actor-status': ToggleActorStatusParams;
   'add-actor-effect': AddActorEffectParams;
@@ -656,6 +714,10 @@ export interface CommandResultMap {
   'get-scene-tokens': SceneTokensResult;
   'get-actor-items': ActorItemsResult;
   'use-item': UseItemResult;
+  'add-item-to-actor': ItemResult;
+  'add-item-from-compendium': ItemResult;
+  'update-actor-item': ItemResult;
+  'delete-actor-item': DeleteResult;
   'get-actor-effects': ActorEffectsResult;
   'toggle-actor-status': ToggleStatusResult;
   'add-actor-effect': AddEffectResult;

@@ -56,7 +56,11 @@ export {
 // Item handlers
 export {
   getActorItemsHandler,
-  useItemHandler
+  useItemHandler,
+  addItemToActorHandler,
+  addItemFromCompendiumHandler,
+  updateActorItemHandler,
+  deleteActorItemHandler
 } from '@/commands/handlers/item';
 
 // Effect handlers

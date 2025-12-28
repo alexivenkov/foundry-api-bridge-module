@@ -1,5 +1,11 @@
 import type { UseItemParams, UseItemResult, RollResult } from '@/commands/types';
-import { extractDiceResults, getGame, type FoundryActivity, type FoundryRoll } from './itemTypes';
+import {
+  extractDiceResults,
+  getGame,
+  type FoundryActivity,
+  type FoundryRoll,
+  type ActivityUsageConfig
+} from './itemTypes';
 
 function extractRollResults(rolls: FoundryRoll[] | undefined): RollResult[] {
   if (!rolls || rolls.length === 0) {
@@ -56,18 +62,15 @@ export async function useItemHandler(params: UseItemParams): Promise<UseItemResu
     targetActivity = activities[0];
   }
 
-  const usageConfig: {
-    consume: { resources: boolean; spellSlot: boolean } | false;
-    scaling?: number;
-  } = {
+  const usageConfig: ActivityUsageConfig = {
     consume: params.consume === false
       ? false
-      : { resources: true, spellSlot: true }
+      : { resources: true, spellSlot: true },
+    scaling: params.scaling ?? false,
+    concentration: { begin: false },
+    create: { measuredTemplate: false },
+    event: { shiftKey: true }
   };
-
-  if (params.scaling !== undefined) {
-    usageConfig.scaling = params.scaling;
-  }
 
   const dialogConfig = { configure: false };
   const messageConfig = { create: params.showInChat ?? false };
