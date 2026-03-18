@@ -1,7 +1,7 @@
 import type { ModuleConfig } from '@/config/types';
 
-export const SERVER_URL = 'https://foundry-mcp.com';
-export const WS_URL = 'wss://foundry-mcp.com/ws';
+export const SERVER_URL = 'http://localhost:3001';
+export const WS_URL = 'ws://localhost:3001/ws';
 
 export const DEFAULT_CONFIG: ModuleConfig = {
   apiServer: {

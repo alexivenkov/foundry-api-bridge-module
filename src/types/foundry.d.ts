@@ -2,10 +2,12 @@ declare const game: Game;
 
 interface SettingConfig {
   name: string;
+  hint?: string;
   scope: 'world' | 'client';
   config: boolean;
   type: typeof String | typeof Number | typeof Boolean | typeof Object | typeof Array;
   default: unknown;
+  requiresReload?: boolean;
 }
 
 interface SettingMenuConfig {

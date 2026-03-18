@@ -1,5 +1,5 @@
 import type { ModuleConfig } from '@/config/types';
-import { getConfig, setConfig } from '@/settings/SettingsManager';
+import { getConfig, setConfig, getServerUrl, getWsUrl, getApiKey, setServerUrl, setWsUrl, setApiKey } from '@/settings/SettingsManager';
 import { validateConfig } from '@/config/validator';
 import { DEFAULT_CONFIG } from '@/config/defaults';
 
@@ -126,6 +126,11 @@ export class ApiConfigForm extends FormApplication {
 
     return {
       config,
+      connection: {
+        serverUrl: getServerUrl(),
+        wsUrl: getWsUrl(),
+        apiKey: getApiKey()
+      },
       availableCompendia
     };
   }
@@ -198,6 +203,20 @@ export class ApiConfigForm extends FormApplication {
     }
 
     await setConfig(newConfig);
+
+    const serverUrl = formData['connection.serverUrl'];
+    const wsUrl = formData['connection.wsUrl'];
+    const apiKey = formData['connection.apiKey'];
+
+    if (typeof serverUrl === 'string') {
+      await setServerUrl(serverUrl);
+    }
+    if (typeof wsUrl === 'string') {
+      await setWsUrl(wsUrl);
+    }
+    if (typeof apiKey === 'string') {
+      await setApiKey(apiKey);
+    }
 
     console.log('Foundry API Bridge | Configuration saved successfully');
 
