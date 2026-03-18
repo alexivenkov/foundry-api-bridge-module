@@ -1,4 +1,5 @@
 import { ConfigManager } from '@/config/ConfigManager';
+import { SERVER_URL, WS_URL } from '@/config/defaults';
 import { ApiClient } from '@/api/ApiClient';
 import { WorldDataCollector } from '@/collectors/WorldDataCollector';
 import { CompendiumCollector } from '@/collectors/CompendiumCollector';
@@ -57,7 +58,7 @@ import {
 } from '@/commands';
 import type { WorldData, CompendiumData, CompendiumMetadata } from '@/types/foundry';
 
-console.log('Foundry API Bridge | Loading module v4.14.0...');
+console.log('Foundry API Bridge | Loading module v5.0.0...');
 
 let updateLoop: UpdateLoop | null = null;
 let apiClient: ApiClient | null = null;
@@ -84,7 +85,7 @@ Hooks.once('ready', () => {
     ConfigManager.initialize();
     const config = ConfigManager.getConfig();
 
-    apiClient = new ApiClient(config.apiServer.url);
+    apiClient = new ApiClient(SERVER_URL);
     worldCollector = new WorldDataCollector();
     compendiumCollector = new CompendiumCollector();
 
@@ -119,7 +120,7 @@ Hooks.once('ready', () => {
   }
 });
 
-function initializeWebSocket(wsConfig: { url: string; reconnectInterval: number; maxReconnectAttempts: number }): void {
+function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnectAttempts: number }): void {
   commandRouter = new CommandRouter();
   commandRouter.register('roll-dice', rollDiceHandler);
   commandRouter.register('roll-skill', rollSkillHandler);
@@ -170,7 +171,7 @@ function initializeWebSocket(wsConfig: { url: string; reconnectInterval: number;
   commandRouter.register('update-actor-effect', updateActorEffectHandler);
 
   wsClient = new WebSocketClient({
-    url: wsConfig.url,
+    url: WS_URL,
     reconnectInterval: wsConfig.reconnectInterval,
     maxReconnectAttempts: wsConfig.maxReconnectAttempts
   });
@@ -264,7 +265,7 @@ window.FoundryAPIBridge = {
 
 Object.defineProperties(window.FoundryAPIBridge, {
   API_SERVER_URL: {
-    get: () => ConfigManager.getConfig().apiServer.url
+    get: () => SERVER_URL
   },
   UPDATE_INTERVAL: {
     get: () => ConfigManager.getConfig().apiServer.updateInterval

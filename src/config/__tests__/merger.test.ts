@@ -8,17 +8,16 @@ describe('mergeWithDefaults', () => {
     expect(result).toEqual(DEFAULT_CONFIG);
   });
 
-  it('overrides top-level string value', () => {
+  it('overrides top-level number value', () => {
     const userConfig = {
       apiServer: {
-        url: 'http://custom:4000'
+        updateInterval: 10000
       }
     };
 
     const result = mergeWithDefaults(userConfig, DEFAULT_CONFIG);
 
-    expect(result.apiServer.url).toBe('http://custom:4000');
-    expect(result.apiServer.updateInterval).toBe(5000);
+    expect(result.apiServer.updateInterval).toBe(10000);
   });
 
   it('overrides nested values', () => {
@@ -64,7 +63,6 @@ describe('mergeWithDefaults', () => {
   it('handles multiple overrides', () => {
     const userConfig: DeepPartial<ModuleConfig> = {
       apiServer: {
-        url: 'http://custom:4000',
         updateInterval: 10000,
         endpoints: {
           worldData: '/api/world',
@@ -80,7 +78,6 @@ describe('mergeWithDefaults', () => {
 
     const result = mergeWithDefaults(userConfig, DEFAULT_CONFIG);
 
-    expect(result.apiServer.url).toBe('http://custom:4000');
     expect(result.apiServer.updateInterval).toBe(10000);
     expect(result.features.autoLoadCompendium).toBe(false);
     expect(result.features.periodicUpdates).toBe(false);
@@ -89,12 +86,12 @@ describe('mergeWithDefaults', () => {
   it('preserves defaults when user config has undefined values', () => {
     const userConfig = {
       apiServer: {
-        url: undefined
+        updateInterval: undefined
       }
     };
 
     const result = mergeWithDefaults(userConfig, DEFAULT_CONFIG);
 
-    expect(result.apiServer.url).toBe('http://localhost:3001');
+    expect(result.apiServer.updateInterval).toBe(5000);
   });
 });

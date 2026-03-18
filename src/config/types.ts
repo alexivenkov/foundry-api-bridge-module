@@ -11,7 +11,6 @@ export interface ModuleConfig {
 }
 
 export interface ApiServerConfig {
-  url: string;
   updateInterval: number;
   endpoints: {
     worldData: string;
@@ -21,7 +20,6 @@ export interface ApiServerConfig {
 
 export interface WebSocketConfig {
   enabled: boolean;
-  url: string;
   reconnectInterval: number;
   maxReconnectAttempts: number;
 }

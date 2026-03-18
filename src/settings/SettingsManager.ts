@@ -27,7 +27,7 @@ export async function registerMenu(): Promise<void> {
   game.settings.registerMenu(MODULE_ID, 'configMenu', {
     name: 'Configure Module',
     label: 'Configure',
-    hint: 'Configure API server URL, update interval, and compendium auto-load settings',
+    hint: 'Configure update interval and compendium auto-load settings',
     icon: 'fas fa-cog',
     type: ApiConfigForm as unknown as new () => FormApplication,
     restricted: true

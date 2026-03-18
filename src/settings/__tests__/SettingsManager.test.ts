@@ -51,7 +51,7 @@ describe('SettingsManager', () => {
         expect.objectContaining({
           name: 'Configure Module',
           label: 'Configure',
-          hint: 'Configure API server URL, update interval, and compendium auto-load settings',
+          hint: 'Configure update interval and compendium auto-load settings',
           icon: 'fas fa-cog',
           restricted: true
         })
@@ -65,7 +65,7 @@ describe('SettingsManager', () => {
         ...DEFAULT_CONFIG,
         apiServer: {
           ...DEFAULT_CONFIG.apiServer,
-          url: 'http://test.com'
+          updateInterval: 3000
         }
       };
 
@@ -92,7 +92,7 @@ describe('SettingsManager', () => {
         ...DEFAULT_CONFIG,
         apiServer: {
           ...DEFAULT_CONFIG.apiServer,
-          url: 'http://new-server.com'
+          updateInterval: 10000
         }
       };
 

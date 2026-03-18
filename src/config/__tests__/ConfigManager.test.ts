@@ -21,7 +21,7 @@ describe('ConfigManager', () => {
     it('should initialize with config from game.settings', () => {
       const settingsConfig: ModuleConfig = {
         ...DEFAULT_CONFIG,
-        apiServer: { ...DEFAULT_CONFIG.apiServer, url: 'http://test:3000' }
+        apiServer: { ...DEFAULT_CONFIG.apiServer, updateInterval: 3000 }
       };
 
       mockGetConfig.mockReturnValue(settingsConfig);
@@ -29,7 +29,7 @@ describe('ConfigManager', () => {
       ConfigManager.initialize();
 
       expect(ConfigManager.isInitialized()).toBe(true);
-      expect(ConfigManager.getConfig().apiServer.url).toBe('http://test:3000');
+      expect(ConfigManager.getConfig().apiServer.updateInterval).toBe(3000);
     });
   });
 
@@ -42,7 +42,7 @@ describe('ConfigManager', () => {
     it('should migrate valid config from file to settings', async () => {
       const fileConfig: ModuleConfig = {
         ...DEFAULT_CONFIG,
-        apiServer: { ...DEFAULT_CONFIG.apiServer, url: 'http://migrated:3000' }
+        apiServer: { ...DEFAULT_CONFIG.apiServer, updateInterval: 3000 }
       };
 
       mockLoadConfigFromUrl.mockResolvedValue(fileConfig);
@@ -50,12 +50,12 @@ describe('ConfigManager', () => {
       await ConfigManager.migrateFromFile('config.json');
 
       expect(mockSetConfig).toHaveBeenCalledWith(fileConfig);
-      expect(ConfigManager.getConfig().apiServer.url).toBe('http://migrated:3000');
+      expect(ConfigManager.getConfig().apiServer.updateInterval).toBe(3000);
     });
 
     it('should merge partial config when migrating', async () => {
       const partialConfig = {
-        apiServer: { url: 'http://partial:3000' }
+        apiServer: { updateInterval: 3000 }
       };
 
       mockLoadConfigFromUrl.mockResolvedValue(partialConfig);
@@ -64,8 +64,8 @@ describe('ConfigManager', () => {
 
       expect(mockSetConfig).toHaveBeenCalled();
       const savedConfig = mockSetConfig.mock.calls[0]?.[0] as ModuleConfig;
-      expect(savedConfig.apiServer.url).toBe('http://partial:3000');
-      expect(savedConfig.apiServer.updateInterval).toBe(5000);
+      expect(savedConfig.apiServer.updateInterval).toBe(3000);
+      expect(savedConfig.apiServer.endpoints.worldData).toBe('/update');
     });
 
     it('should handle migration errors gracefully', async () => {
@@ -92,13 +92,13 @@ describe('ConfigManager', () => {
     it('should update config when valid', async () => {
       const newConfig: ModuleConfig = {
         ...DEFAULT_CONFIG,
-        apiServer: { ...DEFAULT_CONFIG.apiServer, url: 'http://updated:3000' }
+        apiServer: { ...DEFAULT_CONFIG.apiServer, updateInterval: 10000 }
       };
 
       await ConfigManager.updateConfig(newConfig);
 
       expect(mockSetConfig).toHaveBeenCalledWith(newConfig);
-      expect(ConfigManager.getConfig().apiServer.url).toBe('http://updated:3000');
+      expect(ConfigManager.getConfig().apiServer.updateInterval).toBe(10000);
     });
 
     it('should throw error when config is invalid', async () => {

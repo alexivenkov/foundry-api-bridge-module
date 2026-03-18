@@ -42,15 +42,11 @@ function parseFormData(formData: Record<string, unknown>): ModuleConfig {
     }
   });
 
-  const urlRaw = formData['apiServer.url'];
   const worldDataRaw = formData['apiServer.endpoints.worldData'];
   const compendiumRaw = formData['apiServer.endpoints.compendium'];
 
-  const wsUrlRaw = formData['webSocket.url'];
-
   const config: ModuleConfig = {
     apiServer: {
-      url: typeof urlRaw === 'string' ? urlRaw : DEFAULT_CONFIG.apiServer.url,
       updateInterval: Number(formData['apiServer.updateInterval'] ?? DEFAULT_CONFIG.apiServer.updateInterval),
       endpoints: {
         worldData: typeof worldDataRaw === 'string' ? worldDataRaw : DEFAULT_CONFIG.apiServer.endpoints.worldData,
@@ -59,7 +55,6 @@ function parseFormData(formData: Record<string, unknown>): ModuleConfig {
     },
     webSocket: {
       enabled: Boolean(formData['webSocket.enabled'] ?? DEFAULT_CONFIG.webSocket.enabled),
-      url: typeof wsUrlRaw === 'string' ? wsUrlRaw : DEFAULT_CONFIG.webSocket.url,
       reconnectInterval: Number(formData['webSocket.reconnectInterval'] ?? DEFAULT_CONFIG.webSocket.reconnectInterval),
       maxReconnectAttempts: Number(formData['webSocket.maxReconnectAttempts'] ?? DEFAULT_CONFIG.webSocket.maxReconnectAttempts)
     },

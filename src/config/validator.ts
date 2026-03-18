@@ -23,7 +23,6 @@ function hasApiServerConfig(value: unknown): boolean {
   const endpoints = apiServer['endpoints'];
 
   return (
-    typeof apiServer['url'] === 'string' &&
     typeof apiServer['updateInterval'] === 'number' &&
     typeof endpoints === 'object' &&
     endpoints !== null &&
@@ -39,7 +38,6 @@ function hasWebSocketConfig(value: unknown): boolean {
 
   return (
     typeof ws['enabled'] === 'boolean' &&
-    typeof ws['url'] === 'string' &&
     typeof ws['reconnectInterval'] === 'number' &&
     typeof ws['maxReconnectAttempts'] === 'number'
   );
