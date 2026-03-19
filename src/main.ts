@@ -58,7 +58,7 @@ import {
 import type { WorldData, CompendiumData, CompendiumMetadata } from '@/types/foundry';
 import { isDefaultOrEmptySettings } from '@/utils/validation';
 
-const MODULE_VERSION = '6.0.0';
+const MODULE_VERSION = '6.1.0';
 
 let updateLoop: UpdateLoop | null = null;
 let apiClient: ApiClient | null = null;
@@ -70,6 +70,31 @@ let commandRouter: CommandRouter | null = null;
 Hooks.once('init', () => {
   registerSettings();
   void registerMenu();
+});
+
+Hooks.on('renderSettingsConfig', (_app: unknown, html: JQuery) => {
+  const apiKeyInput = html.find('input[name="foundry-api-bridge.apiKey"]');
+  if (!apiKeyInput.length) return;
+
+  const formGroup = apiKeyInput.closest('.form-group');
+  if (!formGroup.length) return;
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.innerHTML = '<i class="fas fa-key"></i> Get API Key';
+  button.style.cssText = 'margin-top: 4px; padding: 4px 12px; cursor: pointer; font-size: 12px;';
+  button.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.open('https://foundry-mcp.com/auth/patreon', '_blank');
+  });
+
+  const hint = document.createElement('p');
+  hint.className = 'notes';
+  hint.textContent = 'Free account available — no subscription required';
+  hint.style.cssText = 'margin-top: 2px; font-size: 11px; font-style: italic;';
+
+  formGroup.append(button);
+  formGroup.append(hint);
 });
 
 Hooks.once('ready', () => {
