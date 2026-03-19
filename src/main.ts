@@ -58,7 +58,7 @@ import {
 import type { WorldData, CompendiumData, CompendiumMetadata } from '@/types/foundry';
 import { isDefaultOrEmptySettings } from '@/utils/validation';
 
-const MODULE_VERSION = '6.1.0';
+const MODULE_VERSION = '6.1.1';
 
 let updateLoop: UpdateLoop | null = null;
 let apiClient: ApiClient | null = null;
@@ -72,12 +72,15 @@ Hooks.once('init', () => {
   void registerMenu();
 });
 
-Hooks.on('renderSettingsConfig', (_app: unknown, html: JQuery) => {
-  const apiKeyInput = html.find('input[name="foundry-api-bridge.apiKey"]');
-  if (!apiKeyInput.length) return;
+Hooks.on('renderSettingsConfig', (_app: unknown, html: unknown) => {
+  const root = html instanceof HTMLElement ? html : (html as JQuery)[0];
+  if (!root) return;
+
+  const apiKeyInput = root.querySelector('input[name="foundry-api-bridge.apiKey"]');
+  if (!apiKeyInput) return;
 
   const formGroup = apiKeyInput.closest('.form-group');
-  if (!formGroup.length) return;
+  if (!formGroup) return;
 
   const button = document.createElement('button');
   button.type = 'button';
@@ -89,12 +92,12 @@ Hooks.on('renderSettingsConfig', (_app: unknown, html: JQuery) => {
   });
 
   const hint = document.createElement('p');
-  hint.className = 'notes';
+  hint.className = 'hint';
   hint.textContent = 'Free account available — no subscription required';
   hint.style.cssText = 'margin-top: 2px; font-size: 11px; font-style: italic;';
 
-  formGroup.append(button);
-  formGroup.append(hint);
+  formGroup.appendChild(button);
+  formGroup.appendChild(hint);
 });
 
 Hooks.once('ready', () => {
