@@ -76,7 +76,7 @@ describe('ConfigManager', () => {
 
       expect(mockSetConfig).not.toHaveBeenCalled();
       expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'Failed to migrate config from file:',
+        'Foundry API Bridge | Failed to migrate config from file:',
         expect.any(Error)
       );
       consoleWarnSpy.mockRestore();

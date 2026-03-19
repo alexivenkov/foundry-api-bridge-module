@@ -1,8 +1,8 @@
 {
   "id": "foundry-api-bridge",
-  "title": "Foundry API Bridge",
-  "description": "HTTP REST API bridge for external access to Foundry VTT world data. Enables AI DM and other external tools to read journals, actors, scenes, items, and compendium packs. Fully configurable via UI.",
-  "version": "5.1.0",
+  "title": "Foundry API Bridge (Foundry MCP)",
+  "description": "Connect Foundry VTT to AI assistants via foundry-mcp.com. Syncs world data and enables AI to roll dice, manage combat, edit journals, move tokens, and more through the MCP protocol.",
+  "version": "6.0.0",
   "authors": [
     {
       "name": "Alex Ivenkov",
@@ -11,7 +11,7 @@
   ],
   "compatibility": {
     "minimum": "11",
-    "verified": "12",
+    "verified": "13",
     "maximum": "13"
   },
   "esmodules": [

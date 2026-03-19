@@ -56,8 +56,9 @@ import {
   updateActorEffectHandler
 } from '@/commands';
 import type { WorldData, CompendiumData, CompendiumMetadata } from '@/types/foundry';
+import { isDefaultOrEmptySettings } from '@/utils/validation';
 
-console.log('Foundry API Bridge | Loading module v5.1.0...');
+const MODULE_VERSION = '6.0.0';
 
 let updateLoop: UpdateLoop | null = null;
 let apiClient: ApiClient | null = null;
@@ -69,14 +70,10 @@ let commandRouter: CommandRouter | null = null;
 Hooks.once('init', () => {
   registerSettings();
   void registerMenu();
-  console.log('Foundry API Bridge | Settings registered');
 });
 
 Hooks.once('ready', () => {
-  console.log('Foundry API Bridge | Module initializing...');
-
   if (!game.user?.isGM) {
-    console.log('Foundry API Bridge | Module disabled for non-GM users');
     return;
   }
 
@@ -87,6 +84,11 @@ Hooks.once('ready', () => {
     const serverUrl = getServerUrl();
     const wsUrl = getWsUrl();
     const apiKey = getApiKey();
+
+    if (isDefaultOrEmptySettings(serverUrl, wsUrl, apiKey)) {
+      console.log(`Foundry API Bridge | v${MODULE_VERSION} loaded. Configure Server URL, WebSocket URL, and API Key in module settings to connect.`);
+      return;
+    }
 
     apiClient = new ApiClient(serverUrl, apiKey);
     worldCollector = new WorldDataCollector();
@@ -102,7 +104,7 @@ Hooks.once('ready', () => {
       updateLoop.start();
     }
 
-    console.log('Foundry API Bridge | Module initialized successfully');
+    console.log(`Foundry API Bridge | v${MODULE_VERSION} initialized`);
 
     if (config.features.autoLoadCompendium && config.compendium.autoLoad.length > 0) {
       compendiumCollector.autoLoad(
@@ -182,10 +184,16 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
 
   wsClient.onConnect(() => {
     console.log('Foundry API Bridge | WebSocket connected to server');
+    if (ui.notifications) {
+      ui.notifications.info('Foundry API Bridge | Connected to server');
+    }
   });
 
   wsClient.onDisconnect(() => {
     console.log('Foundry API Bridge | WebSocket disconnected from server');
+    if (ui.notifications) {
+      ui.notifications.warn('Foundry API Bridge | Disconnected from server');
+    }
   });
 
   wsClient.onMessage((command) => {
@@ -250,7 +258,7 @@ window.FoundryAPIBridge = {
     const packData = await compendiumCollector.loadContents(packId);
     if (packData) {
       await apiClient.sendCompendium(config.apiServer.endpoints.compendium, packId, packData);
-      console.log(`✓ Compendium ${packId} loaded and sent successfully`);
+      console.log(`Foundry API Bridge | Compendium ${packId} sent successfully`);
     }
   },
   autoLoadCompendium: async (): Promise<void> => {

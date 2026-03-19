@@ -37,7 +37,7 @@ export class ConfigManager {
         }
       }
     } catch (error) {
-      console.warn('Failed to migrate config from file:', error);
+      console.warn('Foundry API Bridge | Failed to migrate config from file:', error);
     }
   }
 

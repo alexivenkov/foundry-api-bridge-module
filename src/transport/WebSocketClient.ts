@@ -68,7 +68,7 @@ export class WebSocketClient {
 
   send(response: CommandResponse): void {
     if (this.socket?.readyState !== WS_OPEN) {
-      console.warn('WebSocket is not connected');
+      console.warn('Foundry API Bridge | WebSocket is not connected');
       return;
     }
 
@@ -96,12 +96,12 @@ export class WebSocketClient {
 
     this.socket.onopen = (): void => {
       this.reconnectAttempts = 0;
-      console.log('WebSocket connected');
+      console.log('Foundry API Bridge | WebSocket connected');
       this.connectHandler?.();
     };
 
     this.socket.onclose = (): void => {
-      console.log('WebSocket disconnected');
+      console.log('Foundry API Bridge | WebSocket disconnected');
       this.disconnectHandler?.();
 
       if (!this.isManualClose) {
@@ -110,7 +110,7 @@ export class WebSocketClient {
     };
 
     this.socket.onerror = (event: Event): void => {
-      console.error('WebSocket error:', event);
+      console.error('Foundry API Bridge | WebSocket error:', event);
     };
 
     this.socket.onmessage = (event: MessageEvent): void => {
@@ -123,13 +123,13 @@ export class WebSocketClient {
       const data = JSON.parse(event.data as string) as unknown;
 
       if (!this.isValidCommand(data)) {
-        console.error('Invalid command format:', data);
+        console.error('Foundry API Bridge | Invalid command format:', data);
         return;
       }
 
       this.messageHandler?.(data);
     } catch (error) {
-      console.error('Failed to parse WebSocket message:', error);
+      console.error('Foundry API Bridge | Failed to parse WebSocket message:', error);
     }
   }
 
@@ -148,16 +148,17 @@ export class WebSocketClient {
 
   private scheduleReconnect(): void {
     if (this.reconnectAttempts >= this.config.maxReconnectAttempts) {
-      console.error('Max reconnect attempts reached');
+      console.warn('Foundry API Bridge | Max reconnect attempts reached. Use module settings to reconfigure.');
       return;
     }
 
     this.reconnectAttempts++;
-    console.log(`Reconnecting in ${String(this.config.reconnectInterval)}ms (attempt ${String(this.reconnectAttempts)})`);
+    const delay = this.config.reconnectInterval * Math.pow(2, this.reconnectAttempts - 1);
+    console.log(`Foundry API Bridge | Reconnecting in ${String(delay)}ms (attempt ${String(this.reconnectAttempts)}/${String(this.config.maxReconnectAttempts)})`);
 
     this.reconnectTimer = setTimeout(() => {
       this.connect();
-    }, this.config.reconnectInterval);
+    }, delay);
   }
 
   private clearReconnectTimer(): void {

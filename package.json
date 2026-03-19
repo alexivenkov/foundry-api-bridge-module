@@ -1,7 +1,7 @@
 {
   "name": "foundry-api-bridge",
-  "version": "5.1.0",
-  "description": "HTTP REST API bridge for external access to Foundry VTT world data",
+  "version": "6.0.0",
+  "description": "Connect Foundry VTT to AI assistants via foundry-mcp.com",
   "type": "module",
   "scripts": {
     "dev": "vite build --watch",

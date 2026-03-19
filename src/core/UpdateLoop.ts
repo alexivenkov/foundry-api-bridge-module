@@ -22,14 +22,14 @@ export class UpdateLoop {
       this.sendUpdate();
     }, this.interval);
 
-    console.log(`Update loop started (interval: ${String(this.interval)}ms)`);
+    console.log(`Foundry API Bridge | Update loop started (interval: ${String(this.interval)}ms)`);
   }
 
   stop(): void {
     if (this.timerId !== null) {
       clearInterval(this.timerId);
       this.timerId = null;
-      console.log('Update loop stopped');
+      console.log('Foundry API Bridge | Update loop stopped');
     }
   }
 
@@ -40,7 +40,7 @@ export class UpdateLoop {
   private sendUpdate(): void {
     const data = this.collector.collect();
     this.apiClient.sendWorldData(this.endpoint, data).catch((error: unknown) => {
-      console.error("Failed to send world data:", error instanceof Error ? error.message : String(error));
+      console.error("Foundry API Bridge | Failed to send world data:", error instanceof Error ? error.message : String(error));
     });
   }
 }

@@ -59,6 +59,50 @@ describe('ApiClient', () => {
     });
   });
 
+  describe('authorization header', () => {
+    it('should include Authorization header when apiKey is provided', async () => {
+      const clientWithKey = new ApiClient('http://localhost:3001', 'pk_test123');
+      mockFetch.mockResolvedValue({ ok: true });
+
+      const mockWorldData: WorldData = {
+        world: { id: 'test', title: 'Test', system: 'dnd5e', systemVersion: '3.0.0', foundryVersion: '12' },
+        counts: { journals: 0, actors: 0, items: 0, scenes: 0 },
+        journals: [], actors: [], scenes: [], items: [], compendiumMeta: []
+      };
+
+      await clientWithKey.sendWorldData('/update', mockWorldData);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:3001/update',
+        expect.objectContaining({
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer pk_test123'
+          }
+        })
+      );
+    });
+
+    it('should not include Authorization header when apiKey is empty', async () => {
+      mockFetch.mockResolvedValue({ ok: true });
+
+      const mockWorldData: WorldData = {
+        world: { id: 'test', title: 'Test', system: 'dnd5e', systemVersion: '3.0.0', foundryVersion: '12' },
+        counts: { journals: 0, actors: 0, items: 0, scenes: 0 },
+        journals: [], actors: [], scenes: [], items: [], compendiumMeta: []
+      };
+
+      await client.sendWorldData('/update', mockWorldData);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:3001/update',
+        expect.objectContaining({
+          headers: { 'Content-Type': 'application/json' }
+        })
+      );
+    });
+  });
+
   describe('sendCompendium', () => {
     const mockCompendiumData: CompendiumData = {
       id: 'dnd5e.monsters',

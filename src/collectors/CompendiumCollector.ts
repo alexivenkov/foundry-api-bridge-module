@@ -27,11 +27,11 @@ export class CompendiumCollector {
     const pack = game.packs.get(packId);
 
     if (!pack) {
-      console.error(`Compendium not found: ${packId}`);
+      console.error(`Foundry API Bridge | Compendium not found: ${packId}`);
       return null;
     }
 
-    console.log(`Loading compendium: ${packId} (${String(pack.index.size)} documents)...`);
+    console.log(`Foundry API Bridge | Loading compendium: ${packId} (${String(pack.index.size)} documents)`);
 
     try {
       const documents = await pack.getDocuments();
@@ -92,32 +92,32 @@ export class CompendiumCollector {
         packData.documents.push(docData);
       });
 
-      console.log(`Loaded ${String(packData.documents.length)} documents from ${packId}`);
+      console.log(`Foundry API Bridge | Loaded ${String(packData.documents.length)} documents from ${packId}`);
       return packData;
 
     } catch (error) {
-      console.error(`Error loading compendium ${packId}:`, error);
+      console.error(`Foundry API Bridge | Error loading compendium ${packId}:`, error);
       return null;
     }
   }
 
   async autoLoad(packIds: string[], apiClient: ApiClient, endpoint: string): Promise<void> {
     if (!game.packs) {
-      console.warn('game.packs is not available');
+      console.warn('Foundry API Bridge | game.packs is not available');
       return;
     }
 
     if (packIds.length === 0) {
-      console.log('No compendia configured for auto-load');
+      console.log('Foundry API Bridge | No compendia configured for auto-load');
       return;
     }
 
-    console.log(`Auto-loading ${String(packIds.length)} compendia...`);
+    console.log(`Foundry API Bridge | Auto-loading ${String(packIds.length)} compendia`);
 
     for (const packId of packIds) {
       const pack = game.packs.get(packId);
       if (!pack) {
-        console.warn(`Pack not found, skipping: ${packId}`);
+        console.warn(`Foundry API Bridge | Pack not found, skipping: ${packId}`);
         continue;
       }
 
@@ -125,13 +125,13 @@ export class CompendiumCollector {
         const packData = await this.loadContents(packId);
         if (packData) {
           await apiClient.sendCompendium(endpoint, packId, packData);
-          console.log(`✓ Compendium ${packId} loaded and sent successfully`);
+          console.log(`Foundry API Bridge | Compendium ${packId} sent successfully`);
         }
       } catch (error) {
-        console.error(`Error auto-loading ${packId}:`, error);
+        console.error(`Foundry API Bridge | Error auto-loading ${packId}:`, error);
       }
     }
 
-    console.log('Auto-load complete');
+    console.log('Foundry API Bridge | Auto-load complete');
   }
 }
