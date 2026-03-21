@@ -58,7 +58,7 @@ import {
 import type { WorldData, CompendiumData, CompendiumMetadata } from '@/types/foundry';
 import { isDefaultOrEmptySettings } from '@/utils/validation';
 
-const MODULE_VERSION = '6.1.1';
+const MODULE_VERSION = '6.1.2';
 
 let updateLoop: UpdateLoop | null = null;
 let apiClient: ApiClient | null = null;
