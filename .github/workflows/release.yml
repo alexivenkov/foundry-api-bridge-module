@@ -66,22 +66,25 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish to Foundry VTT
+        env:
+          FOUNDRY_TOKEN: ${{ secrets.FOUNDRY_RELEASE_TOKEN }}
+          RELEASE_VERSION: ${{ steps.get_version.outputs.VERSION }}
         run: |
           curl -s -X POST \
             "https://api.foundryvtt.com/_api/packages/release_version/" \
             -H "Content-Type: application/json" \
-            -H "Authorization: ${{ secrets.FOUNDRY_RELEASE_TOKEN }}" \
-            -d '{
-              "id": "foundry-api-bridge",
-              "dry-run": false,
-              "release": {
-                "version": "${{ steps.get_version.outputs.VERSION }}",
-                "manifest": "https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge-module/master/dist/module.json",
-                "notes": "https://github.com/alexivenkov/foundry-api-bridge-module/releases/tag/v${{ steps.get_version.outputs.VERSION }}",
-                "compatibility": {
-                  "minimum": "11",
-                  "verified": "13",
-                  "maximum": "13"
+            -H "Authorization: ${FOUNDRY_TOKEN}" \
+            -d "{
+              \"id\": \"foundry-api-bridge\",
+              \"dry-run\": false,
+              \"release\": {
+                \"version\": \"${RELEASE_VERSION}\",
+                \"manifest\": \"https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge-module/master/dist/module.json\",
+                \"notes\": \"https://github.com/alexivenkov/foundry-api-bridge-module/releases/tag/v${RELEASE_VERSION}\",
+                \"compatibility\": {
+                  \"minimum\": \"11\",
+                  \"verified\": \"13\",
+                  \"maximum\": \"13\"
                 }
               }
-            }'
+            }"
