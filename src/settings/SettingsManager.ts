@@ -22,7 +22,7 @@ export function registerSettings(): void {
     scope: 'world',
     config: true,
     type: String,
-    default: 'http://localhost:3001',
+    default: 'https://foundry-mcp.com',
     requiresReload: true
   });
 
@@ -32,7 +32,7 @@ export function registerSettings(): void {
     scope: 'world',
     config: true,
     type: String,
-    default: 'ws://localhost:3001/ws',
+    default: 'wss://foundry-mcp.com/ws',
     requiresReload: true
   });
 

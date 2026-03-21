@@ -23,12 +23,8 @@ describe('isDefaultOrEmptySettings', () => {
     expect(isDefaultOrEmptySettings('https://foundry-mcp.com', 'wss://foundry-mcp.com/ws', '')).toBe(true);
   });
 
-  it('returns true when serverUrl is default localhost', () => {
-    expect(isDefaultOrEmptySettings('http://localhost:3001', 'wss://foundry-mcp.com/ws', 'pk_test')).toBe(true);
-  });
-
-  it('returns true when wsUrl is default localhost', () => {
-    expect(isDefaultOrEmptySettings('https://foundry-mcp.com', 'ws://localhost:3001/ws', 'pk_test')).toBe(true);
+  it('returns false with localhost URLs but valid apiKey', () => {
+    expect(isDefaultOrEmptySettings('http://localhost:3001', 'ws://localhost:3001/ws', 'pk_test')).toBe(false);
   });
 
   it('returns true when serverUrl is empty', () => {
@@ -43,7 +39,7 @@ describe('isDefaultOrEmptySettings', () => {
     expect(isDefaultOrEmptySettings('', '', '')).toBe(true);
   });
 
-  it('returns true when all settings are defaults', () => {
+  it('returns true when apiKey is empty even with URLs', () => {
     expect(isDefaultOrEmptySettings('http://localhost:3001', 'ws://localhost:3001/ws', '')).toBe(true);
   });
 
