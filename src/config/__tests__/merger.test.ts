@@ -92,6 +92,6 @@ describe('mergeWithDefaults', () => {
 
     const result = mergeWithDefaults(userConfig, DEFAULT_CONFIG);
 
-    expect(result.apiServer.updateInterval).toBe(5000);
+    expect(result.apiServer.updateInterval).toBe(30000);
   });
 });

@@ -5,7 +5,7 @@ export const WS_URL = 'ws://localhost:3001/ws';
 
 export const DEFAULT_CONFIG: ModuleConfig = {
   apiServer: {
-    updateInterval: 5000,
+    updateInterval: 30000,
     endpoints: {
       worldData: '/update',
       compendium: '/update-compendium'
