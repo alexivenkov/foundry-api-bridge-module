@@ -56,9 +56,10 @@ import {
   updateActorEffectHandler
 } from '@/commands';
 import type { WorldData, CompendiumData, CompendiumMetadata } from '@/types/foundry';
+import type { SessionInfo } from '@/api/ApiClient';
 import { isDefaultOrEmptySettings } from '@/utils/validation';
 
-const MODULE_VERSION = '6.3.0';
+const MODULE_VERSION = '6.4.0';
 
 let updateLoop: UpdateLoop | null = null;
 let apiClient: ApiClient | null = null;
@@ -66,6 +67,7 @@ let worldCollector: WorldDataCollector | null = null;
 let compendiumCollector: CompendiumCollector | null = null;
 let wsClient: WebSocketClient | null = null;
 let commandRouter: CommandRouter | null = null;
+let sessionInfo: SessionInfo | null = null;
 
 Hooks.once('init', () => {
   registerSettings();
@@ -105,6 +107,10 @@ Hooks.once('ready', () => {
     return;
   }
 
+  void initializeModule();
+});
+
+async function initializeModule(): Promise<void> {
   try {
     ConfigManager.initialize();
     const config = ConfigManager.getConfig();
@@ -122,6 +128,9 @@ Hooks.once('ready', () => {
     worldCollector = new WorldDataCollector();
     compendiumCollector = new CompendiumCollector();
 
+    sessionInfo = await apiClient.getSession();
+    console.log(`Foundry API Bridge | Session: tier=${sessionInfo.tier}, compendiums=${String(sessionInfo.features.compendiums)}`);
+
     if (config.features.periodicUpdates && config.features.collectWorldData) {
       updateLoop = new UpdateLoop(
         config.apiServer.updateInterval,
@@ -135,13 +144,17 @@ Hooks.once('ready', () => {
     console.log(`Foundry API Bridge | v${MODULE_VERSION} initialized`);
 
     if (config.features.autoLoadCompendium && config.compendium.autoLoad.length > 0) {
-      compendiumCollector.autoLoad(
-        config.compendium.autoLoad,
-        apiClient,
-        config.apiServer.endpoints.compendium
-      ).catch((error: unknown) => {
-        console.error('Foundry API Bridge | Error during auto-load:', error);
-      });
+      if (sessionInfo.features.compendiums) {
+        compendiumCollector.autoLoad(
+          config.compendium.autoLoad,
+          apiClient,
+          config.apiServer.endpoints.compendium
+        ).catch((error: unknown) => {
+          console.error('Foundry API Bridge | Error during auto-load:', error);
+        });
+      } else {
+        console.log('Foundry API Bridge | Compendium upload requires Adventurer tier or higher');
+      }
     }
 
     if (config.webSocket.enabled) {
@@ -151,7 +164,7 @@ Hooks.once('ready', () => {
   } catch (error: unknown) {
     console.error('Foundry API Bridge | Initialization failed:', error);
   }
-});
+}
 
 function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnectAttempts: number }, wsUrl: string, apiKey: string): void {
   commandRouter = new CommandRouter();
@@ -277,11 +290,19 @@ window.FoundryAPIBridge = {
   },
   sendCompendiumToServer: async (packId: string, packData: CompendiumData): Promise<void> => {
     if (!apiClient) throw new Error('Module not initialized');
+    if (!sessionInfo?.features.compendiums) {
+      if (ui.notifications) ui.notifications.warn('Foundry API Bridge | Compendium upload requires Adventurer tier or higher');
+      return;
+    }
     const config = ConfigManager.getConfig();
     await apiClient.sendCompendium(config.apiServer.endpoints.compendium, packId, packData);
   },
   loadAndSendCompendium: async (packId: string): Promise<void> => {
     if (!compendiumCollector || !apiClient) throw new Error('Module not initialized');
+    if (!sessionInfo?.features.compendiums) {
+      if (ui.notifications) ui.notifications.warn('Foundry API Bridge | Compendium upload requires Adventurer tier or higher');
+      return;
+    }
     const config = ConfigManager.getConfig();
     const packData = await compendiumCollector.loadContents(packId);
     if (packData) {
@@ -291,6 +312,10 @@ window.FoundryAPIBridge = {
   },
   autoLoadCompendium: async (): Promise<void> => {
     if (!compendiumCollector || !apiClient) throw new Error('Module not initialized');
+    if (!sessionInfo?.features.compendiums) {
+      if (ui.notifications) ui.notifications.warn('Foundry API Bridge | Compendium upload requires Adventurer tier or higher');
+      return;
+    }
     const config = ConfigManager.getConfig();
     await compendiumCollector.autoLoad(
       config.compendium.autoLoad,
@@ -298,6 +323,7 @@ window.FoundryAPIBridge = {
       config.apiServer.endpoints.compendium
     );
   },
+  getSession: (): SessionInfo | null => sessionInfo,
   API_SERVER_URL: '',
   UPDATE_INTERVAL: 0,
   AUTO_LOAD_COMPENDIUM: []

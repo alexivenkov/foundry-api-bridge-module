@@ -27,6 +27,14 @@ interface ClientSettings {
 }
 
 declare global {
+  interface SessionInfo {
+    tier: string;
+    features: {
+      compendiums: boolean;
+      commands: string[];
+    };
+  }
+
   interface Window {
     FoundryAPIBridge: {
       collectWorldData: () => WorldData;
@@ -38,6 +46,7 @@ declare global {
       sendCompendiumToServer: (packId: string, packData: CompendiumData) => Promise<void>;
       loadAndSendCompendium: (packId: string) => Promise<void>;
       autoLoadCompendium: () => Promise<void>;
+      getSession: () => SessionInfo | null;
       API_SERVER_URL: string;
       UPDATE_INTERVAL: number;
       AUTO_LOAD_COMPENDIUM: string[];

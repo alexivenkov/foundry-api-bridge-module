@@ -52,6 +52,14 @@
       <span class="compendium-counter" id="compendiumCounter">0 selected</span>
     </h2>
 
+    {{#unless compendiumsAllowed}}
+    <p class="section-description" style="color: #a04000; font-weight: 600;">
+      <i class="fas fa-lock"></i>
+      Compendium sync is available on Adventurer tier and above.
+      <a href="https://foundry-mcp.com/auth/patreon" target="_blank" style="color: #782e22;">Upgrade</a>
+    </p>
+    {{/unless}}
+
     <p class="section-description">
       <i class="fas fa-info-circle"></i>
       Select which compendium packs to automatically load and send to the API server when world is ready

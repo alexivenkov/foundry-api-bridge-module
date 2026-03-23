@@ -188,6 +188,161 @@ describe('ApiClient', () => {
     });
   });
 
+  describe('getSession', () => {
+    it('returns session info on success', async () => {
+      const clientWithKey = new ApiClient('http://localhost:3001', 'pk_test');
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({
+          tier: 'adventurer',
+          features: { compendiums: true, commands: ['roll-dice'] }
+        })
+      });
+
+      const session = await clientWithKey.getSession();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:3001/api/session',
+        { method: 'GET', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer pk_test' } }
+      );
+      expect(session.tier).toBe('adventurer');
+      expect(session.features.compendiums).toBe(true);
+    });
+
+    it('returns fallback on 401', async () => {
+      mockFetch.mockResolvedValue({ ok: false, status: 401 });
+
+      const session = await client.getSession();
+
+      expect(session.tier).toBe('unknown');
+      expect(session.features.compendiums).toBe(false);
+      expect(session.features.commands).toEqual([]);
+    });
+
+    it('returns fallback on network error', async () => {
+      mockFetch.mockRejectedValue(new Error('Network error'));
+
+      const session = await client.getSession();
+
+      expect(session.tier).toBe('unknown');
+      expect(session.features.compendiums).toBe(false);
+    });
+
+    it('returns fallback on 500', async () => {
+      mockFetch.mockResolvedValue({ ok: false, status: 500 });
+
+      const session = await client.getSession();
+
+      expect(session.tier).toBe('unknown');
+      expect(session.features.compendiums).toBe(false);
+    });
+
+    it('returns fallback when response has no features field', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ tier: 'free' })
+      });
+
+      const session = await client.getSession();
+
+      expect(session.tier).toBe('free');
+      expect(session.features.compendiums).toBe(false);
+      expect(session.features.commands).toEqual([]);
+    });
+
+    it('returns fallback when response has no tier field', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ features: { compendiums: true } })
+      });
+
+      const session = await client.getSession();
+
+      expect(session.tier).toBe('unknown');
+      expect(session.features.compendiums).toBe(true);
+    });
+
+    it('returns fallback when response is empty object', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({})
+      });
+
+      const session = await client.getSession();
+
+      expect(session.tier).toBe('unknown');
+      expect(session.features.compendiums).toBe(false);
+      expect(session.features.commands).toEqual([]);
+    });
+
+    it('returns fallback when features.compendiums is not boolean', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ tier: 'dm', features: { compendiums: 'yes', commands: [] } })
+      });
+
+      const session = await client.getSession();
+
+      expect(session.features.compendiums).toBe(false);
+    });
+
+    it('filters non-string values from commands array', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({
+          tier: 'dm',
+          features: { compendiums: true, commands: ['roll-dice', 123, null, 'get-combat-state'] }
+        })
+      });
+
+      const session = await client.getSession();
+
+      expect(session.features.commands).toEqual(['roll-dice', 'get-combat-state']);
+    });
+
+    it('handles features.commands not being an array', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({
+          tier: 'adventurer',
+          features: { compendiums: true, commands: 'not-array' }
+        })
+      });
+
+      const session = await client.getSession();
+
+      expect(session.features.commands).toEqual([]);
+    });
+
+    it('returns fallback when json() throws', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.reject(new Error('Invalid JSON'))
+      });
+
+      const session = await client.getSession();
+
+      expect(session.tier).toBe('unknown');
+      expect(session.features.compendiums).toBe(false);
+    });
+
+    it('returns free tier session correctly', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({
+          tier: 'free',
+          features: { compendiums: false, commands: ['get-combat-state'] }
+        })
+      });
+
+      const session = await client.getSession();
+
+      expect(session.tier).toBe('free');
+      expect(session.features.compendiums).toBe(false);
+      expect(session.features.commands).toEqual(['get-combat-state']);
+    });
+  });
+
   describe('ApiError', () => {
     it('has correct name and status', () => {
       const error = new ApiError('test', 429);
