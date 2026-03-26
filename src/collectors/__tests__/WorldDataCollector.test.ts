@@ -57,7 +57,11 @@ const mockGame = {
       folder: null,
       img: 'scene.jpg',
       width: 4000,
-      height: 3000
+      height: 3000,
+      grid: { size: 100, type: 1, units: 'ft', distance: 5 },
+      darkness: 0.5,
+      notes: { contents: [{ x: 100, y: 200, text: 'Secret door', label: 'Door', entryId: 'journal1' }] },
+      walls: { contents: [{ c: [0, 0, 100, 100], move: 20, sense: 20, door: 0 }] }
     }]
   ]),
   items: new Map([
@@ -174,7 +178,11 @@ describe('WorldDataCollector', () => {
       folder: null,
       img: 'scene.jpg',
       width: 4000,
-      height: 3000
+      height: 3000,
+      grid: { size: 100, type: 1, units: 'ft', distance: 5 },
+      darkness: 0.5,
+      notes: [{ x: 100, y: 200, text: 'Secret door', label: 'Door', entryId: 'journal1' }],
+      walls: [{ c: [0, 0, 100, 100], move: 20, sense: 20, door: 0 }]
     });
   });
 
@@ -205,6 +213,131 @@ describe('WorldDataCollector', () => {
       packageName: 'dnd5e',
       documentCount: 331
     });
+  });
+
+  it('collects scene with missing grid, notes, walls (defaults)', () => {
+    (global as Record<string, unknown>)['game'] = {
+      ...mockGame,
+      scenes: new Map([
+        ['bare', {
+          id: 'bare',
+          uuid: 'Scene.bare',
+          name: 'Bare Scene',
+          active: false,
+          folder: null
+        }]
+      ])
+    };
+
+    const data = collector.collect();
+
+    expect(data.scenes[0]).toEqual({
+      id: 'bare',
+      uuid: 'Scene.bare',
+      name: 'Bare Scene',
+      active: false,
+      folder: null,
+      img: '',
+      width: 0,
+      height: 0,
+      grid: { size: 100, type: 1, units: 'ft', distance: 5 },
+      darkness: 0,
+      notes: [],
+      walls: []
+    });
+  });
+
+  it('collects scene with empty notes and walls contents', () => {
+    (global as Record<string, unknown>)['game'] = {
+      ...mockGame,
+      scenes: new Map([
+        ['empty-collections', {
+          id: 'empty-collections',
+          uuid: 'Scene.empty',
+          name: 'Empty Collections Scene',
+          active: true,
+          folder: null,
+          img: 'bg.jpg',
+          width: 2000,
+          height: 1500,
+          grid: { size: 50, type: 2, units: 'm', distance: 1.5 },
+          darkness: 0.8,
+          notes: { contents: [] },
+          walls: { contents: [] }
+        }]
+      ])
+    };
+
+    const data = collector.collect();
+
+    expect(data.scenes[0]?.grid).toEqual({ size: 50, type: 2, units: 'm', distance: 1.5 });
+    expect(data.scenes[0]?.darkness).toBe(0.8);
+    expect(data.scenes[0]?.notes).toEqual([]);
+    expect(data.scenes[0]?.walls).toEqual([]);
+  });
+
+  it('collects scene note with null entryId', () => {
+    (global as Record<string, unknown>)['game'] = {
+      ...mockGame,
+      scenes: new Map([
+        ['noted', {
+          id: 'noted',
+          uuid: 'Scene.noted',
+          name: 'Noted Scene',
+          active: true,
+          folder: null,
+          img: 'bg.jpg',
+          width: 1000,
+          height: 1000,
+          grid: { size: 100, type: 1, units: 'ft', distance: 5 },
+          darkness: 0,
+          notes: { contents: [
+            { x: 10, y: 20, text: 'Unlinked note', label: 'Pin' },
+            { x: 30, y: 40 }
+          ] },
+          walls: { contents: [] }
+        }]
+      ])
+    };
+
+    const data = collector.collect();
+
+    expect(data.scenes[0]?.notes).toEqual([
+      { x: 10, y: 20, text: 'Unlinked note', label: 'Pin', entryId: null },
+      { x: 30, y: 40, text: '', label: '', entryId: null }
+    ]);
+  });
+
+  it('collects scene wall with missing properties (defaults to 0)', () => {
+    (global as Record<string, unknown>)['game'] = {
+      ...mockGame,
+      scenes: new Map([
+        ['walled', {
+          id: 'walled',
+          uuid: 'Scene.walled',
+          name: 'Walled Scene',
+          active: true,
+          folder: null,
+          img: 'bg.jpg',
+          width: 1000,
+          height: 1000,
+          grid: { size: 100, type: 1, units: 'ft', distance: 5 },
+          darkness: 0,
+          notes: { contents: [] },
+          walls: { contents: [
+            { c: [0, 0, 100, 100] },
+            {}
+          ] }
+        }]
+      ])
+    };
+
+    const data = collector.collect();
+
+    expect(data.scenes[0]?.walls).toEqual([
+      { c: [0, 0, 100, 100], move: 0, sense: 0, door: 0 },
+      { c: [], move: 0, sense: 0, door: 0 }
+    ]);
   });
 
   it('handles empty collections', () => {

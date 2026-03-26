@@ -63,6 +63,13 @@ export {
   deleteActorItemHandler
 } from '@/commands/handlers/item';
 
+// Scene handlers
+export {
+  getSceneHandler,
+  getScenesListHandler,
+  activateSceneHandler
+} from '@/commands/handlers/scene';
+
 // Effect handlers
 export {
   getActorEffectsHandler,

@@ -61,7 +61,10 @@ export type CommandType =
   | 'toggle-actor-status'
   | 'add-actor-effect'
   | 'remove-actor-effect'
-  | 'update-actor-effect';
+  | 'update-actor-effect'
+  | 'get-scene'
+  | 'get-scenes-list'
+  | 'activate-scene';
 
 export interface RollDiceParams {
   formula: string;
@@ -611,6 +614,71 @@ export interface UpdateEffectResult {
   name: string;
 }
 
+// Scene Commands
+export interface GetSceneParams {
+  sceneId?: string;
+}
+
+export type GetScenesListParams = Record<string, never>;
+
+export interface ActivateSceneParams {
+  sceneId: string;
+}
+
+// Scene Results
+export interface SceneGridResult {
+  size: number;
+  type: number;
+  units: string;
+  distance: number;
+}
+
+export interface SceneNoteResult {
+  x: number;
+  y: number;
+  text: string;
+  label: string;
+  entryId: string | null;
+}
+
+export interface SceneWallResult {
+  c: number[];
+  move: number;
+  sense: number;
+  door: number;
+}
+
+export interface SceneDetailResult {
+  id: string;
+  name: string;
+  active: boolean;
+  img: string;
+  width: number;
+  height: number;
+  grid: SceneGridResult;
+  darkness: number;
+  notes: SceneNoteResult[];
+  walls: SceneWallResult[];
+  tokenCount: number;
+}
+
+export interface SceneSummaryResult {
+  id: string;
+  name: string;
+  active: boolean;
+  img: string;
+}
+
+export interface SceneListResult {
+  scenes: SceneSummaryResult[];
+}
+
+export interface ActivateSceneResult {
+  id: string;
+  name: string;
+  active: boolean;
+}
+
 export type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
 
 export const ABILITY_KEYS: readonly AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
@@ -670,6 +738,9 @@ export interface CommandParamsMap {
   'add-actor-effect': AddActorEffectParams;
   'remove-actor-effect': RemoveActorEffectParams;
   'update-actor-effect': UpdateActorEffectParams;
+  'get-scene': GetSceneParams;
+  'get-scenes-list': GetScenesListParams;
+  'activate-scene': ActivateSceneParams;
 }
 
 export interface CommandResultMap {
@@ -723,4 +794,7 @@ export interface CommandResultMap {
   'add-actor-effect': AddEffectResult;
   'remove-actor-effect': RemoveEffectResult;
   'update-actor-effect': UpdateEffectResult;
+  'get-scene': SceneDetailResult;
+  'get-scenes-list': SceneListResult;
+  'activate-scene': ActivateSceneResult;
 }

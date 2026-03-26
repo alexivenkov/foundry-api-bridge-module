@@ -112,6 +112,32 @@ export class WorldDataCollector {
 
     game.scenes.forEach(scene => {
       const sceneAny = scene as unknown as Record<string, unknown>;
+
+      const gridRaw = sceneAny['grid'] as Record<string, unknown> | undefined;
+      const grid = {
+        size: (gridRaw?.['size'] as number) ?? 100,
+        type: (gridRaw?.['type'] as number) ?? 1,
+        units: (gridRaw?.['units'] as string) ?? 'ft',
+        distance: (gridRaw?.['distance'] as number) ?? 5
+      };
+
+      const notesRaw = sceneAny['notes'] as { contents?: Array<Record<string, unknown>> } | undefined;
+      const notes = (notesRaw?.contents ?? []).map(note => ({
+        x: (note['x'] as number) ?? 0,
+        y: (note['y'] as number) ?? 0,
+        text: (note['text'] as string) ?? '',
+        label: (note['label'] as string) ?? '',
+        entryId: (note['entryId'] as string | undefined) ?? null
+      }));
+
+      const wallsRaw = sceneAny['walls'] as { contents?: Array<Record<string, unknown>> } | undefined;
+      const walls = (wallsRaw?.contents ?? []).map(wall => ({
+        c: (wall['c'] as number[]) ?? [],
+        move: (wall['move'] as number) ?? 0,
+        sense: (wall['sense'] as number) ?? 0,
+        door: (wall['door'] as number) ?? 0
+      }));
+
       scenes.push({
         id: scene.id,
         uuid: scene.uuid,
@@ -120,7 +146,11 @@ export class WorldDataCollector {
         folder: (scene.folder?.name) ?? null,
         img: (sceneAny['img'] as string | undefined) ?? '',
         width: (sceneAny['width'] as number | undefined) ?? 0,
-        height: (sceneAny['height'] as number | undefined) ?? 0
+        height: (sceneAny['height'] as number | undefined) ?? 0,
+        grid,
+        darkness: (sceneAny['darkness'] as number | undefined) ?? 0,
+        notes,
+        walls
       });
     });
 

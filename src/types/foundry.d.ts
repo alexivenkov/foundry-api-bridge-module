@@ -115,6 +115,10 @@ export interface SceneData {
   img: string;
   width: number;
   height: number;
+  grid: { size: number; type: number; units: string; distance: number };
+  darkness: number;
+  notes: { x: number; y: number; text: string; label: string; entryId: string | null }[];
+  walls: { c: number[]; move: number; sense: number; door: number }[];
 }
 
 export interface ItemData {
