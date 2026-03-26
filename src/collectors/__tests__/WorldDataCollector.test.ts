@@ -61,7 +61,11 @@ const mockGame = {
       grid: { size: 100, type: 1, units: 'ft', distance: 5 },
       darkness: 0.5,
       notes: { contents: [{ x: 100, y: 200, text: 'Secret door', label: 'Door', entryId: 'journal1' }] },
-      walls: { contents: [{ c: [0, 0, 100, 100], move: 20, sense: 20, door: 0 }] }
+      walls: { contents: [{ c: [0, 0, 100, 100], move: 20, sense: 20, door: 0 }] },
+      lights: { contents: [{ x: 500, y: 500, config: { bright: 30, dim: 60, color: '#ff9900', angle: 360 }, walls: true, hidden: false }] },
+      tiles: { contents: [{ x: 200, y: 300, width: 100, height: 100, texture: { src: 'tiles/table.png' }, hidden: false, elevation: 0, rotation: 0 }] },
+      drawings: { contents: [{ x: 400, y: 400, shape: { type: 'r', width: 200, height: 100, points: [] }, text: 'Area', hidden: false, fillColor: '#00ff00', strokeColor: '#000000' }] },
+      regions: { contents: [{ id: 'region1', name: 'Trap Zone', color: '#ff0000', shapes: [{ type: 'rectangle' }] }] }
     }]
   ]),
   items: new Map([
@@ -182,7 +186,11 @@ describe('WorldDataCollector', () => {
       grid: { size: 100, type: 1, units: 'ft', distance: 5 },
       darkness: 0.5,
       notes: [{ x: 100, y: 200, text: 'Secret door', label: 'Door', entryId: 'journal1' }],
-      walls: [{ c: [0, 0, 100, 100], move: 20, sense: 20, door: 0 }]
+      walls: [{ c: [0, 0, 100, 100], move: 20, sense: 20, door: 0 }],
+      lights: [{ x: 500, y: 500, bright: 30, dim: 60, color: '#ff9900', angle: 360, walls: true, hidden: false }],
+      tiles: [{ x: 200, y: 300, width: 100, height: 100, img: 'tiles/table.png', hidden: false, elevation: 0, rotation: 0 }],
+      drawings: [{ x: 400, y: 400, shape: { type: 'r', width: 200, height: 100, points: [] }, text: 'Area', hidden: false, fillColor: '#00ff00', strokeColor: '#000000' }],
+      regions: [{ id: 'region1', name: 'Trap Zone', color: '#ff0000', shapes: [{ type: 'rectangle' }] }]
     });
   });
 
@@ -243,11 +251,15 @@ describe('WorldDataCollector', () => {
       grid: { size: 100, type: 1, units: 'ft', distance: 5 },
       darkness: 0,
       notes: [],
-      walls: []
+      walls: [],
+      lights: [],
+      tiles: [],
+      drawings: [],
+      regions: []
     });
   });
 
-  it('collects scene with empty notes and walls contents', () => {
+  it('collects scene with empty collection contents', () => {
     (global as Record<string, unknown>)['game'] = {
       ...mockGame,
       scenes: new Map([
@@ -263,7 +275,11 @@ describe('WorldDataCollector', () => {
           grid: { size: 50, type: 2, units: 'm', distance: 1.5 },
           darkness: 0.8,
           notes: { contents: [] },
-          walls: { contents: [] }
+          walls: { contents: [] },
+          lights: { contents: [] },
+          tiles: { contents: [] },
+          drawings: { contents: [] },
+          regions: { contents: [] }
         }]
       ])
     };
@@ -274,6 +290,10 @@ describe('WorldDataCollector', () => {
     expect(data.scenes[0]?.darkness).toBe(0.8);
     expect(data.scenes[0]?.notes).toEqual([]);
     expect(data.scenes[0]?.walls).toEqual([]);
+    expect(data.scenes[0]?.lights).toEqual([]);
+    expect(data.scenes[0]?.tiles).toEqual([]);
+    expect(data.scenes[0]?.drawings).toEqual([]);
+    expect(data.scenes[0]?.regions).toEqual([]);
   });
 
   it('collects scene note with null entryId', () => {

@@ -648,6 +648,58 @@ export interface SceneWallResult {
   door: number;
 }
 
+export interface SceneLightResult {
+  x: number;
+  y: number;
+  bright: number;
+  dim: number;
+  color: string | null;
+  angle: number;
+  walls: boolean;
+  hidden: boolean;
+}
+
+export interface SceneTileResult {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  img: string;
+  hidden: boolean;
+  elevation: number;
+  rotation: number;
+}
+
+export interface SceneDrawingResult {
+  x: number;
+  y: number;
+  shape: { type: string; width: number; height: number; points: number[] };
+  text: string;
+  hidden: boolean;
+  fillColor: string | null;
+  strokeColor: string | null;
+}
+
+export interface SceneRegionResult {
+  id: string;
+  name: string;
+  color: string | null;
+  shapes: { type: string }[];
+}
+
+export interface SceneTokenSummary {
+  id: string;
+  name: string;
+  actorId: string | null;
+  gridX: number;
+  gridY: number;
+  x: number;
+  y: number;
+  elevation: number;
+  hidden: boolean;
+  disposition: number;
+}
+
 export interface SceneDetailResult {
   id: string;
   name: string;
@@ -659,7 +711,11 @@ export interface SceneDetailResult {
   darkness: number;
   notes: SceneNoteResult[];
   walls: SceneWallResult[];
-  tokenCount: number;
+  lights: SceneLightResult[];
+  tiles: SceneTileResult[];
+  drawings: SceneDrawingResult[];
+  regions: SceneRegionResult[];
+  tokens: SceneTokenSummary[];
 }
 
 export interface SceneSummaryResult {

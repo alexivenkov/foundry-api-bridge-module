@@ -138,6 +138,66 @@ export class WorldDataCollector {
         door: (wall['door'] as number) ?? 0
       }));
 
+      const lightsRaw = sceneAny['lights'] as { contents?: Array<Record<string, unknown>> } | undefined;
+      const lights = (lightsRaw?.contents ?? []).map(light => {
+        const config = light['config'] as Record<string, unknown> | undefined;
+        return {
+          x: (light['x'] as number) ?? 0,
+          y: (light['y'] as number) ?? 0,
+          bright: (config?.['bright'] as number) ?? 0,
+          dim: (config?.['dim'] as number) ?? 0,
+          color: (config?.['color'] as string | undefined) ?? null,
+          angle: (config?.['angle'] as number) ?? 360,
+          walls: (light['walls'] as boolean | undefined) ?? true,
+          hidden: (light['hidden'] as boolean | undefined) ?? false
+        };
+      });
+
+      const tilesRaw = sceneAny['tiles'] as { contents?: Array<Record<string, unknown>> } | undefined;
+      const tiles = (tilesRaw?.contents ?? []).map(tile => {
+        const texture = tile['texture'] as Record<string, unknown> | undefined;
+        return {
+          x: (tile['x'] as number) ?? 0,
+          y: (tile['y'] as number) ?? 0,
+          width: (tile['width'] as number) ?? 0,
+          height: (tile['height'] as number) ?? 0,
+          img: (texture?.['src'] as string | undefined) ?? '',
+          hidden: (tile['hidden'] as boolean | undefined) ?? false,
+          elevation: (tile['elevation'] as number) ?? 0,
+          rotation: (tile['rotation'] as number) ?? 0
+        };
+      });
+
+      const drawingsRaw = sceneAny['drawings'] as { contents?: Array<Record<string, unknown>> } | undefined;
+      const drawings = (drawingsRaw?.contents ?? []).map(drawing => {
+        const shape = drawing['shape'] as Record<string, unknown> | undefined;
+        return {
+          x: (drawing['x'] as number) ?? 0,
+          y: (drawing['y'] as number) ?? 0,
+          shape: {
+            type: (shape?.['type'] as string) ?? '',
+            width: (shape?.['width'] as number) ?? 0,
+            height: (shape?.['height'] as number) ?? 0,
+            points: (shape?.['points'] as number[]) ?? []
+          },
+          text: (drawing['text'] as string | undefined) ?? '',
+          hidden: (drawing['hidden'] as boolean | undefined) ?? false,
+          fillColor: (drawing['fillColor'] as string | undefined) ?? null,
+          strokeColor: (drawing['strokeColor'] as string | undefined) ?? null
+        };
+      });
+
+      const regionsRaw = sceneAny['regions'] as { contents?: Array<Record<string, unknown>> } | undefined;
+      const regions = (regionsRaw?.contents ?? []).map(region => {
+        const shapes = region['shapes'] as Array<Record<string, unknown>> | undefined;
+        return {
+          id: (region['id'] as string) ?? '',
+          name: (region['name'] as string) ?? '',
+          color: (region['color'] as string | undefined) ?? null,
+          shapes: (shapes ?? []).map(s => ({ type: (s['type'] as string) ?? '' }))
+        };
+      });
+
       scenes.push({
         id: scene.id,
         uuid: scene.uuid,
@@ -150,7 +210,11 @@ export class WorldDataCollector {
         grid,
         darkness: (sceneAny['darkness'] as number | undefined) ?? 0,
         notes,
-        walls
+        walls,
+        lights,
+        tiles,
+        drawings,
+        regions
       });
     });
 

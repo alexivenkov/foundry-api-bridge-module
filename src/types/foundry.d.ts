@@ -119,6 +119,10 @@ export interface SceneData {
   darkness: number;
   notes: { x: number; y: number; text: string; label: string; entryId: string | null }[];
   walls: { c: number[]; move: number; sense: number; door: number }[];
+  lights: { x: number; y: number; bright: number; dim: number; color: string | null; angle: number; walls: boolean; hidden: boolean }[];
+  tiles: { x: number; y: number; width: number; height: number; img: string; hidden: boolean; elevation: number; rotation: number }[];
+  drawings: { x: number; y: number; shape: { type: string; width: number; height: number; points: number[] }; text: string; hidden: boolean; fillColor: string | null; strokeColor: string | null }[];
+  regions: { id: string; name: string; color: string | null; shapes: { type: string }[] }[];
 }
 
 export interface ItemData {

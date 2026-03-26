@@ -17,6 +17,53 @@ interface MockWall {
   door: number;
 }
 
+interface MockLight {
+  x: number;
+  y: number;
+  config: { bright: number; dim: number; color: string | null; angle: number };
+  walls: boolean;
+  hidden: boolean;
+}
+
+interface MockTile {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  texture: { src: string };
+  hidden: boolean;
+  elevation: number;
+  rotation: number;
+}
+
+interface MockDrawing {
+  x: number;
+  y: number;
+  shape: { type: string; width: number; height: number; points: number[] };
+  text: string;
+  hidden: boolean;
+  fillColor: string | null;
+  strokeColor: string | null;
+}
+
+interface MockRegion {
+  id: string;
+  name: string;
+  color: string | null;
+  shapes: { type: string }[];
+}
+
+interface MockToken {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  elevation: number;
+  hidden: boolean;
+  disposition: number;
+  actor: { id: string } | null;
+}
+
 interface MockScene {
   id: string;
   name: string;
@@ -28,7 +75,11 @@ interface MockScene {
   darkness: number;
   notes: { contents: MockNote[] };
   walls: { contents: MockWall[] };
-  tokens: { contents: { id: string }[] };
+  lights: { contents: MockLight[] };
+  tiles: { contents: MockTile[] };
+  drawings: { contents: MockDrawing[] };
+  regions: { contents: MockRegion[] };
+  tokens: { contents: MockToken[] };
   activate: jest.Mock;
 }
 
@@ -49,6 +100,58 @@ const createMockWall = (overrides: Partial<MockWall> = {}): MockWall => ({
   ...overrides
 });
 
+const createMockLight = (overrides: Partial<MockLight> = {}): MockLight => ({
+  x: 500,
+  y: 500,
+  config: { bright: 30, dim: 60, color: '#ff9900', angle: 360 },
+  walls: true,
+  hidden: false,
+  ...overrides
+});
+
+const createMockTile = (overrides: Partial<MockTile> = {}): MockTile => ({
+  x: 200,
+  y: 300,
+  width: 100,
+  height: 100,
+  texture: { src: 'tiles/table.png' },
+  hidden: false,
+  elevation: 0,
+  rotation: 0,
+  ...overrides
+});
+
+const createMockDrawing = (overrides: Partial<MockDrawing> = {}): MockDrawing => ({
+  x: 400,
+  y: 400,
+  shape: { type: 'r', width: 200, height: 100, points: [] },
+  text: '',
+  hidden: false,
+  fillColor: '#00ff00',
+  strokeColor: '#000000',
+  ...overrides
+});
+
+const createMockRegion = (overrides: Partial<MockRegion> = {}): MockRegion => ({
+  id: 'region-1',
+  name: 'Trap Zone',
+  color: '#ff0000',
+  shapes: [{ type: 'rectangle' }],
+  ...overrides
+});
+
+const createMockToken = (overrides: Partial<MockToken> = {}): MockToken => ({
+  id: 'token-1',
+  name: 'Goblin',
+  x: 250,
+  y: 350,
+  elevation: 0,
+  hidden: false,
+  disposition: -1,
+  actor: { id: 'actor-1' },
+  ...overrides
+});
+
 const createMockScene = (overrides: Partial<MockScene> = {}): MockScene => ({
   id: 'scene-123',
   name: 'Test Scene',
@@ -60,7 +163,11 @@ const createMockScene = (overrides: Partial<MockScene> = {}): MockScene => ({
   darkness: 0.3,
   notes: { contents: [createMockNote()] },
   walls: { contents: [createMockWall()] },
-  tokens: { contents: [{ id: 'token-1' }, { id: 'token-2' }] },
+  lights: { contents: [createMockLight()] },
+  tiles: { contents: [createMockTile()] },
+  drawings: { contents: [createMockDrawing()] },
+  regions: { contents: [createMockRegion()] },
+  tokens: { contents: [createMockToken(), createMockToken({ id: 'token-2', name: 'Fighter', x: 500, y: 500, disposition: 1, actor: { id: 'actor-2' } })] },
   activate: jest.fn().mockResolvedValue(undefined),
   ...overrides
 });
@@ -105,7 +212,14 @@ describe('Scene Handlers', () => {
         darkness: 0.3,
         notes: [{ x: 100, y: 200, text: 'A mysterious door', label: 'Door', entryId: 'journal-123' }],
         walls: [{ c: [0, 0, 100, 100], move: 20, sense: 20, door: 0 }],
-        tokenCount: 2
+        lights: [{ x: 500, y: 500, bright: 30, dim: 60, color: '#ff9900', angle: 360, walls: true, hidden: false }],
+        tiles: [{ x: 200, y: 300, width: 100, height: 100, img: 'tiles/table.png', hidden: false, elevation: 0, rotation: 0 }],
+        drawings: [{ x: 400, y: 400, shape: { type: 'r', width: 200, height: 100, points: [] }, text: '', hidden: false, fillColor: '#00ff00', strokeColor: '#000000' }],
+        regions: [{ id: 'region-1', name: 'Trap Zone', color: '#ff0000', shapes: [{ type: 'rectangle' }] }],
+        tokens: [
+          { id: 'token-1', name: 'Goblin', actorId: 'actor-1', gridX: 2, gridY: 3, x: 250, y: 350, elevation: 0, hidden: false, disposition: -1 },
+          { id: 'token-2', name: 'Fighter', actorId: 'actor-2', gridX: 5, gridY: 5, x: 500, y: 500, elevation: 0, hidden: false, disposition: 1 }
+        ]
       });
     });
 
@@ -133,10 +247,14 @@ describe('Scene Handlers', () => {
         .rejects.toThrow('Scene not found: nonexistent');
     });
 
-    it('handles scene with empty notes and walls', async () => {
+    it('handles scene with empty collections', async () => {
       const mockScene = createMockScene({
         notes: { contents: [] },
         walls: { contents: [] },
+        lights: { contents: [] },
+        tiles: { contents: [] },
+        drawings: { contents: [] },
+        regions: { contents: [] },
         tokens: { contents: [] }
       });
       mockGame.scenes.active = mockScene;
@@ -145,7 +263,11 @@ describe('Scene Handlers', () => {
 
       expect(result.notes).toEqual([]);
       expect(result.walls).toEqual([]);
-      expect(result.tokenCount).toBe(0);
+      expect(result.lights).toEqual([]);
+      expect(result.tiles).toEqual([]);
+      expect(result.drawings).toEqual([]);
+      expect(result.regions).toEqual([]);
+      expect(result.tokens).toEqual([]);
     });
 
     it('includes multiple notes and walls', async () => {
@@ -212,6 +334,10 @@ describe('Scene Handlers', () => {
         darkness: undefined,
         notes: undefined,
         walls: undefined,
+        lights: undefined,
+        tiles: undefined,
+        drawings: undefined,
+        regions: undefined,
         tokens: undefined,
         activate: jest.fn()
       } as unknown as MockScene;
@@ -226,7 +352,11 @@ describe('Scene Handlers', () => {
       expect(result.darkness).toBe(0);
       expect(result.notes).toEqual([]);
       expect(result.walls).toEqual([]);
-      expect(result.tokenCount).toBe(0);
+      expect(result.lights).toEqual([]);
+      expect(result.tiles).toEqual([]);
+      expect(result.drawings).toEqual([]);
+      expect(result.regions).toEqual([]);
+      expect(result.tokens).toEqual([]);
     });
 
     it('handles null notes and walls collections', async () => {
@@ -241,6 +371,10 @@ describe('Scene Handlers', () => {
         darkness: 0,
         notes: null,
         walls: null,
+        lights: null,
+        tiles: null,
+        drawings: null,
+        regions: null,
         tokens: null,
         activate: jest.fn()
       } as unknown as MockScene;
@@ -250,7 +384,11 @@ describe('Scene Handlers', () => {
 
       expect(result.notes).toEqual([]);
       expect(result.walls).toEqual([]);
-      expect(result.tokenCount).toBe(0);
+      expect(result.lights).toEqual([]);
+      expect(result.tiles).toEqual([]);
+      expect(result.drawings).toEqual([]);
+      expect(result.regions).toEqual([]);
+      expect(result.tokens).toEqual([]);
     });
 
     it('handles note with null entryId (unlinked note)', async () => {
@@ -388,7 +526,7 @@ describe('Scene Handlers', () => {
 
     it('handles scene with undefined img', async () => {
       const scene = createMockScene();
-      (scene as Record<string, unknown>).img = undefined;
+      (scene as unknown as Record<string, unknown>)['img'] = undefined;
       mockGame.scenes.forEach.mockImplementation((fn: (scene: MockScene) => void) => fn(scene));
 
       const result = await getScenesListHandler({} as Record<string, never>);
@@ -417,6 +555,116 @@ describe('Scene Handlers', () => {
 
       const summary = result.scenes[0];
       expect(Object.keys(summary ?? {})).toEqual(['id', 'name', 'active', 'img']);
+    });
+  });
+
+  describe('getSceneHandler - lights, tiles, drawings, regions, tokens', () => {
+    it('maps lights with config', async () => {
+      const mockScene = createMockScene({
+        lights: { contents: [
+          createMockLight({ x: 100, y: 200, config: { bright: 20, dim: 40, color: '#ffffff', angle: 90 }, walls: false, hidden: true })
+        ] }
+      });
+      mockGame.scenes.active = mockScene;
+
+      const result = await getSceneHandler({});
+
+      expect(result.lights[0]).toEqual({ x: 100, y: 200, bright: 20, dim: 40, color: '#ffffff', angle: 90, walls: false, hidden: true });
+    });
+
+    it('maps tiles with texture', async () => {
+      const mockScene = createMockScene({
+        tiles: { contents: [
+          createMockTile({ x: 0, y: 0, width: 512, height: 512, texture: { src: 'tiles/chest.png' }, elevation: 5, rotation: 45 })
+        ] }
+      });
+      mockGame.scenes.active = mockScene;
+
+      const result = await getSceneHandler({});
+
+      expect(result.tiles[0]).toEqual({ x: 0, y: 0, width: 512, height: 512, img: 'tiles/chest.png', hidden: false, elevation: 5, rotation: 45 });
+    });
+
+    it('maps drawings with shape', async () => {
+      const mockScene = createMockScene({
+        drawings: { contents: [
+          createMockDrawing({ shape: { type: 'p', width: 0, height: 0, points: [0, 0, 100, 0, 100, 100] }, text: 'Triangle' })
+        ] }
+      });
+      mockGame.scenes.active = mockScene;
+
+      const result = await getSceneHandler({});
+
+      expect(result.drawings[0]?.shape.type).toBe('p');
+      expect(result.drawings[0]?.shape.points).toEqual([0, 0, 100, 0, 100, 100]);
+      expect(result.drawings[0]?.text).toBe('Triangle');
+    });
+
+    it('maps regions with shapes', async () => {
+      const mockScene = createMockScene({
+        regions: { contents: [
+          createMockRegion({ id: 'r1', name: 'Throne Room', shapes: [{ type: 'rectangle' }, { type: 'circle' }] })
+        ] }
+      });
+      mockGame.scenes.active = mockScene;
+
+      const result = await getSceneHandler({});
+
+      expect(result.regions[0]).toEqual({ id: 'r1', name: 'Throne Room', color: '#ff0000', shapes: [{ type: 'rectangle' }, { type: 'circle' }] });
+    });
+
+    it('converts token pixel positions to grid coordinates', async () => {
+      const mockScene = createMockScene({
+        grid: { size: 100, type: 1, units: 'ft', distance: 5 },
+        tokens: { contents: [
+          createMockToken({ id: 't1', x: 250, y: 350 }),
+          createMockToken({ id: 't2', x: 0, y: 0 }),
+          createMockToken({ id: 't3', x: 99, y: 199 })
+        ] }
+      });
+      mockGame.scenes.active = mockScene;
+
+      const result = await getSceneHandler({});
+
+      expect(result.tokens[0]).toMatchObject({ id: 't1', gridX: 2, gridY: 3 });
+      expect(result.tokens[1]).toMatchObject({ id: 't2', gridX: 0, gridY: 0 });
+      expect(result.tokens[2]).toMatchObject({ id: 't3', gridX: 0, gridY: 1 });
+    });
+
+    it('includes token actorId, disposition, hidden', async () => {
+      const mockScene = createMockScene({
+        tokens: { contents: [
+          createMockToken({ actor: { id: 'actor-abc' }, disposition: 1, hidden: true })
+        ] }
+      });
+      mockGame.scenes.active = mockScene;
+
+      const result = await getSceneHandler({});
+
+      expect(result.tokens[0]).toMatchObject({ actorId: 'actor-abc', disposition: 1, hidden: true });
+    });
+
+    it('handles token with null actor', async () => {
+      const mockScene = createMockScene({
+        tokens: { contents: [createMockToken({ actor: null })] }
+      });
+      mockGame.scenes.active = mockScene;
+
+      const result = await getSceneHandler({});
+
+      expect(result.tokens[0]?.actorId).toBeNull();
+    });
+
+    it('uses grid size for grid coordinate calculation', async () => {
+      const mockScene = createMockScene({
+        grid: { size: 50, type: 1, units: 'ft', distance: 5 },
+        tokens: { contents: [createMockToken({ x: 150, y: 250 })] }
+      });
+      mockGame.scenes.active = mockScene;
+
+      const result = await getSceneHandler({});
+
+      expect(result.tokens[0]).toMatchObject({ gridX: 3, gridY: 5 });
     });
   });
 
