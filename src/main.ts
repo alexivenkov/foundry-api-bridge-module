@@ -48,6 +48,7 @@ import {
   activateSceneHandler,
   getActorItemsHandler,
   useItemHandler,
+  activateItemHandler,
   addItemToActorHandler,
   addItemFromCompendiumHandler,
   updateActorItemHandler,
@@ -212,6 +213,7 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
   commandRouter.register('activate-scene', activateSceneHandler);
   commandRouter.register('get-actor-items', getActorItemsHandler);
   commandRouter.register('use-item', useItemHandler);
+  commandRouter.register('activate-item', activateItemHandler);
   commandRouter.register('add-item-to-actor', addItemToActorHandler);
   commandRouter.register('add-item-from-compendium', addItemFromCompendiumHandler);
   commandRouter.register('update-actor-item', updateActorItemHandler);

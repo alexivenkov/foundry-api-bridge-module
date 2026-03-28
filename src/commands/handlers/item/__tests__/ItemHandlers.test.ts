@@ -411,6 +411,223 @@ describe('useItemHandler', () => {
   });
 });
 
+import { activateItemHandler } from '../ActivateItemHandler';
+
+const mockTargetToken1 = { setTarget: jest.fn() };
+const mockTargetToken2 = { setTarget: jest.fn() };
+const mockExistingTarget = { setTarget: jest.fn() };
+
+const mockCanvas = {
+  tokens: {
+    get: jest.fn()
+  }
+};
+
+const mockUser = {
+  targets: new Set<{ setTarget: jest.Mock }>()
+};
+
+describe('activateItemHandler', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUser.targets.clear();
+    (globalThis as Record<string, unknown>)['game'] = { ...mockGame, user: mockUser };
+    (globalThis as Record<string, unknown>)['canvas'] = mockCanvas;
+    mockGame.actors.get.mockReturnValue(mockActor);
+    mockActor.items.get.mockReturnValue(mockWeapon);
+    mockActivitiesCollection.contents = [mockActivity];
+    mockActivitiesCollection.get.mockReturnValue(undefined);
+    mockActivitiesCollection.find.mockReturnValue(undefined);
+  });
+
+  it('calls activity.use() with no arguments', async () => {
+    mockActivity.use.mockResolvedValue(null);
+
+    const result = await activateItemHandler({
+      actorId: 'actor-123',
+      itemId: 'weapon-123'
+    });
+
+    expect(mockActivity.use).toHaveBeenCalledWith();
+    expect(result).toEqual({
+      itemId: 'weapon-123',
+      itemName: 'Longsword',
+      itemType: 'weapon',
+      activityUsed: { id: 'activity-123', name: 'Attack', type: 'attack' },
+      activated: true,
+      targetsSet: 0
+    });
+  });
+
+  it('calls activity.use() by specific activity ID', async () => {
+    mockActivitiesCollection.get.mockReturnValue(mockActivity);
+    mockActivity.use.mockResolvedValue(null);
+
+    await activateItemHandler({
+      actorId: 'actor-123',
+      itemId: 'weapon-123',
+      activityId: 'activity-123'
+    });
+
+    expect(mockActivitiesCollection.get).toHaveBeenCalledWith('activity-123');
+    expect(mockActivity.use).toHaveBeenCalledWith();
+  });
+
+  it('calls activity.use() by activity type', async () => {
+    mockActivitiesCollection.find.mockReturnValue(mockActivity);
+    mockActivity.use.mockResolvedValue(null);
+
+    await activateItemHandler({
+      actorId: 'actor-123',
+      itemId: 'weapon-123',
+      activityType: 'attack'
+    });
+
+    expect(mockActivitiesCollection.find).toHaveBeenCalled();
+    expect(mockActivity.use).toHaveBeenCalledWith();
+  });
+
+  it('falls back to item.use() when no activities exist', async () => {
+    mockActivitiesCollection.contents = [];
+    mockWeapon.use.mockResolvedValue(null);
+
+    const result = await activateItemHandler({
+      actorId: 'actor-123',
+      itemId: 'weapon-123'
+    });
+
+    expect(mockWeapon.use).toHaveBeenCalledWith();
+    expect(result).toEqual({
+      itemId: 'weapon-123',
+      itemName: 'Longsword',
+      itemType: 'weapon',
+      activated: true,
+      targetsSet: 0
+    });
+  });
+
+  it('sets targets before calling use()', async () => {
+    mockCanvas.tokens.get.mockImplementation((id: string) => {
+      if (id === 'target-1') return mockTargetToken1;
+      if (id === 'target-2') return mockTargetToken2;
+      return undefined;
+    });
+    mockActivity.use.mockResolvedValue(null);
+
+    const result = await activateItemHandler({
+      actorId: 'actor-123',
+      itemId: 'weapon-123',
+      targetTokenIds: ['target-1', 'target-2']
+    });
+
+    expect(mockTargetToken1.setTarget).toHaveBeenCalledWith(true, { user: mockUser, releaseOthers: false });
+    expect(mockTargetToken2.setTarget).toHaveBeenCalledWith(true, { user: mockUser, releaseOthers: false });
+    expect(result.targetsSet).toBe(2);
+    expect(mockActivity.use).toHaveBeenCalledWith();
+  });
+
+  it('clears existing targets before setting new ones', async () => {
+    mockUser.targets.add(mockExistingTarget);
+    mockCanvas.tokens.get.mockReturnValue(mockTargetToken1);
+    mockActivity.use.mockResolvedValue(null);
+
+    await activateItemHandler({
+      actorId: 'actor-123',
+      itemId: 'weapon-123',
+      targetTokenIds: ['target-1']
+    });
+
+    expect(mockExistingTarget.setTarget).toHaveBeenCalledWith(false, { user: mockUser, releaseOthers: false });
+    expect(mockTargetToken1.setTarget).toHaveBeenCalledWith(true, { user: mockUser, releaseOthers: false });
+  });
+
+  it('sets single target', async () => {
+    mockCanvas.tokens.get.mockReturnValue(mockTargetToken1);
+    mockActivity.use.mockResolvedValue(null);
+
+    const result = await activateItemHandler({
+      actorId: 'actor-123',
+      itemId: 'weapon-123',
+      targetTokenIds: ['target-1']
+    });
+
+    expect(result.targetsSet).toBe(1);
+  });
+
+  it('throws when target token not found', async () => {
+    mockCanvas.tokens.get.mockReturnValue(undefined);
+
+    await expect(activateItemHandler({
+      actorId: 'actor-123',
+      itemId: 'weapon-123',
+      targetTokenIds: ['nonexistent']
+    })).rejects.toThrow('Target token not found: nonexistent');
+  });
+
+  it('skips targeting when targetTokenIds not provided', async () => {
+    mockActivity.use.mockResolvedValue(null);
+
+    const result = await activateItemHandler({
+      actorId: 'actor-123',
+      itemId: 'weapon-123'
+    });
+
+    expect(mockCanvas.tokens.get).not.toHaveBeenCalled();
+    expect(result.targetsSet).toBe(0);
+  });
+
+  it('skips targeting when targetTokenIds is empty', async () => {
+    mockActivity.use.mockResolvedValue(null);
+
+    const result = await activateItemHandler({
+      actorId: 'actor-123',
+      itemId: 'weapon-123',
+      targetTokenIds: []
+    });
+
+    expect(mockCanvas.tokens.get).not.toHaveBeenCalled();
+    expect(result.targetsSet).toBe(0);
+  });
+
+  it('throws when actor not found', async () => {
+    mockGame.actors.get.mockReturnValue(undefined);
+
+    await expect(activateItemHandler({
+      actorId: 'nonexistent',
+      itemId: 'weapon-123'
+    })).rejects.toThrow('Actor not found: nonexistent');
+  });
+
+  it('throws when item not found', async () => {
+    mockActor.items.get.mockReturnValue(undefined);
+
+    await expect(activateItemHandler({
+      actorId: 'actor-123',
+      itemId: 'nonexistent'
+    })).rejects.toThrow('Item not found: nonexistent');
+  });
+
+  it('throws when activity ID not found', async () => {
+    mockActivitiesCollection.get.mockReturnValue(undefined);
+
+    await expect(activateItemHandler({
+      actorId: 'actor-123',
+      itemId: 'weapon-123',
+      activityId: 'nonexistent'
+    })).rejects.toThrow('Activity not found: nonexistent');
+  });
+
+  it('throws when activity type not found', async () => {
+    mockActivitiesCollection.find.mockReturnValue(undefined);
+
+    await expect(activateItemHandler({
+      actorId: 'actor-123',
+      itemId: 'weapon-123',
+      activityType: 'heal'
+    })).rejects.toThrow("No activity of type 'heal' found on item: Longsword");
+  });
+});
+
 // Mock for CRUD handlers
 const mockCreatedItem = {
   id: 'new-item-123',

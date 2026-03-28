@@ -100,12 +100,33 @@ export interface ActorsCollection {
   get(id: string): FoundryActor | undefined;
 }
 
+export interface FoundryTargetToken {
+  setTarget(targeted: boolean, options?: { user?: FoundryUser; releaseOthers?: boolean }): void;
+}
+
+export interface FoundryCanvasTokensLayer {
+  get(id: string): FoundryTargetToken | undefined;
+}
+
+export interface FoundryCanvas {
+  tokens: FoundryCanvasTokensLayer;
+}
+
+export interface FoundryUser {
+  targets: Set<FoundryTargetToken>;
+}
+
 export interface ItemFoundryGame {
   actors: ActorsCollection;
+  user: FoundryUser;
 }
 
 export function getGame(): ItemFoundryGame {
   return (globalThis as unknown as { game: ItemFoundryGame }).game;
+}
+
+export function getCanvas(): FoundryCanvas {
+  return (globalThis as unknown as { canvas: FoundryCanvas }).canvas;
 }
 
 export function extractDiceResults(terms: FoundryDiceTerm[]): RollResult['dice'] {

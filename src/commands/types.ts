@@ -64,7 +64,8 @@ export type CommandType =
   | 'update-actor-effect'
   | 'get-scene'
   | 'get-scenes-list'
-  | 'activate-scene';
+  | 'activate-scene'
+  | 'activate-item';
 
 export interface RollDiceParams {
   formula: string;
@@ -614,6 +615,24 @@ export interface UpdateEffectResult {
   name: string;
 }
 
+// Activate Item Command (full automation pipeline)
+export interface ActivateItemParams {
+  actorId: string;
+  itemId: string;
+  activityId?: string;
+  activityType?: string;
+  targetTokenIds?: string[];
+}
+
+export interface ActivateItemResult {
+  itemId: string;
+  itemName: string;
+  itemType: string;
+  activityUsed?: ActivityInfo;
+  activated: boolean;
+  targetsSet: number;
+}
+
 // Scene Commands
 export interface GetSceneParams {
   sceneId?: string;
@@ -797,6 +816,7 @@ export interface CommandParamsMap {
   'get-scene': GetSceneParams;
   'get-scenes-list': GetScenesListParams;
   'activate-scene': ActivateSceneParams;
+  'activate-item': ActivateItemParams;
 }
 
 export interface CommandResultMap {
@@ -853,4 +873,5 @@ export interface CommandResultMap {
   'get-scene': SceneDetailResult;
   'get-scenes-list': SceneListResult;
   'activate-scene': ActivateSceneResult;
+  'activate-item': ActivateItemResult;
 }

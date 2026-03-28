@@ -57,6 +57,7 @@ export {
 export {
   getActorItemsHandler,
   useItemHandler,
+  activateItemHandler,
   addItemToActorHandler,
   addItemFromCompendiumHandler,
   updateActorItemHandler,
