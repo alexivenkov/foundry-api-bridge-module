@@ -159,16 +159,24 @@ export async function activateItemHandler(params: ActivateItemParams): Promise<A
     setupAutoTemplatePlace(params.templatePosition);
   }
 
-  const usageConfig = params.templatePosition
-    ? undefined
-    : { create: { measuredTemplate: false } };
+  const usageConfig: Record<string, unknown> = {};
+
+  if (!params.templatePosition) {
+    usageConfig['create'] = { measuredTemplate: false };
+  }
+
+  if (params.spellLevel !== undefined) {
+    usageConfig['scaling'] = params.spellLevel;
+  }
+
+  const config = Object.keys(usageConfig).length > 0 ? usageConfig : undefined;
 
   let useResult: FoundryUsageResult | null = null;
 
   if (targetActivity) {
-    useResult = await targetActivity.use(usageConfig);
+    useResult = await targetActivity.use(config as Parameters<typeof targetActivity.use>[0]);
   } else {
-    useResult = await item.use(usageConfig);
+    useResult = await item.use(config as Parameters<typeof item.use>[0]);
   }
 
   let workflow: MidiWorkflowResult | undefined;

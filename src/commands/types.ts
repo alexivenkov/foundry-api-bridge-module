@@ -623,6 +623,7 @@ export interface ActivateItemParams {
   activityType?: string;
   targetTokenIds?: string[];
   templatePosition?: { x: number; y: number; direction?: number };
+  spellLevel?: number;
 }
 
 export interface MidiWorkflowResult {
