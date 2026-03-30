@@ -5,15 +5,18 @@ import {
   getCanvas,
   getHooks,
   isMidiQolActive,
+  getMidiQOL,
   type FoundryActivity,
+  type FoundryItem,
   type FoundryRoll,
+  type FoundryTargetToken,
   type FoundryUsageResult,
   type MidiWorkflow
 } from './itemTypes';
 
 const MIDI_WORKFLOW_TIMEOUT = 5000;
 
-function setTargets(tokenIds: string[]): number {
+function setTargets(tokenIds: string[]): FoundryTargetToken[] {
   const canvas = getCanvas();
   const game = getGame();
 
@@ -21,17 +24,17 @@ function setTargets(tokenIds: string[]): number {
     existing.setTarget(false, { user: game.user, releaseOthers: false });
   }
 
-  let count = 0;
+  const tokens: FoundryTargetToken[] = [];
   for (const tokenId of tokenIds) {
     const token = canvas.tokens.get(tokenId);
     if (!token) {
       throw new Error(`Target token not found: ${tokenId}`);
     }
     token.setTarget(true, { user: game.user, releaseOthers: false });
-    count++;
+    tokens.push(token);
   }
 
-  return count;
+  return tokens;
 }
 
 function extractRolls(rolls: FoundryRoll[] | undefined): RollResult[] {
@@ -83,6 +86,53 @@ function waitForMidiWorkflow(): { promise: Promise<MidiWorkflow | undefined>; cl
   return { promise, cleanup };
 }
 
+async function placeTemplateOnScene(
+  item: FoundryItem,
+  position: { x: number; y: number }
+): Promise<void> {
+  const canvas = getCanvas();
+  if (!canvas.scene) return;
+
+  const system = item.system as unknown as Record<string, unknown>;
+  const target = system['target'] as Record<string, unknown> | undefined;
+  const distance = (target?.['value'] as number | undefined) ?? 20;
+
+  await canvas.scene.createEmbeddedDocuments('MeasuredTemplate', [{
+    t: 'circle',
+    x: position.x,
+    y: position.y,
+    distance,
+    fillColor: '#ff0000',
+    author: getGame().user.id
+  }]);
+}
+
+function resolveActivity(item: FoundryItem, params: ActivateItemParams): FoundryActivity | undefined {
+  const activities = item.system.activities?.contents ?? [];
+
+  if (params.activityId) {
+    const activity = item.system.activities?.get(params.activityId);
+    if (!activity) {
+      throw new Error(`Activity not found: ${params.activityId}`);
+    }
+    return activity;
+  }
+
+  if (params.activityType) {
+    const activity = item.system.activities?.find((a: FoundryActivity) => a.type === params.activityType);
+    if (!activity) {
+      throw new Error(`No activity of type '${params.activityType}' found on item: ${item.name}`);
+    }
+    return activity;
+  }
+
+  if (activities.length > 0) {
+    return activities[0];
+  }
+
+  return undefined;
+}
+
 export async function activateItemHandler(params: ActivateItemParams): Promise<ActivateItemResult> {
   const game = getGame();
   const actor = game.actors.get(params.actorId);
@@ -97,31 +147,53 @@ export async function activateItemHandler(params: ActivateItemParams): Promise<A
     throw new Error(`Item not found: ${params.itemId}`);
   }
 
-  const targetsSet = params.targetTokenIds?.length
+  const targetTokens = params.targetTokenIds?.length
     ? setTargets(params.targetTokenIds)
-    : 0;
+    : [];
 
-  const activities = item.system.activities?.contents ?? [];
+  const targetActivity = resolveActivity(item, params);
+  const midiActive = isMidiQolActive();
 
-  let targetActivity: FoundryActivity | undefined;
+  if (params.templatePosition && midiActive) {
+    const midiApi = getMidiQOL();
+    if (midiApi) {
+      const midiListener = waitForMidiWorkflow();
 
-  if (params.activityId) {
-    targetActivity = item.system.activities?.get(params.activityId);
-    if (!targetActivity) {
-      throw new Error(`Activity not found: ${params.activityId}`);
+      new midiApi.TrapWorkflow(actor, item, targetTokens, params.templatePosition);
+
+      const midiWorkflow = await midiListener.promise;
+      midiListener.cleanup();
+
+      const result: ActivateItemResult = {
+        itemId: item.id,
+        itemName: item.name,
+        itemType: item.type,
+        activated: true,
+        targetsSet: targetTokens.length,
+        rolls: []
+      };
+
+      if (midiWorkflow) {
+        result.workflow = extractWorkflow(midiWorkflow);
+      }
+
+      if (targetActivity) {
+        result.activityUsed = {
+          id: targetActivity._id,
+          name: targetActivity.name,
+          type: targetActivity.type
+        };
+      }
+
+      return result;
     }
-  } else if (params.activityType) {
-    targetActivity = item.system.activities?.find(a => a.type === params.activityType);
-    if (!targetActivity) {
-      throw new Error(`No activity of type '${params.activityType}' found on item: ${item.name}`);
-    }
-  } else if (activities.length > 0) {
-    targetActivity = activities[0];
   }
 
-  const midiActive = isMidiQolActive();
-  const midiListener = midiActive ? waitForMidiWorkflow() : undefined;
+  if (params.templatePosition) {
+    await placeTemplateOnScene(item, params.templatePosition);
+  }
 
+  const midiListener = midiActive ? waitForMidiWorkflow() : undefined;
   const usageConfig = { create: { measuredTemplate: false } };
 
   let useResult: FoundryUsageResult | null = null;
@@ -147,7 +219,7 @@ export async function activateItemHandler(params: ActivateItemParams): Promise<A
     itemName: item.name,
     itemType: item.type,
     activated: true,
-    targetsSet,
+    targetsSet: targetTokens.length,
     rolls: extractRolls(useResult?.rolls)
   };
 

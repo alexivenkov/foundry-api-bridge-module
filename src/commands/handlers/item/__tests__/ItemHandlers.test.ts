@@ -417,12 +417,23 @@ const mockTargetToken1 = { setTarget: jest.fn() };
 const mockTargetToken2 = { setTarget: jest.fn() };
 const mockExistingTarget = { setTarget: jest.fn() };
 
+const mockScene = {
+  createEmbeddedDocuments: jest.fn().mockResolvedValue([])
+};
+
 const mockCanvas = {
-  tokens: { get: jest.fn() }
+  tokens: { get: jest.fn() },
+  scene: mockScene
 };
 
 const mockUser = {
+  id: 'user-1',
   targets: new Set<{ setTarget: jest.Mock }>()
+};
+
+const mockTrapWorkflow = jest.fn();
+const mockMidiQOL = {
+  TrapWorkflow: mockTrapWorkflow
 };
 
 const mockModules = {
@@ -447,9 +458,11 @@ describe('activateItemHandler', () => {
     jest.useFakeTimers();
     mockUser.targets.clear();
     mockModules.get.mockReturnValue(undefined);
+    mockScene.createEmbeddedDocuments.mockResolvedValue([]);
     (globalThis as Record<string, unknown>)['game'] = { ...mockGame, user: mockUser, modules: mockModules };
     (globalThis as Record<string, unknown>)['canvas'] = mockCanvas;
     (globalThis as Record<string, unknown>)['Hooks'] = mockHooks;
+    delete (globalThis as Record<string, unknown>)['MidiQOL'];
     mockGame.actors.get.mockReturnValue(mockActor);
     mockActor.items.get.mockReturnValue(mockWeapon);
     mockActivitiesCollection.contents = [mockActivity];
@@ -740,6 +753,122 @@ describe('activateItemHandler', () => {
 
       expect(mockHooks.once).not.toHaveBeenCalled();
       expect(result.workflow).toBeUndefined();
+    });
+  });
+
+  describe('AoE template placement', () => {
+    it('uses TrapWorkflow when Midi-QOL active and templatePosition provided', async () => {
+      mockModules.get.mockReturnValue({ active: true });
+      (globalThis as Record<string, unknown>)['MidiQOL'] = mockMidiQOL;
+      mockCanvas.tokens.get.mockReturnValue(mockTargetToken1);
+      mockHooks.once.mockImplementation((_hook: string, callback: (wf: unknown) => void) => {
+        callback({
+          damageTotal: 28,
+          isCritical: false,
+          isFumble: false,
+          hitTargets: new Set(),
+          saves: new Set([{ id: 'target-1' }]),
+          failedSaves: new Set()
+        });
+        return 1;
+      });
+
+      const result = await activateItemHandler({
+        actorId: 'actor-123',
+        itemId: 'weapon-123',
+        targetTokenIds: ['target-1'],
+        templatePosition: { x: 500, y: 500 }
+      });
+
+      expect(mockTrapWorkflow).toHaveBeenCalledWith(
+        mockActor,
+        mockWeapon,
+        [mockTargetToken1],
+        { x: 500, y: 500 }
+      );
+      expect(mockActivity.use).not.toHaveBeenCalled();
+      expect(result.activated).toBe(true);
+      expect(result.workflow?.damageTotal).toBe(28);
+    });
+
+    it('creates MeasuredTemplate when Midi-QOL inactive and templatePosition provided', async () => {
+      mockModules.get.mockReturnValue(undefined);
+      mockActivity.use.mockResolvedValue(null);
+
+      await activateItemHandler({
+        actorId: 'actor-123',
+        itemId: 'weapon-123',
+        templatePosition: { x: 300, y: 400 }
+      });
+
+      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledWith('MeasuredTemplate', [{
+        t: 'circle',
+        x: 300,
+        y: 400,
+        distance: 20,
+        fillColor: '#ff0000',
+        author: 'user-1'
+      }]);
+      expect(mockActivity.use).toHaveBeenCalled();
+    });
+
+    it('skips template when templatePosition not provided', async () => {
+      mockActivity.use.mockResolvedValue(null);
+
+      await activateItemHandler({
+        actorId: 'actor-123',
+        itemId: 'weapon-123'
+      });
+
+      expect(mockScene.createEmbeddedDocuments).not.toHaveBeenCalled();
+      expect(mockTrapWorkflow).not.toHaveBeenCalled();
+    });
+
+    it('falls back to MeasuredTemplate when MidiQOL global not available', async () => {
+      mockModules.get.mockReturnValue({ active: true });
+      mockActivity.use.mockResolvedValue(null);
+      mockHooks.once.mockImplementation((_hook: string, callback: (wf: unknown) => void) => {
+        callback({ hitTargets: new Set(), saves: new Set(), failedSaves: new Set() });
+        return 1;
+      });
+
+      const result = await activateItemHandler({
+        actorId: 'actor-123',
+        itemId: 'weapon-123',
+        templatePosition: { x: 100, y: 200 }
+      });
+
+      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalled();
+      expect(mockTrapWorkflow).not.toHaveBeenCalled();
+      expect(result.activated).toBe(true);
+    });
+
+    it('passes resolved target tokens to TrapWorkflow', async () => {
+      mockModules.get.mockReturnValue({ active: true });
+      (globalThis as Record<string, unknown>)['MidiQOL'] = mockMidiQOL;
+      mockCanvas.tokens.get.mockImplementation((id: string) => {
+        if (id === 'target-1') return mockTargetToken1;
+        if (id === 'target-2') return mockTargetToken2;
+        return undefined;
+      });
+      mockHooks.once.mockImplementation((_hook: string, callback: (wf: unknown) => void) => {
+        callback({ hitTargets: new Set(), saves: new Set(), failedSaves: new Set() });
+        return 1;
+      });
+
+      await activateItemHandler({
+        actorId: 'actor-123',
+        itemId: 'weapon-123',
+        targetTokenIds: ['target-1', 'target-2'],
+        templatePosition: { x: 500, y: 500 }
+      });
+
+      expect(mockTrapWorkflow).toHaveBeenCalledWith(
+        mockActor,
+        mockWeapon,
+        [mockTargetToken1, mockTargetToken2],
+        { x: 500, y: 500 }
+      );
     });
   });
 

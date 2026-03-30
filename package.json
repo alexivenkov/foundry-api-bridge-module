@@ -1,6 +1,6 @@
 {
   "name": "foundry-api-bridge",
-  "version": "6.8.1",
+  "version": "6.8.2",
   "description": "Connect Foundry VTT to AI assistants via foundry-mcp.com",
   "type": "module",
   "scripts": {
@@ -12,7 +12,8 @@
     "type-check": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "all": "npm run lint && npm test && npm run build"
   },
   "keywords": [
     "foundry-vtt",

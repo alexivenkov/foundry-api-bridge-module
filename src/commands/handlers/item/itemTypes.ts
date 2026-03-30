@@ -108,11 +108,17 @@ export interface FoundryCanvasTokensLayer {
   get(id: string): FoundryTargetToken | undefined;
 }
 
+export interface FoundryCanvasScene {
+  createEmbeddedDocuments(type: string, data: Record<string, unknown>[]): Promise<unknown[]>;
+}
+
 export interface FoundryCanvas {
   tokens: FoundryCanvasTokensLayer;
+  scene: FoundryCanvasScene | undefined;
 }
 
 export interface FoundryUser {
+  id: string;
   targets: Set<FoundryTargetToken>;
 }
 
@@ -163,6 +169,19 @@ export function getHooks(): FoundryHooks {
 
 export function isMidiQolActive(): boolean {
   return getGame().modules.get('midi-qol')?.active ?? false;
+}
+
+export interface MidiQOLApi {
+  TrapWorkflow: new (
+    actor: FoundryActor,
+    item: FoundryItem,
+    targets: FoundryTargetToken[],
+    position: { x: number; y: number }
+  ) => unknown;
+}
+
+export function getMidiQOL(): MidiQOLApi | undefined {
+  return (globalThis as unknown as { MidiQOL?: MidiQOLApi }).MidiQOL;
 }
 
 export function extractDiceResults(terms: FoundryDiceTerm[]): RollResult['dice'] {
