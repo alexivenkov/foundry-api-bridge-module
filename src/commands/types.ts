@@ -624,6 +624,16 @@ export interface ActivateItemParams {
   targetTokenIds?: string[];
 }
 
+export interface MidiWorkflowResult {
+  attackTotal: number | undefined;
+  damageTotal: number | undefined;
+  isCritical: boolean;
+  isFumble: boolean;
+  hitTargetIds: string[];
+  saveTargetIds: string[];
+  failedSaveTargetIds: string[];
+}
+
 export interface ActivateItemResult {
   itemId: string;
   itemName: string;
@@ -631,6 +641,9 @@ export interface ActivateItemResult {
   activityUsed?: ActivityInfo;
   activated: boolean;
   targetsSet: number;
+  rolls: RollResult[];
+  chatMessageId?: string;
+  workflow?: MidiWorkflowResult;
 }
 
 // Scene Commands

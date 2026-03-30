@@ -116,9 +116,37 @@ export interface FoundryUser {
   targets: Set<FoundryTargetToken>;
 }
 
+export interface FoundryModule {
+  active: boolean;
+}
+
+export interface FoundryModulesCollection {
+  get(id: string): FoundryModule | undefined;
+}
+
+export interface MidiWorkflowToken {
+  id: string;
+}
+
+export interface MidiWorkflow {
+  attackTotal?: number;
+  damageTotal?: number;
+  isCritical?: boolean;
+  isFumble?: boolean;
+  hitTargets?: Set<MidiWorkflowToken>;
+  saves?: Set<MidiWorkflowToken>;
+  failedSaves?: Set<MidiWorkflowToken>;
+}
+
+export interface FoundryHooks {
+  once(hook: string, callback: (workflow: MidiWorkflow) => void): number;
+  off(hook: string, id: number): void;
+}
+
 export interface ItemFoundryGame {
   actors: ActorsCollection;
   user: FoundryUser;
+  modules: FoundryModulesCollection;
 }
 
 export function getGame(): ItemFoundryGame {
@@ -127,6 +155,14 @@ export function getGame(): ItemFoundryGame {
 
 export function getCanvas(): FoundryCanvas {
   return (globalThis as unknown as { canvas: FoundryCanvas }).canvas;
+}
+
+export function getHooks(): FoundryHooks {
+  return (globalThis as unknown as { Hooks: FoundryHooks }).Hooks;
+}
+
+export function isMidiQolActive(): boolean {
+  return getGame().modules.get('midi-qol')?.active ?? false;
 }
 
 export function extractDiceResults(terms: FoundryDiceTerm[]): RollResult['dice'] {

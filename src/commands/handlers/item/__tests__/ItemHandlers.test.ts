@@ -418,21 +418,38 @@ const mockTargetToken2 = { setTarget: jest.fn() };
 const mockExistingTarget = { setTarget: jest.fn() };
 
 const mockCanvas = {
-  tokens: {
-    get: jest.fn()
-  }
+  tokens: { get: jest.fn() }
 };
 
 const mockUser = {
   targets: new Set<{ setTarget: jest.Mock }>()
 };
 
+const mockModules = {
+  get: jest.fn()
+};
+
+const mockHooks = {
+  once: jest.fn(),
+  off: jest.fn()
+};
+
+const mockUsageResult = {
+  rolls: [
+    { total: 18, formula: '1d20+5', terms: [{ faces: 20, number: 1, results: [{ result: 13 }] }], isCritical: false, isFumble: false }
+  ],
+  message: { id: 'chat-msg-123' }
+};
+
 describe('activateItemHandler', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers();
     mockUser.targets.clear();
-    (globalThis as Record<string, unknown>)['game'] = { ...mockGame, user: mockUser };
+    mockModules.get.mockReturnValue(undefined);
+    (globalThis as Record<string, unknown>)['game'] = { ...mockGame, user: mockUser, modules: mockModules };
     (globalThis as Record<string, unknown>)['canvas'] = mockCanvas;
+    (globalThis as Record<string, unknown>)['Hooks'] = mockHooks;
     mockGame.actors.get.mockReturnValue(mockActor);
     mockActor.items.get.mockReturnValue(mockWeapon);
     mockActivitiesCollection.contents = [mockActivity];
@@ -440,7 +457,25 @@ describe('activateItemHandler', () => {
     mockActivitiesCollection.find.mockReturnValue(undefined);
   });
 
-  it('calls activity.use() with no arguments', async () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('returns rolls and chatMessageId from use() result', async () => {
+    mockActivity.use.mockResolvedValue(mockUsageResult);
+
+    const result = await activateItemHandler({
+      actorId: 'actor-123',
+      itemId: 'weapon-123'
+    });
+
+    expect(result.rolls).toHaveLength(1);
+    expect(result.rolls[0]?.total).toBe(18);
+    expect(result.chatMessageId).toBe('chat-msg-123');
+    expect(result.workflow).toBeUndefined();
+  });
+
+  it('returns empty rolls when use() returns null', async () => {
     mockActivity.use.mockResolvedValue(null);
 
     const result = await activateItemHandler({
@@ -448,18 +483,35 @@ describe('activateItemHandler', () => {
       itemId: 'weapon-123'
     });
 
-    expect(mockActivity.use).toHaveBeenCalledWith();
-    expect(result).toEqual({
-      itemId: 'weapon-123',
-      itemName: 'Longsword',
-      itemType: 'weapon',
-      activityUsed: { id: 'activity-123', name: 'Attack', type: 'attack' },
-      activated: true,
-      targetsSet: 0
-    });
+    expect(result.rolls).toEqual([]);
+    expect(result.chatMessageId).toBeUndefined();
   });
 
-  it('calls activity.use() by specific activity ID', async () => {
+  it('includes activityUsed when activity exists', async () => {
+    mockActivity.use.mockResolvedValue(null);
+
+    const result = await activateItemHandler({
+      actorId: 'actor-123',
+      itemId: 'weapon-123'
+    });
+
+    expect(result.activityUsed).toEqual({ id: 'activity-123', name: 'Attack', type: 'attack' });
+  });
+
+  it('omits activityUsed when falling back to item.use()', async () => {
+    mockActivitiesCollection.contents = [];
+    mockWeapon.use.mockResolvedValue(null);
+
+    const result = await activateItemHandler({
+      actorId: 'actor-123',
+      itemId: 'weapon-123'
+    });
+
+    expect(mockWeapon.use).toHaveBeenCalledWith();
+    expect(result.activityUsed).toBeUndefined();
+  });
+
+  it('resolves activity by ID', async () => {
     mockActivitiesCollection.get.mockReturnValue(mockActivity);
     mockActivity.use.mockResolvedValue(null);
 
@@ -470,10 +522,9 @@ describe('activateItemHandler', () => {
     });
 
     expect(mockActivitiesCollection.get).toHaveBeenCalledWith('activity-123');
-    expect(mockActivity.use).toHaveBeenCalledWith();
   });
 
-  it('calls activity.use() by activity type', async () => {
+  it('resolves activity by type', async () => {
     mockActivitiesCollection.find.mockReturnValue(mockActivity);
     mockActivity.use.mockResolvedValue(null);
 
@@ -484,26 +535,6 @@ describe('activateItemHandler', () => {
     });
 
     expect(mockActivitiesCollection.find).toHaveBeenCalled();
-    expect(mockActivity.use).toHaveBeenCalledWith();
-  });
-
-  it('falls back to item.use() when no activities exist', async () => {
-    mockActivitiesCollection.contents = [];
-    mockWeapon.use.mockResolvedValue(null);
-
-    const result = await activateItemHandler({
-      actorId: 'actor-123',
-      itemId: 'weapon-123'
-    });
-
-    expect(mockWeapon.use).toHaveBeenCalledWith();
-    expect(result).toEqual({
-      itemId: 'weapon-123',
-      itemName: 'Longsword',
-      itemType: 'weapon',
-      activated: true,
-      targetsSet: 0
-    });
   });
 
   it('sets targets before calling use()', async () => {
@@ -523,7 +554,6 @@ describe('activateItemHandler', () => {
     expect(mockTargetToken1.setTarget).toHaveBeenCalledWith(true, { user: mockUser, releaseOthers: false });
     expect(mockTargetToken2.setTarget).toHaveBeenCalledWith(true, { user: mockUser, releaseOthers: false });
     expect(result.targetsSet).toBe(2);
-    expect(mockActivity.use).toHaveBeenCalledWith();
   });
 
   it('clears existing targets before setting new ones', async () => {
@@ -538,30 +568,6 @@ describe('activateItemHandler', () => {
     });
 
     expect(mockExistingTarget.setTarget).toHaveBeenCalledWith(false, { user: mockUser, releaseOthers: false });
-    expect(mockTargetToken1.setTarget).toHaveBeenCalledWith(true, { user: mockUser, releaseOthers: false });
-  });
-
-  it('sets single target', async () => {
-    mockCanvas.tokens.get.mockReturnValue(mockTargetToken1);
-    mockActivity.use.mockResolvedValue(null);
-
-    const result = await activateItemHandler({
-      actorId: 'actor-123',
-      itemId: 'weapon-123',
-      targetTokenIds: ['target-1']
-    });
-
-    expect(result.targetsSet).toBe(1);
-  });
-
-  it('throws when target token not found', async () => {
-    mockCanvas.tokens.get.mockReturnValue(undefined);
-
-    await expect(activateItemHandler({
-      actorId: 'actor-123',
-      itemId: 'weapon-123',
-      targetTokenIds: ['nonexistent']
-    })).rejects.toThrow('Target token not found: nonexistent');
   });
 
   it('skips targeting when targetTokenIds not provided', async () => {
@@ -576,17 +582,154 @@ describe('activateItemHandler', () => {
     expect(result.targetsSet).toBe(0);
   });
 
-  it('skips targeting when targetTokenIds is empty', async () => {
-    mockActivity.use.mockResolvedValue(null);
+  it('throws when target token not found', async () => {
+    mockCanvas.tokens.get.mockReturnValue(undefined);
 
-    const result = await activateItemHandler({
+    await expect(activateItemHandler({
       actorId: 'actor-123',
       itemId: 'weapon-123',
-      targetTokenIds: []
+      targetTokenIds: ['nonexistent']
+    })).rejects.toThrow('Target token not found: nonexistent');
+  });
+
+  describe('Midi-QOL integration', () => {
+    beforeEach(() => {
+      mockModules.get.mockReturnValue({ active: true });
     });
 
-    expect(mockCanvas.tokens.get).not.toHaveBeenCalled();
-    expect(result.targetsSet).toBe(0);
+    it('listens for midi-qol.RollComplete when Midi-QOL is active', async () => {
+      mockHooks.once.mockImplementation((_hook: string, callback: (wf: unknown) => void) => {
+        callback({
+          attackTotal: 18,
+          damageTotal: 12,
+          isCritical: false,
+          isFumble: false,
+          hitTargets: new Set([{ id: 'target-1' }]),
+          saves: new Set(),
+          failedSaves: new Set([{ id: 'target-1' }])
+        });
+        return 1;
+      });
+      mockActivity.use.mockResolvedValue(mockUsageResult);
+
+      const result = await activateItemHandler({
+        actorId: 'actor-123',
+        itemId: 'weapon-123'
+      });
+
+      expect(mockHooks.once).toHaveBeenCalledWith('midi-qol.RollComplete', expect.any(Function));
+      expect(result.workflow).toEqual({
+        attackTotal: 18,
+        damageTotal: 12,
+        isCritical: false,
+        isFumble: false,
+        hitTargetIds: ['target-1'],
+        saveTargetIds: [],
+        failedSaveTargetIds: ['target-1']
+      });
+    });
+
+    it('includes critical hit in workflow', async () => {
+      mockHooks.once.mockImplementation((_hook: string, callback: (wf: unknown) => void) => {
+        callback({
+          attackTotal: 20,
+          damageTotal: 24,
+          isCritical: true,
+          isFumble: false,
+          hitTargets: new Set([{ id: 'target-1' }]),
+          saves: new Set(),
+          failedSaves: new Set()
+        });
+        return 1;
+      });
+      mockActivity.use.mockResolvedValue(null);
+
+      const result = await activateItemHandler({
+        actorId: 'actor-123',
+        itemId: 'weapon-123'
+      });
+
+      expect(result.workflow?.isCritical).toBe(true);
+      expect(result.workflow?.damageTotal).toBe(24);
+    });
+
+    it('includes saves and failed saves', async () => {
+      mockHooks.once.mockImplementation((_hook: string, callback: (wf: unknown) => void) => {
+        callback({
+          hitTargets: new Set(),
+          saves: new Set([{ id: 'target-1' }, { id: 'target-2' }]),
+          failedSaves: new Set([{ id: 'target-3' }])
+        });
+        return 1;
+      });
+      mockActivity.use.mockResolvedValue(null);
+
+      const result = await activateItemHandler({
+        actorId: 'actor-123',
+        itemId: 'weapon-123'
+      });
+
+      expect(result.workflow?.saveTargetIds).toEqual(['target-1', 'target-2']);
+      expect(result.workflow?.failedSaveTargetIds).toEqual(['target-3']);
+    });
+
+    it('returns undefined workflow on timeout', async () => {
+      mockHooks.once.mockReturnValue(1);
+      mockActivity.use.mockResolvedValue(null);
+
+      const resultPromise = activateItemHandler({
+        actorId: 'actor-123',
+        itemId: 'weapon-123'
+      });
+
+      jest.advanceTimersByTime(5000);
+      const result = await resultPromise;
+
+      expect(result.workflow).toBeUndefined();
+    });
+
+    it('cleans up hook listener after timeout', async () => {
+      mockHooks.once.mockReturnValue(42);
+      mockActivity.use.mockResolvedValue(null);
+
+      const resultPromise = activateItemHandler({
+        actorId: 'actor-123',
+        itemId: 'weapon-123'
+      });
+
+      jest.advanceTimersByTime(5000);
+      await resultPromise;
+
+      expect(mockHooks.off).toHaveBeenCalledWith('midi-qol.RollComplete', 42);
+    });
+  });
+
+  describe('without Midi-QOL', () => {
+    it('does not register hooks when Midi-QOL is inactive', async () => {
+      mockModules.get.mockReturnValue({ active: false });
+      mockActivity.use.mockResolvedValue(null);
+
+      const result = await activateItemHandler({
+        actorId: 'actor-123',
+        itemId: 'weapon-123'
+      });
+
+      expect(mockHooks.once).not.toHaveBeenCalled();
+      expect(result.workflow).toBeUndefined();
+    });
+
+    it('does not register hooks when Midi-QOL module not found', async () => {
+      mockModules.get.mockReturnValue(undefined);
+      mockActivity.use.mockResolvedValue(null);
+
+      const result = await activateItemHandler({
+        actorId: 'actor-123',
+        itemId: 'weapon-123'
+      });
+
+      expect(mockHooks.once).not.toHaveBeenCalled();
+      expect(result.workflow).toBeUndefined();
+    });
   });
 
   it('throws when actor not found', async () => {

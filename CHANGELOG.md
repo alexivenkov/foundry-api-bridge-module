@@ -2,6 +2,71 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.8.0] - 2026-03-30
+
+### Changed
+- **activate-item now returns full results** from item usage
+  - `rolls[]` - dice results from Foundry (attack rolls, damage, etc.)
+  - `chatMessageId` - reference to created chat message
+  - `workflow` - full Midi-QOL automation results when Midi-QOL is installed
+- Midi-QOL workflow data includes: `attackTotal`, `damageTotal`, `isCritical`, `isFumble`, `hitTargetIds`, `saveTargetIds`, `failedSaveTargetIds`
+- Auto-detects Midi-QOL presence via `game.modules.get('midi-qol')` — zero overhead when not installed
+
+### Technical
+- Listens for `midi-qol.RollComplete` hook with 5s timeout safety
+- 481 tests
+
+## [6.7.0] - 2026-03-28
+
+### Added
+- **`activate-item` command** - Native item activation with full automation module support
+  - Calls `item.use()` / `activity.use()` without suppressing hooks or dialogs
+  - Enables Midi-QOL and other automation modules to intercept and run full pipeline
+  - `targetTokenIds` parameter for programmatic targeting before activation
+  - Clears existing targets and sets new ones via `canvas.tokens.get().setTarget()`
+- Supports `activityId` and `activityType` for selecting specific item activities
+
+### Technical
+- New handler: `src/commands/handlers/item/ActivateItemHandler.ts`
+- Targeting types added to `itemTypes.ts`: `FoundryTargetToken`, `FoundryCanvasTokensLayer`, `FoundryUser`
+- 474 tests
+
+## [6.6.0] - 2026-03-27
+
+### Added
+- **Scene lights** - Light sources with bright/dim radius, color, angle, wall interaction
+- **Scene tiles** - Decorative tile images with position, size, elevation, rotation
+- **Scene drawings** - Shapes (rectangle, ellipse, polygon, freehand) with fill/stroke colors and text
+- **Scene regions** - Named zones with geometric shapes (Foundry v13)
+- **Token grid positions** - `gridX`/`gridY` computed from pixel coordinates and grid size
+
+### Changed
+- `get-scene` result: `tokenCount` replaced with full `tokens[]` array including grid coordinates, actorId, disposition, hidden
+- REST `SceneData` extended with `lights[]`, `tiles[]`, `drawings[]`, `regions[]`
+- `pixelToGrid()` utility for coordinate conversion
+
+### Technical
+- 460 tests
+
+## [6.5.0] - 2026-03-26
+
+### Added
+- **Scene management commands** via WebSocket
+  - `get-scene` - Get detailed scene info (grid, darkness, notes, walls, token count)
+  - `get-scenes-list` - List all scenes (id, name, active, img)
+  - `activate-scene` - Switch the active scene
+- **Enriched scene data** in REST outbound
+  - `grid` - Grid size, type (square/hex), units, distance per cell
+  - `darkness` - Scene darkness level (0-1)
+  - `notes[]` - Map pins with text, label, linked journal entry
+  - `walls[]` - Wall segments with movement/vision blocking and door types
+- Scene handler group: `src/commands/handlers/scene/`
+
+### Technical
+- New types: `SceneDetailResult`, `SceneSummaryResult`, `SceneGridResult`, `SceneNoteResult`, `SceneWallResult`
+- `sceneTypes.ts` with Foundry interfaces and mapping functions
+- 452 tests
+
 ## [4.11.0] - 2025-12-06
 
 ### Changed

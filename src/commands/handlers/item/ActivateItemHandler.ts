@@ -1,5 +1,17 @@
-import type { ActivateItemParams, ActivateItemResult } from '@/commands/types';
-import { getGame, getCanvas, type FoundryActivity } from './itemTypes';
+import type { ActivateItemParams, ActivateItemResult, MidiWorkflowResult, RollResult } from '@/commands/types';
+import {
+  extractDiceResults,
+  getGame,
+  getCanvas,
+  getHooks,
+  isMidiQolActive,
+  type FoundryActivity,
+  type FoundryRoll,
+  type FoundryUsageResult,
+  type MidiWorkflow
+} from './itemTypes';
+
+const MIDI_WORKFLOW_TIMEOUT = 5000;
 
 function setTargets(tokenIds: string[]): number {
   const canvas = getCanvas();
@@ -20,6 +32,55 @@ function setTargets(tokenIds: string[]): number {
   }
 
   return count;
+}
+
+function extractRolls(rolls: FoundryRoll[] | undefined): RollResult[] {
+  if (!rolls || rolls.length === 0) return [];
+
+  return rolls.map(roll => {
+    const result: RollResult = {
+      total: roll.total,
+      formula: roll.formula,
+      dice: extractDiceResults(roll.terms)
+    };
+    if (roll.isCritical) result.isCritical = true;
+    if (roll.isFumble) result.isFumble = true;
+    return result;
+  });
+}
+
+function extractWorkflow(workflow: MidiWorkflow): MidiWorkflowResult {
+  return {
+    attackTotal: workflow.attackTotal,
+    damageTotal: workflow.damageTotal,
+    isCritical: workflow.isCritical ?? false,
+    isFumble: workflow.isFumble ?? false,
+    hitTargetIds: [...(workflow.hitTargets ?? [])].map(t => t.id),
+    saveTargetIds: [...(workflow.saves ?? [])].map(t => t.id),
+    failedSaveTargetIds: [...(workflow.failedSaves ?? [])].map(t => t.id)
+  };
+}
+
+function waitForMidiWorkflow(): { promise: Promise<MidiWorkflow | undefined>; cleanup: () => void } {
+  const hooks = getHooks();
+  let hookId: number;
+
+  const promise = Promise.race([
+    new Promise<MidiWorkflow>((resolve) => {
+      hookId = hooks.once('midi-qol.RollComplete', resolve);
+    }),
+    new Promise<undefined>((resolve) => {
+      setTimeout(() => resolve(undefined), MIDI_WORKFLOW_TIMEOUT);
+    })
+  ]);
+
+  const cleanup = () => {
+    if (hookId !== undefined) {
+      hooks.off('midi-qol.RollComplete', hookId);
+    }
+  };
+
+  return { promise, cleanup };
 }
 
 export async function activateItemHandler(params: ActivateItemParams): Promise<ActivateItemResult> {
@@ -58,30 +119,51 @@ export async function activateItemHandler(params: ActivateItemParams): Promise<A
     targetActivity = activities[0];
   }
 
-  if (targetActivity) {
-    await targetActivity.use();
+  const midiActive = isMidiQolActive();
+  const midiListener = midiActive ? waitForMidiWorkflow() : undefined;
 
-    return {
-      itemId: item.id,
-      itemName: item.name,
-      itemType: item.type,
-      activityUsed: {
-        id: targetActivity._id,
-        name: targetActivity.name,
-        type: targetActivity.type
-      },
-      activated: true,
-      targetsSet
-    };
+  let useResult: FoundryUsageResult | null = null;
+
+  if (targetActivity) {
+    useResult = await targetActivity.use();
+  } else {
+    useResult = await item.use();
   }
 
-  await item.use();
+  let workflow: MidiWorkflowResult | undefined;
 
-  return {
+  if (midiListener) {
+    const midiWorkflow = await midiListener.promise;
+    midiListener.cleanup();
+    if (midiWorkflow) {
+      workflow = extractWorkflow(midiWorkflow);
+    }
+  }
+
+  const result: ActivateItemResult = {
     itemId: item.id,
     itemName: item.name,
     itemType: item.type,
     activated: true,
-    targetsSet
+    targetsSet,
+    rolls: extractRolls(useResult?.rolls)
   };
+
+  if (workflow) {
+    result.workflow = workflow;
+  }
+
+  if (useResult?.message) {
+    result.chatMessageId = useResult.message.id;
+  }
+
+  if (targetActivity) {
+    result.activityUsed = {
+      id: targetActivity._id,
+      name: targetActivity.name,
+      type: targetActivity.type
+    };
+  }
+
+  return result;
 }
