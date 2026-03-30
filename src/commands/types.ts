@@ -622,7 +622,7 @@ export interface ActivateItemParams {
   activityId?: string;
   activityType?: string;
   targetTokenIds?: string[];
-  templatePosition?: { x: number; y: number };
+  templatePosition?: { x: number; y: number; direction?: number };
 }
 
 export interface MidiWorkflowResult {

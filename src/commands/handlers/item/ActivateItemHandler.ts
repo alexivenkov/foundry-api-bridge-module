@@ -86,7 +86,7 @@ function waitForMidiWorkflow(): { promise: Promise<MidiWorkflow | undefined>; cl
   return { promise, cleanup };
 }
 
-function setupAutoTemplatePlace(position: { x: number; y: number }): void {
+function setupAutoTemplatePlace(position: { x: number; y: number; direction?: number }): void {
   const dnd5eCanvas = getDnd5eCanvas();
   if (!dnd5eCanvas) return;
 
@@ -95,7 +95,11 @@ function setupAutoTemplatePlace(position: { x: number; y: number }): void {
   const origDrawPreview = AbilityTemplate.prototype.drawPreview;
 
   AbilityTemplate.prototype.drawPreview = async function (this: { document: { toObject(): Record<string, unknown>; updateSource(data: Record<string, unknown>): void } }): Promise<unknown> {
-    this.document.updateSource({ x: position.x, y: position.y });
+    const update: Record<string, unknown> = { x: position.x, y: position.y };
+    if (position.direction !== undefined) {
+      update['direction'] = position.direction;
+    }
+    this.document.updateSource(update);
     const data = this.document.toObject();
     AbilityTemplate.prototype.drawPreview = origDrawPreview;
     const result = await canvas.scene?.createEmbeddedDocuments('MeasuredTemplate', [data]);
