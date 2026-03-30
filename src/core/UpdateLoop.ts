@@ -52,7 +52,8 @@ export class UpdateLoop {
     while (this.running) {
       const delay = await this.sendUpdate();
 
-      if (!this.running) break;
+      // running may change during async sendUpdate() — stop() can be called externally
+      if (!(this.running as boolean)) break;
 
       await this.sleep(delay);
     }
@@ -86,18 +87,15 @@ export class UpdateLoop {
           console.warn(`Foundry API Bridge | Server unavailable (${String(status)}). Next update in ${String(delay / 1000)}s`);
           return delay;
         }
+
+        console.error('Foundry API Bridge | Failed to send world data:', error.message);
+        return this.interval;
       }
 
-      const isNetworkError = !(error instanceof ApiError);
-      if (isNetworkError) {
-        const delay = this.interval * BACKOFF_SERVER_DOWN;
-        console.error('Foundry API Bridge | Failed to send world data:', error instanceof Error ? error.message : String(error));
-        console.warn(`Foundry API Bridge | Network error. Next update in ${String(delay / 1000)}s`);
-        return delay;
-      }
-
+      const delay = this.interval * BACKOFF_SERVER_DOWN;
       console.error('Foundry API Bridge | Failed to send world data:', error instanceof Error ? error.message : String(error));
-      return this.interval;
+      console.warn(`Foundry API Bridge | Network error. Next update in ${String(delay / 1000)}s`);
+      return delay;
     }
   }
 

@@ -124,7 +124,7 @@ export class ApiConfigForm extends FormApplication {
       });
     }
 
-    const session = window.FoundryAPIBridge?.getSession?.() ?? null;
+    const session = window.FoundryAPIBridge?.getSession() ?? null;
     const compendiumsAllowed = session?.features.compendiums ?? false;
 
     return {
@@ -150,7 +150,7 @@ export class ApiConfigForm extends FormApplication {
     updateCounter();
 
     // Disable compendium section if tier doesn't allow it
-    const session = window.FoundryAPIBridge?.getSession?.() ?? null;
+    const session = window.FoundryAPIBridge?.getSession() ?? null;
     if (!session?.features.compendiums) {
       html.find('.compendium-checkbox').prop('disabled', true);
       html.find('#selectAllBtn, #deselectAllBtn').prop('disabled', true);
@@ -214,11 +214,11 @@ export class ApiConfigForm extends FormApplication {
 
     console.log('Foundry API Bridge | Configuration saved');
 
-    const currentSession = window.FoundryAPIBridge?.getSession?.() ?? null;
+    const currentSession = window.FoundryAPIBridge?.getSession() ?? null;
     if (newConfig.features.autoLoadCompendium && newConfig.compendium.autoLoad.length > 0 && currentSession?.features.compendiums) {
 
       try {
-        await window.FoundryAPIBridge.autoLoadCompendium();
+        await window.FoundryAPIBridge?.autoLoadCompendium();
         if (ui.notifications) {
           ui.notifications.info(`Successfully loaded ${String(newConfig.compendium.autoLoad.length)} compendium pack(s)`);
         }

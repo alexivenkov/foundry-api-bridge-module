@@ -36,7 +36,7 @@ declare global {
   }
 
   interface Window {
-    FoundryAPIBridge: {
+    FoundryAPIBridge?: {
       collectWorldData: () => WorldData;
       sendDataToServer: (data: WorldData) => Promise<void>;
       startUpdateLoop: () => void;

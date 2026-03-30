@@ -78,7 +78,7 @@ export interface FoundryItem {
   img: string;
   system: FoundryItemSystem;
   use(
-    usage?: { consume?: boolean; scaling?: number },
+    usage?: { consume?: boolean; scaling?: number; create?: { measuredTemplate?: boolean } },
     dialog?: { configure?: boolean },
     message?: { create?: boolean }
   ): Promise<FoundryUsageResult | null>;

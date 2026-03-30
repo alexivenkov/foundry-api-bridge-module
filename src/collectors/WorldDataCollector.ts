@@ -115,39 +115,39 @@ export class WorldDataCollector {
 
       const gridRaw = sceneAny['grid'] as Record<string, unknown> | undefined;
       const grid = {
-        size: (gridRaw?.['size'] as number) ?? 100,
-        type: (gridRaw?.['type'] as number) ?? 1,
-        units: (gridRaw?.['units'] as string) ?? 'ft',
-        distance: (gridRaw?.['distance'] as number) ?? 5
+        size: (gridRaw?.['size'] as number | undefined) ?? 100,
+        type: (gridRaw?.['type'] as number | undefined) ?? 1,
+        units: (gridRaw?.['units'] as string | undefined) ?? 'ft',
+        distance: (gridRaw?.['distance'] as number | undefined) ?? 5
       };
 
       const notesRaw = sceneAny['notes'] as { contents?: Array<Record<string, unknown>> } | undefined;
       const notes = (notesRaw?.contents ?? []).map(note => ({
-        x: (note['x'] as number) ?? 0,
-        y: (note['y'] as number) ?? 0,
-        text: (note['text'] as string) ?? '',
-        label: (note['label'] as string) ?? '',
+        x: (note['x'] as number | undefined) ?? 0,
+        y: (note['y'] as number | undefined) ?? 0,
+        text: (note['text'] as string | undefined) ?? '',
+        label: (note['label'] as string | undefined) ?? '',
         entryId: (note['entryId'] as string | undefined) ?? null
       }));
 
       const wallsRaw = sceneAny['walls'] as { contents?: Array<Record<string, unknown>> } | undefined;
       const walls = (wallsRaw?.contents ?? []).map(wall => ({
-        c: (wall['c'] as number[]) ?? [],
-        move: (wall['move'] as number) ?? 0,
-        sense: (wall['sense'] as number) ?? 0,
-        door: (wall['door'] as number) ?? 0
+        c: (wall['c'] as number[] | undefined) ?? [],
+        move: (wall['move'] as number | undefined) ?? 0,
+        sense: (wall['sense'] as number | undefined) ?? 0,
+        door: (wall['door'] as number | undefined) ?? 0
       }));
 
       const lightsRaw = sceneAny['lights'] as { contents?: Array<Record<string, unknown>> } | undefined;
       const lights = (lightsRaw?.contents ?? []).map(light => {
         const config = light['config'] as Record<string, unknown> | undefined;
         return {
-          x: (light['x'] as number) ?? 0,
-          y: (light['y'] as number) ?? 0,
-          bright: (config?.['bright'] as number) ?? 0,
-          dim: (config?.['dim'] as number) ?? 0,
+          x: (light['x'] as number | undefined) ?? 0,
+          y: (light['y'] as number | undefined) ?? 0,
+          bright: (config?.['bright'] as number | undefined) ?? 0,
+          dim: (config?.['dim'] as number | undefined) ?? 0,
           color: (config?.['color'] as string | undefined) ?? null,
-          angle: (config?.['angle'] as number) ?? 360,
+          angle: (config?.['angle'] as number | undefined) ?? 360,
           walls: (light['walls'] as boolean | undefined) ?? true,
           hidden: (light['hidden'] as boolean | undefined) ?? false
         };
@@ -157,14 +157,14 @@ export class WorldDataCollector {
       const tiles = (tilesRaw?.contents ?? []).map(tile => {
         const texture = tile['texture'] as Record<string, unknown> | undefined;
         return {
-          x: (tile['x'] as number) ?? 0,
-          y: (tile['y'] as number) ?? 0,
-          width: (tile['width'] as number) ?? 0,
-          height: (tile['height'] as number) ?? 0,
+          x: (tile['x'] as number | undefined) ?? 0,
+          y: (tile['y'] as number | undefined) ?? 0,
+          width: (tile['width'] as number | undefined) ?? 0,
+          height: (tile['height'] as number | undefined) ?? 0,
           img: (texture?.['src'] as string | undefined) ?? '',
           hidden: (tile['hidden'] as boolean | undefined) ?? false,
-          elevation: (tile['elevation'] as number) ?? 0,
-          rotation: (tile['rotation'] as number) ?? 0
+          elevation: (tile['elevation'] as number | undefined) ?? 0,
+          rotation: (tile['rotation'] as number | undefined) ?? 0
         };
       });
 
@@ -172,13 +172,13 @@ export class WorldDataCollector {
       const drawings = (drawingsRaw?.contents ?? []).map(drawing => {
         const shape = drawing['shape'] as Record<string, unknown> | undefined;
         return {
-          x: (drawing['x'] as number) ?? 0,
-          y: (drawing['y'] as number) ?? 0,
+          x: (drawing['x'] as number | undefined) ?? 0,
+          y: (drawing['y'] as number | undefined) ?? 0,
           shape: {
-            type: (shape?.['type'] as string) ?? '',
-            width: (shape?.['width'] as number) ?? 0,
-            height: (shape?.['height'] as number) ?? 0,
-            points: (shape?.['points'] as number[]) ?? []
+            type: (shape?.['type'] as string | undefined) ?? '',
+            width: (shape?.['width'] as number | undefined) ?? 0,
+            height: (shape?.['height'] as number | undefined) ?? 0,
+            points: (shape?.['points'] as number[] | undefined) ?? []
           },
           text: (drawing['text'] as string | undefined) ?? '',
           hidden: (drawing['hidden'] as boolean | undefined) ?? false,
@@ -191,10 +191,10 @@ export class WorldDataCollector {
       const regions = (regionsRaw?.contents ?? []).map(region => {
         const shapes = region['shapes'] as Array<Record<string, unknown>> | undefined;
         return {
-          id: (region['id'] as string) ?? '',
-          name: (region['name'] as string) ?? '',
+          id: (region['id'] as string | undefined) ?? '',
+          name: (region['name'] as string | undefined) ?? '',
           color: (region['color'] as string | undefined) ?? null,
-          shapes: (shapes ?? []).map(s => ({ type: (s['type'] as string) ?? '' }))
+          shapes: (shapes ?? []).map(s => ({ type: (s['type'] as string | undefined) ?? '' }))
         };
       });
 

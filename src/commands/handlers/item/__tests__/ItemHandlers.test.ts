@@ -475,6 +475,17 @@ describe('activateItemHandler', () => {
     expect(result.workflow).toBeUndefined();
   });
 
+  it('suppresses measured template creation', async () => {
+    mockActivity.use.mockResolvedValue(null);
+
+    await activateItemHandler({
+      actorId: 'actor-123',
+      itemId: 'weapon-123'
+    });
+
+    expect(mockActivity.use).toHaveBeenCalledWith({ create: { measuredTemplate: false } });
+  });
+
   it('returns empty rolls when use() returns null', async () => {
     mockActivity.use.mockResolvedValue(null);
 
@@ -507,7 +518,7 @@ describe('activateItemHandler', () => {
       itemId: 'weapon-123'
     });
 
-    expect(mockWeapon.use).toHaveBeenCalledWith();
+    expect(mockWeapon.use).toHaveBeenCalledWith({ create: { measuredTemplate: false } });
     expect(result.activityUsed).toBeUndefined();
   });
 

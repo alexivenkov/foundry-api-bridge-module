@@ -13,9 +13,9 @@ import type {
 export interface FoundryNote {
   x: number;
   y: number;
-  text: string;
-  label: string;
-  entryId: string | null;
+  text: string | undefined;
+  label: string | undefined;
+  entryId: string | null | undefined;
 }
 
 export interface FoundryWall {
@@ -26,65 +26,65 @@ export interface FoundryWall {
 }
 
 export interface FoundryGrid {
-  size: number;
-  type: number;
-  units: string;
-  distance: number;
+  size: number | undefined;
+  type: number | undefined;
+  units: string | undefined;
+  distance: number | undefined;
 }
 
 export interface FoundryLight {
   x: number;
   y: number;
   config: {
-    bright: number;
-    dim: number;
-    color: string | null;
-    angle: number;
-  };
-  walls: boolean;
-  hidden: boolean;
+    bright: number | undefined;
+    dim: number | undefined;
+    color: string | null | undefined;
+    angle: number | undefined;
+  } | undefined;
+  walls: boolean | undefined;
+  hidden: boolean | undefined;
 }
 
 export interface FoundryTile {
   x: number;
   y: number;
-  width: number;
-  height: number;
-  texture: { src: string };
-  hidden: boolean;
-  elevation: number;
-  rotation: number;
+  width: number | undefined;
+  height: number | undefined;
+  texture: { src: string | undefined } | undefined;
+  hidden: boolean | undefined;
+  elevation: number | undefined;
+  rotation: number | undefined;
 }
 
 export interface FoundryDrawing {
   x: number;
   y: number;
-  shape: { type: string; width: number; height: number; points: number[] };
-  text: string;
-  hidden: boolean;
-  fillColor: string | null;
-  strokeColor: string | null;
+  shape: { type: string | undefined; width: number | undefined; height: number | undefined; points: number[] | undefined } | undefined;
+  text: string | undefined;
+  hidden: boolean | undefined;
+  fillColor: string | null | undefined;
+  strokeColor: string | null | undefined;
 }
 
 export interface FoundryRegionShape {
-  type: string;
+  type: string | undefined;
 }
 
 export interface FoundryRegion {
   id: string;
-  name: string;
-  color: string | null;
-  shapes: FoundryRegionShape[];
+  name: string | undefined;
+  color: string | null | undefined;
+  shapes: FoundryRegionShape[] | undefined;
 }
 
 export interface FoundryToken {
   id: string;
-  name: string;
+  name: string | undefined;
   x: number;
   y: number;
-  elevation: number;
-  hidden: boolean;
-  disposition: number;
+  elevation: number | undefined;
+  hidden: boolean | undefined;
+  disposition: number | undefined;
   actor: { id: string } | null;
 }
 
@@ -92,18 +92,18 @@ export interface FoundryScene {
   id: string;
   name: string;
   active: boolean;
-  img: string;
-  width: number;
-  height: number;
-  grid: FoundryGrid;
-  darkness: number;
-  notes: { contents: FoundryNote[] };
-  walls: { contents: FoundryWall[] };
-  lights: { contents: FoundryLight[] };
-  tiles: { contents: FoundryTile[] };
-  drawings: { contents: FoundryDrawing[] };
-  regions: { contents: FoundryRegion[] };
-  tokens: { contents: FoundryToken[] };
+  img: string | undefined;
+  width: number | undefined;
+  height: number | undefined;
+  grid: FoundryGrid | undefined;
+  darkness: number | undefined;
+  notes: { contents: FoundryNote[] } | undefined;
+  walls: { contents: FoundryWall[] } | undefined;
+  lights: { contents: FoundryLight[] } | undefined;
+  tiles: { contents: FoundryTile[] } | undefined;
+  drawings: { contents: FoundryDrawing[] } | undefined;
+  regions: { contents: FoundryRegion[] } | undefined;
+  tokens: { contents: FoundryToken[] } | undefined;
   activate(): Promise<FoundryScene>;
 }
 

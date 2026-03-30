@@ -63,18 +63,18 @@ function extractWorkflow(workflow: MidiWorkflow): MidiWorkflowResult {
 
 function waitForMidiWorkflow(): { promise: Promise<MidiWorkflow | undefined>; cleanup: () => void } {
   const hooks = getHooks();
-  let hookId: number;
+  let hookId: number | undefined;
 
   const promise = Promise.race([
     new Promise<MidiWorkflow>((resolve) => {
       hookId = hooks.once('midi-qol.RollComplete', resolve);
     }),
     new Promise<undefined>((resolve) => {
-      setTimeout(() => resolve(undefined), MIDI_WORKFLOW_TIMEOUT);
+      setTimeout(() => { resolve(undefined); }, MIDI_WORKFLOW_TIMEOUT);
     })
   ]);
 
-  const cleanup = () => {
+  const cleanup = (): void => {
     if (hookId !== undefined) {
       hooks.off('midi-qol.RollComplete', hookId);
     }
@@ -122,12 +122,14 @@ export async function activateItemHandler(params: ActivateItemParams): Promise<A
   const midiActive = isMidiQolActive();
   const midiListener = midiActive ? waitForMidiWorkflow() : undefined;
 
+  const usageConfig = { create: { measuredTemplate: false } };
+
   let useResult: FoundryUsageResult | null = null;
 
   if (targetActivity) {
-    useResult = await targetActivity.use();
+    useResult = await targetActivity.use(usageConfig);
   } else {
-    useResult = await item.use();
+    useResult = await item.use(usageConfig);
   }
 
   let workflow: MidiWorkflowResult | undefined;
