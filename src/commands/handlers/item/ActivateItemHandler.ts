@@ -166,7 +166,7 @@ export async function activateItemHandler(params: ActivateItemParams): Promise<A
   }
 
   if (params.spellLevel !== undefined) {
-    usageConfig['scaling'] = params.spellLevel;
+    usageConfig['spell'] = { slot: `spell${String(params.spellLevel)}` };
   }
 
   const config = Object.keys(usageConfig).length > 0 ? usageConfig : undefined;
