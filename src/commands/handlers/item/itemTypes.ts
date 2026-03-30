@@ -171,17 +171,27 @@ export function isMidiQolActive(): boolean {
   return getGame().modules.get('midi-qol')?.active ?? false;
 }
 
-export interface MidiQOLApi {
-  TrapWorkflow: new (
-    actor: FoundryActor,
-    item: FoundryItem,
-    targets: FoundryTargetToken[],
-    position: { x: number; y: number }
-  ) => unknown;
+export interface AbilityTemplateDocument {
+  toObject(): Record<string, unknown>;
+  updateSource(data: Record<string, unknown>): void;
 }
 
-export function getMidiQOL(): MidiQOLApi | undefined {
-  return (globalThis as unknown as { MidiQOL?: MidiQOLApi }).MidiQOL;
+export interface AbilityTemplateInstance {
+  document: AbilityTemplateDocument;
+  drawPreview(): Promise<unknown>;
+}
+
+export interface AbilityTemplateClass {
+  fromActivity(activity: FoundryActivity): AbilityTemplateInstance[];
+  prototype: { drawPreview: () => Promise<unknown> };
+}
+
+export interface Dnd5eCanvas {
+  AbilityTemplate: AbilityTemplateClass;
+}
+
+export function getDnd5eCanvas(): Dnd5eCanvas | undefined {
+  return (globalThis as unknown as { dnd5e?: { canvas: Dnd5eCanvas } }).dnd5e?.canvas;
 }
 
 export function extractDiceResults(terms: FoundryDiceTerm[]): RollResult['dice'] {

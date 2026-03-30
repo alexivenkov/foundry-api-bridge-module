@@ -431,9 +431,14 @@ const mockUser = {
   targets: new Set<{ setTarget: jest.Mock }>()
 };
 
-const mockTrapWorkflow = jest.fn();
-const mockMidiQOL = {
-  TrapWorkflow: mockTrapWorkflow
+const mockDrawPreview = jest.fn().mockResolvedValue([]);
+const mockTemplateDocument = {
+  toObject: jest.fn().mockReturnValue({ t: 'circle', x: 0, y: 0, distance: 20, flags: {} }),
+  updateSource: jest.fn()
+};
+const mockAbilityTemplate = {
+  fromActivity: jest.fn().mockReturnValue([{ document: mockTemplateDocument, drawPreview: mockDrawPreview }]),
+  prototype: { drawPreview: mockDrawPreview }
 };
 
 const mockModules = {
@@ -462,7 +467,7 @@ describe('activateItemHandler', () => {
     (globalThis as Record<string, unknown>)['game'] = { ...mockGame, user: mockUser, modules: mockModules };
     (globalThis as Record<string, unknown>)['canvas'] = mockCanvas;
     (globalThis as Record<string, unknown>)['Hooks'] = mockHooks;
-    delete (globalThis as Record<string, unknown>)['MidiQOL'];
+    (globalThis as Record<string, unknown>)['dnd5e'] = { canvas: { AbilityTemplate: mockAbilityTemplate } };
     mockGame.actors.get.mockReturnValue(mockActor);
     mockActor.items.get.mockReturnValue(mockWeapon);
     mockActivitiesCollection.contents = [mockActivity];
@@ -757,10 +762,31 @@ describe('activateItemHandler', () => {
   });
 
   describe('AoE template placement', () => {
-    it('uses TrapWorkflow when Midi-QOL active and templatePosition provided', async () => {
+    it('patches drawPreview to auto-place template when templatePosition provided', async () => {
+      mockActivity.use.mockResolvedValue(null);
+
+      await activateItemHandler({
+        actorId: 'actor-123',
+        itemId: 'weapon-123',
+        templatePosition: { x: 500, y: 500 }
+      });
+
+      expect(mockActivity.use).toHaveBeenCalledWith(undefined);
+    });
+
+    it('suppresses template when templatePosition not provided', async () => {
+      mockActivity.use.mockResolvedValue(null);
+
+      await activateItemHandler({
+        actorId: 'actor-123',
+        itemId: 'weapon-123'
+      });
+
+      expect(mockActivity.use).toHaveBeenCalledWith({ create: { measuredTemplate: false } });
+    });
+
+    it('captures Midi-QOL workflow with templatePosition', async () => {
       mockModules.get.mockReturnValue({ active: true });
-      (globalThis as Record<string, unknown>)['MidiQOL'] = mockMidiQOL;
-      mockCanvas.tokens.get.mockReturnValue(mockTargetToken1);
       mockHooks.once.mockImplementation((_hook: string, callback: (wf: unknown) => void) => {
         callback({
           damageTotal: 28,
@@ -768,31 +794,24 @@ describe('activateItemHandler', () => {
           isFumble: false,
           hitTargets: new Set(),
           saves: new Set([{ id: 'target-1' }]),
-          failedSaves: new Set()
+          failedSaves: new Set([{ id: 'target-2' }])
         });
         return 1;
       });
+      mockActivity.use.mockResolvedValue(null);
 
       const result = await activateItemHandler({
         actorId: 'actor-123',
         itemId: 'weapon-123',
-        targetTokenIds: ['target-1'],
         templatePosition: { x: 500, y: 500 }
       });
 
-      expect(mockTrapWorkflow).toHaveBeenCalledWith(
-        mockActor,
-        mockWeapon,
-        [mockTargetToken1],
-        { x: 500, y: 500 }
-      );
-      expect(mockActivity.use).not.toHaveBeenCalled();
-      expect(result.activated).toBe(true);
       expect(result.workflow?.damageTotal).toBe(28);
+      expect(result.workflow?.saveTargetIds).toEqual(['target-1']);
+      expect(result.workflow?.failedSaveTargetIds).toEqual(['target-2']);
     });
 
-    it('creates MeasuredTemplate when Midi-QOL inactive and templatePosition provided', async () => {
-      mockModules.get.mockReturnValue(undefined);
+    it('calls activity.use without suppression when templatePosition provided', async () => {
       mockActivity.use.mockResolvedValue(null);
 
       await activateItemHandler({
@@ -801,74 +820,27 @@ describe('activateItemHandler', () => {
         templatePosition: { x: 300, y: 400 }
       });
 
-      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledWith('MeasuredTemplate', [{
-        t: 'circle',
-        x: 300,
-        y: 400,
-        distance: 20,
-        fillColor: '#ff0000',
-        author: 'user-1'
-      }]);
-      expect(mockActivity.use).toHaveBeenCalled();
+      expect(mockActivity.use).toHaveBeenCalledWith(undefined);
     });
 
-    it('skips template when templatePosition not provided', async () => {
-      mockActivity.use.mockResolvedValue(null);
-
-      await activateItemHandler({
-        actorId: 'actor-123',
-        itemId: 'weapon-123'
-      });
-
-      expect(mockScene.createEmbeddedDocuments).not.toHaveBeenCalled();
-      expect(mockTrapWorkflow).not.toHaveBeenCalled();
-    });
-
-    it('falls back to MeasuredTemplate when MidiQOL global not available', async () => {
-      mockModules.get.mockReturnValue({ active: true });
-      mockActivity.use.mockResolvedValue(null);
-      mockHooks.once.mockImplementation((_hook: string, callback: (wf: unknown) => void) => {
-        callback({ hitTargets: new Set(), saves: new Set(), failedSaves: new Set() });
-        return 1;
-      });
-
-      const result = await activateItemHandler({
-        actorId: 'actor-123',
-        itemId: 'weapon-123',
-        templatePosition: { x: 100, y: 200 }
-      });
-
-      expect(mockScene.createEmbeddedDocuments).toHaveBeenCalled();
-      expect(mockTrapWorkflow).not.toHaveBeenCalled();
-      expect(result.activated).toBe(true);
-    });
-
-    it('passes resolved target tokens to TrapWorkflow', async () => {
-      mockModules.get.mockReturnValue({ active: true });
-      (globalThis as Record<string, unknown>)['MidiQOL'] = mockMidiQOL;
+    it('sets targets before template placement', async () => {
       mockCanvas.tokens.get.mockImplementation((id: string) => {
         if (id === 'target-1') return mockTargetToken1;
         if (id === 'target-2') return mockTargetToken2;
         return undefined;
       });
-      mockHooks.once.mockImplementation((_hook: string, callback: (wf: unknown) => void) => {
-        callback({ hitTargets: new Set(), saves: new Set(), failedSaves: new Set() });
-        return 1;
-      });
+      mockActivity.use.mockResolvedValue(null);
 
-      await activateItemHandler({
+      const result = await activateItemHandler({
         actorId: 'actor-123',
         itemId: 'weapon-123',
         targetTokenIds: ['target-1', 'target-2'],
         templatePosition: { x: 500, y: 500 }
       });
 
-      expect(mockTrapWorkflow).toHaveBeenCalledWith(
-        mockActor,
-        mockWeapon,
-        [mockTargetToken1, mockTargetToken2],
-        { x: 500, y: 500 }
-      );
+      expect(mockTargetToken1.setTarget).toHaveBeenCalled();
+      expect(mockTargetToken2.setTarget).toHaveBeenCalled();
+      expect(result.targetsSet).toBe(2);
     });
   });
 

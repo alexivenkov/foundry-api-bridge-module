@@ -5,7 +5,7 @@ import {
   getCanvas,
   getHooks,
   isMidiQolActive,
-  getMidiQOL,
+  getDnd5eCanvas,
   type FoundryActivity,
   type FoundryItem,
   type FoundryRoll,
@@ -86,25 +86,21 @@ function waitForMidiWorkflow(): { promise: Promise<MidiWorkflow | undefined>; cl
   return { promise, cleanup };
 }
 
-async function placeTemplateOnScene(
-  item: FoundryItem,
-  position: { x: number; y: number }
-): Promise<void> {
+function setupAutoTemplatePlace(position: { x: number; y: number }): void {
+  const dnd5eCanvas = getDnd5eCanvas();
+  if (!dnd5eCanvas) return;
+
   const canvas = getCanvas();
-  if (!canvas.scene) return;
+  const AbilityTemplate = dnd5eCanvas.AbilityTemplate;
+  const origDrawPreview = AbilityTemplate.prototype.drawPreview;
 
-  const system = item.system as unknown as Record<string, unknown>;
-  const target = system['target'] as Record<string, unknown> | undefined;
-  const distance = (target?.['value'] as number | undefined) ?? 20;
-
-  await canvas.scene.createEmbeddedDocuments('MeasuredTemplate', [{
-    t: 'circle',
-    x: position.x,
-    y: position.y,
-    distance,
-    fillColor: '#ff0000',
-    author: getGame().user.id
-  }]);
+  AbilityTemplate.prototype.drawPreview = async function (this: { document: { toObject(): Record<string, unknown>; updateSource(data: Record<string, unknown>): void } }): Promise<unknown> {
+    this.document.updateSource({ x: position.x, y: position.y });
+    const data = this.document.toObject();
+    AbilityTemplate.prototype.drawPreview = origDrawPreview;
+    const result = await canvas.scene?.createEmbeddedDocuments('MeasuredTemplate', [data]);
+    return result;
+  };
 }
 
 function resolveActivity(item: FoundryItem, params: ActivateItemParams): FoundryActivity | undefined {
@@ -153,48 +149,15 @@ export async function activateItemHandler(params: ActivateItemParams): Promise<A
 
   const targetActivity = resolveActivity(item, params);
   const midiActive = isMidiQolActive();
-
-  if (params.templatePosition && midiActive) {
-    const midiApi = getMidiQOL();
-    if (midiApi) {
-      const midiListener = waitForMidiWorkflow();
-
-      new midiApi.TrapWorkflow(actor, item, targetTokens, params.templatePosition);
-
-      const midiWorkflow = await midiListener.promise;
-      midiListener.cleanup();
-
-      const result: ActivateItemResult = {
-        itemId: item.id,
-        itemName: item.name,
-        itemType: item.type,
-        activated: true,
-        targetsSet: targetTokens.length,
-        rolls: []
-      };
-
-      if (midiWorkflow) {
-        result.workflow = extractWorkflow(midiWorkflow);
-      }
-
-      if (targetActivity) {
-        result.activityUsed = {
-          id: targetActivity._id,
-          name: targetActivity.name,
-          type: targetActivity.type
-        };
-      }
-
-      return result;
-    }
-  }
+  const midiListener = midiActive ? waitForMidiWorkflow() : undefined;
 
   if (params.templatePosition) {
-    await placeTemplateOnScene(item, params.templatePosition);
+    setupAutoTemplatePlace(params.templatePosition);
   }
 
-  const midiListener = midiActive ? waitForMidiWorkflow() : undefined;
-  const usageConfig = { create: { measuredTemplate: false } };
+  const usageConfig = params.templatePosition
+    ? undefined
+    : { create: { measuredTemplate: false } };
 
   let useResult: FoundryUsageResult | null = null;
 
