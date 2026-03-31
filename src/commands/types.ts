@@ -40,6 +40,7 @@ export type CommandType =
   | 'next-turn'
   | 'previous-turn'
   | 'get-combat-state'
+  | 'set-turn'
   | 'roll-initiative'
   | 'set-initiative'
   | 'roll-all-initiative'
@@ -212,6 +213,11 @@ export interface RemoveCombatantParams {
 }
 
 export interface CombatIdParams {
+  combatId?: string;
+}
+
+export interface SetTurnParams {
+  combatantId: string;
   combatId?: string;
 }
 
@@ -806,6 +812,7 @@ export interface CommandParamsMap {
   'next-turn': CombatIdParams;
   'previous-turn': CombatIdParams;
   'get-combat-state': CombatIdParams;
+  'set-turn': SetTurnParams;
   'roll-initiative': RollInitiativeParams;
   'set-initiative': SetInitiativeParams;
   'roll-all-initiative': RollAllInitiativeParams;
@@ -863,6 +870,7 @@ export interface CommandResultMap {
   'next-turn': CombatResult;
   'previous-turn': CombatResult;
   'get-combat-state': CombatResult;
+  'set-turn': CombatResult;
   'roll-initiative': InitiativeRollResult;
   'set-initiative': CombatantResult;
   'roll-all-initiative': InitiativeRollResult;

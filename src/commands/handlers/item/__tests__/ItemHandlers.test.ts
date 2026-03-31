@@ -711,7 +711,7 @@ describe('activateItemHandler', () => {
         itemId: 'weapon-123'
       });
 
-      jest.advanceTimersByTime(5000);
+      jest.advanceTimersByTime(30000);
       const result = await resultPromise;
 
       expect(result.workflow).toBeUndefined();
@@ -726,7 +726,7 @@ describe('activateItemHandler', () => {
         itemId: 'weapon-123'
       });
 
-      jest.advanceTimersByTime(5000);
+      jest.advanceTimersByTime(30000);
       await resultPromise;
 
       expect(mockHooks.off).toHaveBeenCalledWith('midi-qol.RollComplete', 42);

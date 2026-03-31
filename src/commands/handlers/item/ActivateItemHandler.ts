@@ -14,7 +14,7 @@ import {
   type MidiWorkflow
 } from './itemTypes';
 
-const MIDI_WORKFLOW_TIMEOUT = 5000;
+const MIDI_WORKFLOW_TIMEOUT = 30000;
 
 function setTargets(tokenIds: string[]): FoundryTargetToken[] {
   const canvas = getCanvas();

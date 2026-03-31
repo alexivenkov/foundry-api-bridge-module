@@ -13,6 +13,7 @@ import { rollAllInitiativeHandler } from '@/commands';
 import { updateCombatantHandler } from '@/commands';
 import { setCombatantDefeatedHandler } from '@/commands';
 import { toggleCombatantVisibilityHandler } from '@/commands';
+import { setTurnHandler } from '@/commands';
 
 interface MockCombatant {
   id: string;
@@ -50,6 +51,7 @@ interface MockCombat {
   rollAll: jest.Mock;
   rollNPC: jest.Mock;
   setInitiative: jest.Mock;
+  update: jest.Mock;
 }
 
 const createMockCombatant = (overrides: Partial<MockCombatant> = {}): MockCombatant => {
@@ -94,7 +96,8 @@ const createMockCombat = (overrides: Partial<MockCombat> = {}): MockCombat => {
     rollInitiative: jest.fn(),
     rollAll: jest.fn(),
     rollNPC: jest.fn(),
-    setInitiative: jest.fn().mockResolvedValue(undefined)
+    setInitiative: jest.fn().mockResolvedValue(undefined),
+    update: jest.fn().mockResolvedValue(undefined)
   };
 
   // Self-referential mocks need to be set after object creation
@@ -1094,6 +1097,74 @@ describe('Combat Handlers', () => {
 
       expect(mockGame.combats.get).toHaveBeenCalledWith('combat-123');
       expect(mockCombatant.update).toHaveBeenCalled();
+    });
+  });
+
+  describe('setTurnHandler', () => {
+    it('sets turn to specific combatant', async () => {
+      const combatant1 = createMockCombatant({ id: 'c1', name: 'Fighter' });
+      const combatant2 = createMockCombatant({ id: 'c2', name: 'Wizard' });
+      const mockCombat = createMockCombat({
+        started: true,
+        round: 1,
+        turn: 0,
+        turns: [combatant1, combatant2],
+        combatant: combatant1
+      });
+      mockGame.combat = mockCombat;
+
+      await setTurnHandler({ combatantId: 'c2' });
+
+      expect(mockCombat.update).toHaveBeenCalledWith({ turn: 1 });
+    });
+
+    it('sets turn to first combatant', async () => {
+      const combatant1 = createMockCombatant({ id: 'c1' });
+      const combatant2 = createMockCombatant({ id: 'c2' });
+      const mockCombat = createMockCombat({
+        started: true,
+        turn: 1,
+        turns: [combatant1, combatant2],
+        combatant: combatant2
+      });
+      mockGame.combat = mockCombat;
+
+      await setTurnHandler({ combatantId: 'c1' });
+
+      expect(mockCombat.update).toHaveBeenCalledWith({ turn: 0 });
+    });
+
+    it('throws when combat not started', async () => {
+      const mockCombat = createMockCombat({ started: false });
+      mockGame.combat = mockCombat;
+
+      await expect(setTurnHandler({ combatantId: 'c1' }))
+        .rejects.toThrow('Combat not started');
+    });
+
+    it('throws when combatant not in turn order', async () => {
+      const mockCombat = createMockCombat({
+        started: true,
+        turns: [createMockCombatant({ id: 'c1' })]
+      });
+      mockGame.combat = mockCombat;
+
+      await expect(setTurnHandler({ combatantId: 'nonexistent' }))
+        .rejects.toThrow('Combatant not found in turn order: nonexistent');
+    });
+
+    it('uses specific combat when combatId provided', async () => {
+      const combatant1 = createMockCombatant({ id: 'c1' });
+      const mockCombat = createMockCombat({
+        started: true,
+        turns: [combatant1]
+      });
+      mockGame.combats.get.mockReturnValue(mockCombat);
+
+      await setTurnHandler({ combatantId: 'c1', combatId: 'combat-456' });
+
+      expect(mockGame.combats.get).toHaveBeenCalledWith('combat-456');
+      expect(mockCombat.update).toHaveBeenCalledWith({ turn: 0 });
     });
   });
 });

@@ -7,6 +7,7 @@ export { deleteCombatHandler } from './DeleteCombatHandler';
 export { nextTurnHandler } from './NextTurnHandler';
 export { previousTurnHandler } from './PreviousTurnHandler';
 export { getCombatStateHandler } from './GetCombatStateHandler';
+export { setTurnHandler } from './SetTurnHandler';
 export { rollInitiativeHandler } from './RollInitiativeHandler';
 export { setInitiativeHandler } from './SetInitiativeHandler';
 export { rollAllInitiativeHandler } from './RollAllInitiativeHandler';

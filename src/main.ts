@@ -32,6 +32,7 @@ import {
   nextTurnHandler,
   previousTurnHandler,
   getCombatStateHandler,
+  setTurnHandler,
   rollInitiativeHandler,
   setInitiativeHandler,
   rollAllInitiativeHandler,
@@ -197,6 +198,7 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
   commandRouter.register('next-turn', nextTurnHandler);
   commandRouter.register('previous-turn', previousTurnHandler);
   commandRouter.register('get-combat-state', getCombatStateHandler);
+  commandRouter.register('set-turn', setTurnHandler);
   commandRouter.register('roll-initiative', rollInitiativeHandler);
   commandRouter.register('set-initiative', setInitiativeHandler);
   commandRouter.register('roll-all-initiative', rollAllInitiativeHandler);

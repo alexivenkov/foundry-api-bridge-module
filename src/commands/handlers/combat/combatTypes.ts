@@ -52,6 +52,7 @@ export interface FoundryCombat {
   rollAll(options?: RollInitiativeOptions): Promise<FoundryCombat>;
   rollNPC(options?: RollInitiativeOptions): Promise<FoundryCombat>;
   setInitiative(id: string, value: number): Promise<void>;
+  update(data: { turn?: number; round?: number }): Promise<FoundryCombat>;
 }
 
 export interface FoundryCombatantCreateData {

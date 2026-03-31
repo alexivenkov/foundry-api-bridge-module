@@ -36,6 +36,7 @@ export {
   nextTurnHandler,
   previousTurnHandler,
   getCombatStateHandler,
+  setTurnHandler,
   rollInitiativeHandler,
   setInitiativeHandler,
   rollAllInitiativeHandler,
