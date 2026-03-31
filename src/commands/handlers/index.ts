@@ -1,4 +1,5 @@
 export { rollDiceHandler } from '@/commands/handlers/RollDiceHandler';
+export { sendChatMessageHandler } from '@/commands/handlers/SendChatMessageHandler';
 
 // Actor handlers
 export {

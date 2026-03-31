@@ -152,6 +152,15 @@ export interface ActorResult {
 export interface SendChatMessageParams {
   content: string;
   speaker?: string;
+  actorId?: string;
+  flavor?: string;
+  whisperTo?: string[];
+  type?: 'ic' | 'ooc' | 'emote';
+}
+
+export interface SendChatMessageResult {
+  messageId: string;
+  sent: boolean;
 }
 
 // Journal Commands
@@ -854,7 +863,7 @@ export interface CommandResultMap {
   'create-actor-from-compendium': ActorResult;
   'update-actor': ActorResult;
   'delete-actor': DeleteResult;
-  'send-chat-message': { sent: boolean };
+  'send-chat-message': SendChatMessageResult;
   'create-journal': JournalResult;
   'update-journal': JournalResult;
   'delete-journal': DeleteResult;

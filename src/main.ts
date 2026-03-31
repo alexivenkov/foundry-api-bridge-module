@@ -8,6 +8,7 @@ import { WebSocketClient } from '@/transport';
 import {
   CommandRouter,
   rollDiceHandler,
+  sendChatMessageHandler,
   rollSkillHandler,
   rollSaveHandler,
   rollAbilityHandler,
@@ -174,6 +175,7 @@ async function initializeModule(): Promise<void> {
 function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnectAttempts: number }, wsUrl: string, apiKey: string): void {
   commandRouter = new CommandRouter();
   commandRouter.register('roll-dice', rollDiceHandler);
+  commandRouter.register('send-chat-message', sendChatMessageHandler);
   commandRouter.register('roll-skill', rollSkillHandler);
   commandRouter.register('roll-save', rollSaveHandler);
   commandRouter.register('roll-ability', rollAbilityHandler);
