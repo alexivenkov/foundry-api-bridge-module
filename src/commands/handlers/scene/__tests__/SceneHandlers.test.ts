@@ -53,6 +53,12 @@ interface MockRegion {
   shapes: { type: string }[];
 }
 
+interface MockTokenActor {
+  id: string;
+  system?: { attributes?: { hp?: { value: number; max: number }; ac?: { value: number } } };
+  statuses?: Set<string>;
+}
+
 interface MockToken {
   id: string;
   name: string;
@@ -61,7 +67,7 @@ interface MockToken {
   elevation: number;
   hidden: boolean;
   disposition: number;
-  actor: { id: string } | null;
+  actor: MockTokenActor | null;
 }
 
 interface MockScene {
@@ -148,7 +154,11 @@ const createMockToken = (overrides: Partial<MockToken> = {}): MockToken => ({
   elevation: 0,
   hidden: false,
   disposition: -1,
-  actor: { id: 'actor-1' },
+  actor: {
+    id: 'actor-1',
+    system: { attributes: { hp: { value: 7, max: 7 }, ac: { value: 13 } } },
+    statuses: new Set<string>()
+  },
   ...overrides
 });
 
@@ -167,7 +177,7 @@ const createMockScene = (overrides: Partial<MockScene> = {}): MockScene => ({
   tiles: { contents: [createMockTile()] },
   drawings: { contents: [createMockDrawing()] },
   regions: { contents: [createMockRegion()] },
-  tokens: { contents: [createMockToken(), createMockToken({ id: 'token-2', name: 'Fighter', x: 500, y: 500, disposition: 1, actor: { id: 'actor-2' } })] },
+  tokens: { contents: [createMockToken(), createMockToken({ id: 'token-2', name: 'Fighter', x: 500, y: 500, disposition: 1, actor: { id: 'actor-2', system: { attributes: { hp: { value: 7, max: 7 }, ac: { value: 13 } } }, statuses: new Set<string>() } })] },
   activate: jest.fn().mockResolvedValue(undefined),
   ...overrides
 });
@@ -217,8 +227,8 @@ describe('Scene Handlers', () => {
         drawings: [{ x: 400, y: 400, shape: { type: 'r', width: 200, height: 100, points: [] }, text: '', hidden: false, fillColor: '#00ff00', strokeColor: '#000000' }],
         regions: [{ id: 'region-1', name: 'Trap Zone', color: '#ff0000', shapes: [{ type: 'rectangle' }] }],
         tokens: [
-          { id: 'token-1', name: 'Goblin', actorId: 'actor-1', gridX: 2, gridY: 3, x: 250, y: 350, elevation: 0, hidden: false, disposition: -1 },
-          { id: 'token-2', name: 'Fighter', actorId: 'actor-2', gridX: 5, gridY: 5, x: 500, y: 500, elevation: 0, hidden: false, disposition: 1 }
+          { id: 'token-1', name: 'Goblin', actorId: 'actor-1', gridX: 2, gridY: 3, x: 250, y: 350, elevation: 0, hidden: false, disposition: -1, hp: { value: 7, max: 7 }, ac: 13, conditions: [] },
+          { id: 'token-2', name: 'Fighter', actorId: 'actor-2', gridX: 5, gridY: 5, x: 500, y: 500, elevation: 0, hidden: false, disposition: 1, hp: { value: 7, max: 7 }, ac: 13, conditions: [] }
         ]
       });
     });

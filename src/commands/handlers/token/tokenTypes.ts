@@ -27,6 +27,13 @@ export interface FoundryToken {
   disposition: number;
   actor: {
     id: string;
+    system?: {
+      attributes?: {
+        hp?: { value: number; max: number };
+        ac?: { value: number };
+      };
+    };
+    statuses?: Set<string>;
   } | null;
   update(data: TokenUpdateData, options?: TokenUpdateOptions): Promise<FoundryToken>;
   delete(): Promise<FoundryToken>;
@@ -72,7 +79,7 @@ export interface FoundryGame {
 }
 
 export function mapTokenToResult(token: FoundryToken): TokenResult {
-  return {
+  const result: TokenResult = {
     id: token.id,
     name: token.name,
     actorId: token.actor?.id ?? null,
@@ -82,8 +89,21 @@ export function mapTokenToResult(token: FoundryToken): TokenResult {
     rotation: token.rotation,
     hidden: token.hidden,
     img: token.texture.src,
-    disposition: token.disposition
+    disposition: token.disposition,
+    conditions: token.actor?.statuses ? [...token.actor.statuses] : []
   };
+
+  const hp = token.actor?.system?.attributes?.hp;
+  if (hp) {
+    result.hp = { value: hp.value, max: hp.max };
+  }
+
+  const ac = token.actor?.system?.attributes?.ac;
+  if (ac) {
+    result.ac = ac.value;
+  }
+
+  return result;
 }
 
 export function getActiveScene(game: FoundryGame, sceneId?: string): FoundryScene {

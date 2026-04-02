@@ -18,6 +18,8 @@ interface MockToken {
   disposition: number;
   actor: {
     id: string;
+    system?: { attributes?: { hp?: { value: number; max: number }; ac?: { value: number } } };
+    statuses?: Set<string>;
   } | null;
   update: jest.Mock;
   delete: jest.Mock;
@@ -48,7 +50,14 @@ const createMockToken = (overrides: Partial<MockToken> = {}): MockToken => {
     },
     disposition: 1,
     actor: {
-      id: 'actor-456'
+      id: 'actor-456',
+      system: {
+        attributes: {
+          hp: { value: 25, max: 30 },
+          ac: { value: 15 }
+        }
+      },
+      statuses: new Set<string>()
     },
     update: jest.fn(),
     delete: jest.fn(),
@@ -123,7 +132,10 @@ describe('Token Handlers', () => {
         rotation: 0,
         hidden: false,
         img: 'icons/token.png',
-        disposition: 1
+        disposition: 1,
+        hp: { value: 25, max: 30 },
+        ac: 15,
+        conditions: []
       });
     });
 
@@ -424,7 +436,10 @@ describe('Token Handlers', () => {
             rotation: 0,
             hidden: false,
             img: 'icons/token.png',
-            disposition: 1
+            disposition: 1,
+            hp: { value: 25, max: 30 },
+            ac: 15,
+            conditions: []
           },
           {
             id: 'token-2',
@@ -436,7 +451,8 @@ describe('Token Handlers', () => {
             rotation: 0,
             hidden: false,
             img: 'icons/token.png',
-            disposition: 1
+            disposition: 1,
+            conditions: []
           }
         ]
       });

@@ -415,6 +415,11 @@ export interface CombatResult {
 }
 
 // Token Results
+export interface TokenHpData {
+  value: number;
+  max: number;
+}
+
 export interface TokenResult {
   id: string;
   name: string;
@@ -426,6 +431,9 @@ export interface TokenResult {
   hidden: boolean;
   img: string;
   disposition: number;
+  hp?: TokenHpData;
+  ac?: number;
+  conditions: string[];
 }
 
 export interface SceneTokensResult {
@@ -747,6 +755,9 @@ export interface SceneTokenSummary {
   elevation: number;
   hidden: boolean;
   disposition: number;
+  hp?: TokenHpData;
+  ac?: number;
+  conditions: string[];
 }
 
 export interface SceneDetailResult {

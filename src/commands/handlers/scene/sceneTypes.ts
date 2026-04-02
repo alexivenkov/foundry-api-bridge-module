@@ -85,7 +85,16 @@ export interface FoundryToken {
   elevation: number | undefined;
   hidden: boolean | undefined;
   disposition: number | undefined;
-  actor: { id: string } | null;
+  actor: {
+    id: string;
+    system?: {
+      attributes?: {
+        hp?: { value: number; max: number };
+        ac?: { value: number };
+      };
+    };
+    statuses?: Set<string>;
+  } | null;
 }
 
 export interface FoundryScene {
@@ -214,7 +223,7 @@ export function mapRegionToResult(region: FoundryRegion): SceneRegionResult {
 
 export function mapTokenToSummary(token: FoundryToken, gridSize: number): SceneTokenSummary {
   const { gridX, gridY } = pixelToGrid(token.x, token.y, gridSize);
-  return {
+  const result: SceneTokenSummary = {
     id: token.id,
     name: token.name ?? '',
     actorId: token.actor?.id ?? null,
@@ -224,8 +233,21 @@ export function mapTokenToSummary(token: FoundryToken, gridSize: number): SceneT
     y: token.y,
     elevation: token.elevation ?? 0,
     hidden: token.hidden ?? false,
-    disposition: token.disposition ?? 0
+    disposition: token.disposition ?? 0,
+    conditions: token.actor?.statuses ? [...token.actor.statuses] : []
   };
+
+  const hp = token.actor?.system?.attributes?.hp;
+  if (hp) {
+    result.hp = { value: hp.value, max: hp.max };
+  }
+
+  const ac = token.actor?.system?.attributes?.ac;
+  if (ac) {
+    result.ac = ac.value;
+  }
+
+  return result;
 }
 
 export function mapSceneToDetail(scene: FoundryScene): SceneDetailResult {
