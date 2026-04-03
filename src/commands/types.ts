@@ -18,6 +18,7 @@ export type CommandType =
   | 'roll-save'
   | 'roll-attack'
   | 'roll-damage'
+  | 'get-world-info'
   | 'get-actors'
   | 'get-actor'
   | 'create-actor'
@@ -335,10 +336,6 @@ export interface DiceResult {
   results: number[];
 }
 
-export interface ActorListResult {
-  actors: ActorSummary[];
-}
-
 export interface ActorSummary {
   id: string;
   name: string;
@@ -351,21 +348,8 @@ export interface ActorDetailResult {
   name: string;
   type: string;
   img: string;
-  hp: { value: number; max: number };
-  ac: number;
-  abilities: Record<AbilityKey, AbilityScore>;
-  skills: Record<string, SkillInfo>;
+  system: Record<string, unknown>;
   items: ItemSummary[];
-}
-
-export interface AbilityScore {
-  value: number;
-  modifier: number;
-}
-
-export interface SkillInfo {
-  total: number;
-  proficient: boolean;
 }
 
 export interface ItemSummary {
@@ -795,6 +779,38 @@ export interface ActivateSceneResult {
   active: boolean;
 }
 
+// World Info (pull query)
+export type GetWorldInfoParams = Record<string, never>;
+
+export interface WorldInfoData {
+  id: string;
+  title: string;
+  system: string;
+  systemVersion: string;
+  foundryVersion: string;
+}
+
+export interface WorldCounts {
+  journals: number;
+  actors: number;
+  items: number;
+  scenes: number;
+}
+
+export interface CompendiumMetaSummary {
+  id: string;
+  label: string;
+  type: string;
+  system: string;
+  count: number;
+}
+
+export interface WorldInfoResult {
+  world: WorldInfoData;
+  counts: WorldCounts;
+  compendiumMeta: CompendiumMetaSummary[];
+}
+
 export type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
 
 export const ABILITY_KEYS: readonly AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
@@ -810,6 +826,7 @@ export interface CommandParamsMap {
   'roll-save': RollSaveParams;
   'roll-attack': RollAttackParams;
   'roll-damage': RollDamageParams;
+  'get-world-info': GetWorldInfoParams;
   'get-actors': Record<string, never>;
   'get-actor': GetActorParams;
   'create-actor': CreateActorParams;
@@ -868,7 +885,8 @@ export interface CommandResultMap {
   'roll-save': RollResult;
   'roll-attack': RollResult;
   'roll-damage': RollResult;
-  'get-actors': ActorListResult;
+  'get-world-info': WorldInfoResult;
+  'get-actors': ActorSummary[];
   'get-actor': ActorDetailResult;
   'create-actor': ActorResult;
   'create-actor-from-compendium': ActorResult;

@@ -7,3 +7,5 @@ export { createActorHandler } from './CreateActorHandler';
 export { createActorFromCompendiumHandler } from './CreateActorFromCompendiumHandler';
 export { updateActorHandler } from './UpdateActorHandler';
 export { deleteActorHandler } from './DeleteActorHandler';
+export { getActorsHandler } from './GetActorsHandler';
+export { getActorHandler } from './GetActorHandler';

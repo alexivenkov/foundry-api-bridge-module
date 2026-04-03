@@ -13,7 +13,9 @@ export {
   createActorHandler,
   createActorFromCompendiumHandler,
   updateActorHandler,
-  deleteActorHandler
+  deleteActorHandler,
+  getActorsHandler,
+  getActorHandler
 } from '@/commands/handlers/actor';
 
 // Journal handlers
@@ -72,6 +74,9 @@ export {
   getScenesListHandler,
   activateSceneHandler
 } from '@/commands/handlers/scene';
+
+// World handlers
+export { getWorldInfoHandler } from '@/commands/handlers/world';
 
 // Effect handlers
 export {

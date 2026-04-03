@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.12.0] - 2026-04-03
+
+### Added
+- **Pull-architecture commands (Batch 1)** — Gateway can now request data from Foundry on demand via WebSocket instead of relying solely on periodic push
+  - `get-world-info` — world metadata, entity counts, compendium pack list
+  - `get-actors` — list all actors (id, name, type, img)
+  - `get-actor` — full actor data by ID (system data via getRollData, item summaries)
+- New handler group: `src/commands/handlers/world/`
+
+### Changed
+- `ActorDetailResult` type changed from dnd5e-specific (hp, ac, abilities, skills) to system-agnostic (`system: Record<string, unknown>`) matching the push format
+- `get-actors` result type changed from `{ actors: ActorSummary[] }` to flat `ActorSummary[]` matching server contract
+- Removed unused types: `ActorListResult`, `AbilityScore`, `SkillInfo`
+
+### Technical
+- 532 tests (24 new)
+- Data format from `get-actor` is identical to `WorldData.actors[]` from push (uses same `getRollData()`)
+- `get-world-info` data is identical to `WorldData.{ world, counts, compendiumMeta }` from push
+- Existing `get-scenes-list` covers `list-scenes` needs — no duplication
+
 ## [6.8.0] - 2026-03-30
 
 ### Changed

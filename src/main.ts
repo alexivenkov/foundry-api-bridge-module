@@ -18,6 +18,9 @@ import {
   createActorFromCompendiumHandler,
   updateActorHandler,
   deleteActorHandler,
+  getActorsHandler,
+  getActorHandler,
+  getWorldInfoHandler,
   createJournalHandler,
   updateJournalHandler,
   deleteJournalHandler,
@@ -174,6 +177,9 @@ async function initializeModule(): Promise<void> {
 
 function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnectAttempts: number }, wsUrl: string, apiKey: string): void {
   commandRouter = new CommandRouter();
+  commandRouter.register('get-world-info', getWorldInfoHandler);
+  commandRouter.register('get-actors', getActorsHandler);
+  commandRouter.register('get-actor', getActorHandler);
   commandRouter.register('roll-dice', rollDiceHandler);
   commandRouter.register('send-chat-message', sendChatMessageHandler);
   commandRouter.register('roll-skill', rollSkillHandler);
