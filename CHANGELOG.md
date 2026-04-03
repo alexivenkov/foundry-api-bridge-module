@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.13.0] - 2026-04-03
+
+### Added
+- **Pull-architecture commands (Batch 2)** — completes full data coverage for pull-based architecture
+  - `get-journals` — list all journals with pages (text, markdown content)
+  - `get-journal` — single journal by ID with full page content
+  - `get-items` — list all world items with system data
+  - `get-item` — single world item by ID
+  - `get-compendiums` — list all compendium packs with full metadata
+  - `get-compendium` — load all documents from a compendium pack (async, supports Actor items and JournalEntry pages)
+
+### Technical
+- 572 tests (40 new)
+- All pull data formats are 1:1 with push (`POST /update`) format
+- `get-compendium` is the only async handler (calls `pack.getDocuments()`)
+- After server integrates Batch 2, push mechanism can be fully retired
+
 ## [6.12.0] - 2026-04-03
 
 ### Added

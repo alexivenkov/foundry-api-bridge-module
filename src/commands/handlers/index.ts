@@ -25,7 +25,9 @@ export {
   deleteJournalHandler,
   createJournalPageHandler,
   updateJournalPageHandler,
-  deleteJournalPageHandler
+  deleteJournalPageHandler,
+  getJournalsHandler,
+  getJournalHandler
 } from '@/commands/handlers/journal';
 
 // Combat handlers
@@ -65,7 +67,9 @@ export {
   addItemToActorHandler,
   addItemFromCompendiumHandler,
   updateActorItemHandler,
-  deleteActorItemHandler
+  deleteActorItemHandler,
+  getItemsHandler,
+  getItemHandler
 } from '@/commands/handlers/item';
 
 // Scene handlers
@@ -76,7 +80,11 @@ export {
 } from '@/commands/handlers/scene';
 
 // World handlers
-export { getWorldInfoHandler } from '@/commands/handlers/world';
+export {
+  getWorldInfoHandler,
+  getCompendiumsHandler,
+  getCompendiumHandler
+} from '@/commands/handlers/world';
 
 // Effect handlers
 export {

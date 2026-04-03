@@ -16,7 +16,8 @@ function createMockPack(overrides?: Partial<FoundryPack>): FoundryPack {
     metadata: {
       label: 'Monsters',
       type: 'Actor',
-      system: 'dnd5e'
+      system: 'dnd5e',
+      packageName: 'dnd5e'
     },
     index: { size: 350 },
     ...overrides
@@ -145,17 +146,17 @@ describe('getWorldInfoHandler', () => {
     const packs = [
       createMockPack({
         collection: 'dnd5e.monsters',
-        metadata: { label: 'Monsters', type: 'Actor', system: 'dnd5e' },
+        metadata: { label: 'Monsters', type: 'Actor', system: 'dnd5e', packageName: 'dnd5e' },
         index: { size: 350 }
       }),
       createMockPack({
         collection: 'dnd5e.spells',
-        metadata: { label: 'Spells', type: 'Item', system: 'dnd5e' },
+        metadata: { label: 'Spells', type: 'Item', system: 'dnd5e', packageName: 'dnd5e' },
         index: { size: 500 }
       }),
       createMockPack({
         collection: 'world.custom-tables',
-        metadata: { label: 'Custom Tables', type: 'RollTable', system: undefined },
+        metadata: { label: 'Custom Tables', type: 'RollTable', system: undefined, packageName: 'world' },
         index: { size: 5 }
       })
     ];
@@ -190,7 +191,7 @@ describe('getWorldInfoHandler', () => {
 
   it('should fallback system to empty string when pack metadata system is undefined', async () => {
     const pack = createMockPack({
-      metadata: { label: 'Custom', type: 'Actor', system: undefined }
+      metadata: { label: 'Custom', type: 'Actor', system: undefined, packageName: 'custom' }
     });
 
     setGame(createMockGame({ packs: createMockCollection([pack]) }));

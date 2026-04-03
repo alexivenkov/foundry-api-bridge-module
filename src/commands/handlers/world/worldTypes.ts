@@ -12,6 +12,7 @@ export interface FoundryPackMetadata {
   label: string;
   type: string;
   system: string | undefined;
+  packageName: string;
 }
 
 export interface FoundryPackIndex {
@@ -42,4 +43,25 @@ export interface FoundryGame {
 
 export function getGame(): FoundryGame {
   return (globalThis as unknown as { game: FoundryGame }).game;
+}
+
+// Compendium document loading types
+
+export interface FoundryCompendiumDocument {
+  id: string;
+  uuid: string;
+  name: string;
+}
+
+export interface FoundryCompendiumPack {
+  collection: string;
+  metadata: FoundryPackMetadata;
+  index: FoundryPackIndex;
+  getDocuments(): Promise<FoundryCompendiumDocument[]>;
+}
+
+export interface FoundryPacksCollectionFull {
+  get(id: string): FoundryCompendiumPack | undefined;
+  forEach(fn: (pack: FoundryCompendiumPack) => void): void;
+  size: number;
 }

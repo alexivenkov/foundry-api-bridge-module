@@ -1,3 +1,5 @@
+import type { JournalData, ItemData, CompendiumMetadata, CompendiumData } from '@/types/foundry';
+
 export interface Command<T = unknown> {
   id: string;
   type: CommandType;
@@ -67,7 +69,13 @@ export type CommandType =
   | 'get-scene'
   | 'get-scenes-list'
   | 'activate-scene'
-  | 'activate-item';
+  | 'activate-item'
+  | 'get-journals'
+  | 'get-journal'
+  | 'get-items'
+  | 'get-item'
+  | 'get-compendiums'
+  | 'get-compendium';
 
 export interface RollDiceParams {
   formula: string;
@@ -811,6 +819,25 @@ export interface WorldInfoResult {
   compendiumMeta: CompendiumMetaSummary[];
 }
 
+// Pull query params (Batch 2)
+export type GetJournalsParams = Record<string, never>;
+
+export interface GetJournalParams {
+  journalId: string;
+}
+
+export type GetItemsParams = Record<string, never>;
+
+export interface GetItemParams {
+  itemId: string;
+}
+
+export type GetCompendiumsParams = Record<string, never>;
+
+export interface GetCompendiumParams {
+  packId: string;
+}
+
 export type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
 
 export const ABILITY_KEYS: readonly AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
@@ -876,6 +903,12 @@ export interface CommandParamsMap {
   'get-scenes-list': GetScenesListParams;
   'activate-scene': ActivateSceneParams;
   'activate-item': ActivateItemParams;
+  'get-journals': GetJournalsParams;
+  'get-journal': GetJournalParams;
+  'get-items': GetItemsParams;
+  'get-item': GetItemParams;
+  'get-compendiums': GetCompendiumsParams;
+  'get-compendium': GetCompendiumParams;
 }
 
 export interface CommandResultMap {
@@ -935,4 +968,10 @@ export interface CommandResultMap {
   'get-scenes-list': SceneListResult;
   'activate-scene': ActivateSceneResult;
   'activate-item': ActivateItemResult;
+  'get-journals': JournalData[];
+  'get-journal': JournalData;
+  'get-items': ItemData[];
+  'get-item': ItemData;
+  'get-compendiums': CompendiumMetadata[];
+  'get-compendium': CompendiumData;
 }

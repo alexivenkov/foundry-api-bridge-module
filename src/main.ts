@@ -21,6 +21,12 @@ import {
   getActorsHandler,
   getActorHandler,
   getWorldInfoHandler,
+  getJournalsHandler,
+  getJournalHandler,
+  getItemsHandler,
+  getItemHandler,
+  getCompendiumsHandler,
+  getCompendiumHandler,
   createJournalHandler,
   updateJournalHandler,
   deleteJournalHandler,
@@ -180,6 +186,12 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
   commandRouter.register('get-world-info', getWorldInfoHandler);
   commandRouter.register('get-actors', getActorsHandler);
   commandRouter.register('get-actor', getActorHandler);
+  commandRouter.register('get-journals', getJournalsHandler);
+  commandRouter.register('get-journal', getJournalHandler);
+  commandRouter.register('get-items', getItemsHandler);
+  commandRouter.register('get-item', getItemHandler);
+  commandRouter.register('get-compendiums', getCompendiumsHandler);
+  commandRouter.register('get-compendium', getCompendiumHandler);
   commandRouter.register('roll-dice', rollDiceHandler);
   commandRouter.register('send-chat-message', sendChatMessageHandler);
   commandRouter.register('roll-skill', rollSkillHandler);
