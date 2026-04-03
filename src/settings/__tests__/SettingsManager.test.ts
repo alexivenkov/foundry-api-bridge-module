@@ -5,7 +5,7 @@ jest.mock('@/ui/ApiConfigForm', () => ({
   ApiConfigForm: class MockApiConfigForm {}
 }));
 
-import { registerSettings, registerMenu, getConfig, setConfig, resetToDefaults } from '@/settings/SettingsManager';
+import { registerSettings, registerMenu, getConfig, setConfig } from '@/settings/SettingsManager';
 
 const mockSettings = {
   register: jest.fn(),
@@ -39,6 +39,21 @@ describe('SettingsManager', () => {
         }
       );
     });
+
+    it('should register wsUrl and apiKey settings', () => {
+      registerSettings();
+
+      expect(mockSettings.register).toHaveBeenCalledWith(
+        'foundry-api-bridge',
+        'wsUrl',
+        expect.objectContaining({ name: 'WebSocket URL', type: String })
+      );
+      expect(mockSettings.register).toHaveBeenCalledWith(
+        'foundry-api-bridge',
+        'apiKey',
+        expect.objectContaining({ name: 'API Key', type: String })
+      );
+    });
   });
 
   describe('registerMenu', () => {
@@ -51,7 +66,6 @@ describe('SettingsManager', () => {
         expect.objectContaining({
           name: 'Configure Module',
           label: 'Configure',
-          hint: 'Configure update interval and compendium auto-load settings',
           icon: 'fas fa-cog',
           restricted: true
         })
@@ -63,10 +77,7 @@ describe('SettingsManager', () => {
     it('should retrieve config from game.settings', () => {
       const mockConfig: ModuleConfig = {
         ...DEFAULT_CONFIG,
-        apiServer: {
-          ...DEFAULT_CONFIG.apiServer,
-          updateInterval: 3000
-        }
+        webSocket: { ...DEFAULT_CONFIG.webSocket, reconnectInterval: 3000 }
       };
 
       mockSettings.get.mockReturnValue(mockConfig);
@@ -90,10 +101,7 @@ describe('SettingsManager', () => {
     it('should save config to game.settings', async () => {
       const newConfig: ModuleConfig = {
         ...DEFAULT_CONFIG,
-        apiServer: {
-          ...DEFAULT_CONFIG.apiServer,
-          updateInterval: 10000
-        }
+        webSocket: { ...DEFAULT_CONFIG.webSocket, maxReconnectAttempts: 20 }
       };
 
       mockSettings.set.mockResolvedValue(newConfig);
@@ -101,16 +109,6 @@ describe('SettingsManager', () => {
       await setConfig(newConfig);
 
       expect(mockSettings.set).toHaveBeenCalledWith('foundry-api-bridge', 'config', newConfig);
-    });
-  });
-
-  describe('resetToDefaults', () => {
-    it('should reset config to DEFAULT_CONFIG', async () => {
-      mockSettings.set.mockResolvedValue(DEFAULT_CONFIG);
-
-      await resetToDefaults();
-
-      expect(mockSettings.set).toHaveBeenCalledWith('foundry-api-bridge', 'config', DEFAULT_CONFIG);
     });
   });
 });

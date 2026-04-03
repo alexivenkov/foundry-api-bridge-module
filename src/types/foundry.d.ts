@@ -27,56 +27,9 @@ interface ClientSettings {
 }
 
 declare global {
-  interface SessionInfo {
-    tier: string;
-    features: {
-      compendiums: boolean;
-      commands: string[];
-    };
-  }
-
-  interface Window {
-    FoundryAPIBridge?: {
-      collectWorldData: () => WorldData;
-      sendDataToServer: (data: WorldData) => Promise<void>;
-      startUpdateLoop: () => void;
-      stopUpdateLoop: () => void;
-      collectCompendiumMetadata: () => CompendiumMetadata[];
-      loadCompendiumContents: (packId: string) => Promise<CompendiumData | null>;
-      sendCompendiumToServer: (packId: string, packData: CompendiumData) => Promise<void>;
-      loadAndSendCompendium: (packId: string) => Promise<void>;
-      autoLoadCompendium: () => Promise<void>;
-      getSession: () => SessionInfo | null;
-      API_SERVER_URL: string;
-      UPDATE_INTERVAL: number;
-      AUTO_LOAD_COMPENDIUM: string[];
-    };
-  }
-
   interface Game {
     settings: ClientSettings;
   }
-}
-
-export interface WorldData {
-  world: {
-    id: string;
-    title: string;
-    system: string;
-    systemVersion: string;
-    foundryVersion: string;
-  };
-  counts: {
-    journals: number;
-    actors: number;
-    items: number;
-    scenes: number;
-  };
-  journals: JournalData[];
-  actors: ActorData[];
-  scenes: SceneData[];
-  items: ItemData[];
-  compendiumMeta: CompendiumMetadata[];
 }
 
 export interface JournalData {
@@ -93,36 +46,6 @@ export interface JournalPageData {
   type: string;
   text: string | null;
   markdown: string | null;
-}
-
-export interface ActorData {
-  id: string;
-  uuid: string;
-  name: string;
-  type: string;
-  folder: string | null;
-  img: string;
-  system: Record<string, unknown>;
-  items: ItemData[];
-}
-
-export interface SceneData {
-  id: string;
-  uuid: string;
-  name: string;
-  active: boolean;
-  folder: string | null;
-  img: string;
-  width: number;
-  height: number;
-  grid: { size: number; type: number; units: string; distance: number };
-  darkness: number;
-  notes: { x: number; y: number; text: string; label: string; entryId: string | null }[];
-  walls: { c: number[]; move: number; sense: number; door: number }[];
-  lights: { x: number; y: number; bright: number; dim: number; color: string | null; angle: number; walls: boolean; hidden: boolean }[];
-  tiles: { x: number; y: number; width: number; height: number; img: string; hidden: boolean; elevation: number; rotation: number }[];
-  drawings: { x: number; y: number; shape: { type: string; width: number; height: number; points: number[] }; text: string; hidden: boolean; fillColor: string | null; strokeColor: string | null }[];
-  regions: { id: string; name: string; color: string | null; shapes: { type: string }[] }[];
 }
 
 export interface ItemData {

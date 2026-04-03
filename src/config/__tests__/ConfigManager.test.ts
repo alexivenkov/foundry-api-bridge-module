@@ -1,13 +1,10 @@
 import { ConfigManager } from '@/config/ConfigManager';
-import { loadConfigFromUrl } from '@/config/loader';
 import { DEFAULT_CONFIG } from '@/config/defaults';
 import type { ModuleConfig } from '@/config/types';
 import { getConfig, setConfig } from '@/settings/SettingsManager';
 
-jest.mock('@/config/loader');
 jest.mock('@/settings/SettingsManager');
 
-const mockLoadConfigFromUrl = loadConfigFromUrl as jest.MockedFunction<typeof loadConfigFromUrl>;
 const mockGetConfig = getConfig as jest.MockedFunction<typeof getConfig>;
 const mockSetConfig = setConfig as jest.MockedFunction<typeof setConfig>;
 
@@ -21,7 +18,7 @@ describe('ConfigManager', () => {
     it('should initialize with config from game.settings', () => {
       const settingsConfig: ModuleConfig = {
         ...DEFAULT_CONFIG,
-        apiServer: { ...DEFAULT_CONFIG.apiServer, updateInterval: 3000 }
+        webSocket: { ...DEFAULT_CONFIG.webSocket, reconnectInterval: 3000 }
       };
 
       mockGetConfig.mockReturnValue(settingsConfig);
@@ -29,57 +26,7 @@ describe('ConfigManager', () => {
       ConfigManager.initialize();
 
       expect(ConfigManager.isInitialized()).toBe(true);
-      expect(ConfigManager.getConfig().apiServer.updateInterval).toBe(3000);
-    });
-  });
-
-  describe('migrateFromFile', () => {
-    beforeEach(() => {
-      mockGetConfig.mockReturnValue(DEFAULT_CONFIG);
-      ConfigManager.initialize();
-    });
-
-    it('should migrate valid config from file to settings', async () => {
-      const fileConfig: ModuleConfig = {
-        ...DEFAULT_CONFIG,
-        apiServer: { ...DEFAULT_CONFIG.apiServer, updateInterval: 3000 }
-      };
-
-      mockLoadConfigFromUrl.mockResolvedValue(fileConfig);
-
-      await ConfigManager.migrateFromFile('config.json');
-
-      expect(mockSetConfig).toHaveBeenCalledWith(fileConfig);
-      expect(ConfigManager.getConfig().apiServer.updateInterval).toBe(3000);
-    });
-
-    it('should merge partial config when migrating', async () => {
-      const partialConfig = {
-        apiServer: { updateInterval: 3000 }
-      };
-
-      mockLoadConfigFromUrl.mockResolvedValue(partialConfig);
-
-      await ConfigManager.migrateFromFile('config.json');
-
-      expect(mockSetConfig).toHaveBeenCalled();
-      const savedConfig = mockSetConfig.mock.calls[0]?.[0] as ModuleConfig;
-      expect(savedConfig.apiServer.updateInterval).toBe(3000);
-      expect(savedConfig.apiServer.endpoints.worldData).toBe('/update');
-    });
-
-    it('should handle migration errors gracefully', async () => {
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-      mockLoadConfigFromUrl.mockRejectedValue(new Error('File not found'));
-
-      await expect(ConfigManager.migrateFromFile('missing.json')).resolves.not.toThrow();
-
-      expect(mockSetConfig).not.toHaveBeenCalled();
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'Foundry API Bridge | Failed to migrate config from file:',
-        expect.any(Error)
-      );
-      consoleWarnSpy.mockRestore();
+      expect(ConfigManager.getConfig().webSocket.reconnectInterval).toBe(3000);
     });
   });
 
@@ -92,13 +39,13 @@ describe('ConfigManager', () => {
     it('should update config when valid', async () => {
       const newConfig: ModuleConfig = {
         ...DEFAULT_CONFIG,
-        apiServer: { ...DEFAULT_CONFIG.apiServer, updateInterval: 10000 }
+        webSocket: { ...DEFAULT_CONFIG.webSocket, maxReconnectAttempts: 20 }
       };
 
       await ConfigManager.updateConfig(newConfig);
 
       expect(mockSetConfig).toHaveBeenCalledWith(newConfig);
-      expect(ConfigManager.getConfig().apiServer.updateInterval).toBe(10000);
+      expect(ConfigManager.getConfig().webSocket.maxReconnectAttempts).toBe(20);
     });
 
     it('should throw error when config is invalid', async () => {

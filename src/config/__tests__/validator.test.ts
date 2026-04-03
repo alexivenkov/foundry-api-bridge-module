@@ -2,25 +2,10 @@ import { validateConfig } from '@/config/validator';
 import type { ModuleConfig } from '@/config/types';
 
 const validConfig: ModuleConfig = {
-  apiServer: {
-    updateInterval: 5000,
-    endpoints: {
-      worldData: '/update',
-      compendium: '/update-compendium'
-    }
-  },
   webSocket: {
     enabled: true,
     reconnectInterval: 5000,
     maxReconnectAttempts: 10
-  },
-  features: {
-    autoLoadCompendium: true,
-    collectWorldData: true,
-    periodicUpdates: true
-  },
-  compendium: {
-    autoLoad: ['dnd5e.monsters']
   },
   logging: {
     enabled: true,
@@ -43,11 +28,6 @@ describe('validateConfig', () => {
     expect(validateConfig([])).toBe(false);
   });
 
-  it('returns false when apiServer is missing', () => {
-    const invalid = { ...validConfig, apiServer: undefined };
-    expect(validateConfig(invalid)).toBe(false);
-  });
-
   it('returns false when webSocket is missing', () => {
     const invalid = { ...validConfig, webSocket: undefined };
     expect(validateConfig(invalid)).toBe(false);
@@ -61,27 +41,8 @@ describe('validateConfig', () => {
     expect(validateConfig(invalid)).toBe(false);
   });
 
-  it('returns false when features.autoLoadCompendium is not boolean', () => {
-    const invalid = {
-      ...validConfig,
-      features: { ...validConfig.features, autoLoadCompendium: 'yes' }
-    };
-    expect(validateConfig(invalid)).toBe(false);
-  });
-
-  it('returns false when compendium.autoLoad is not array', () => {
-    const invalid = {
-      ...validConfig,
-      compendium: { autoLoad: 'not-array' }
-    };
-    expect(validateConfig(invalid)).toBe(false);
-  });
-
-  it('returns false when compendium.autoLoad contains non-string', () => {
-    const invalid = {
-      ...validConfig,
-      compendium: { autoLoad: ['valid', 123, 'valid2'] }
-    };
+  it('returns false when logging is missing', () => {
+    const invalid = { ...validConfig, logging: undefined };
     expect(validateConfig(invalid)).toBe(false);
   });
 

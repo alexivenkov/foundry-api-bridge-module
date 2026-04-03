@@ -1,6 +1,6 @@
 {
   "name": "foundry-api-bridge",
-  "version": "6.13.0",
+  "version": "7.0.0",
   "description": "Connect Foundry VTT to AI assistants via foundry-mcp.com",
   "type": "module",
   "scripts": {

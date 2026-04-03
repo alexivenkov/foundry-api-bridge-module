@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## [7.0.0] - 2026-04-03
+
+### Breaking Changes
+- **Removed push mechanism entirely** — module no longer sends world data to the server via HTTP
+- Removed periodic world data sync (UpdateLoop)
+- Removed compendium auto-upload on connect
+- Removed REST API client (ApiClient)
+- Removed `window.FoundryAPIBridge` global API
+- Removed `Server URL` setting (only WebSocket URL and API Key remain)
+- Removed config sections: `apiServer`, `features`, `compendium`
+- Simplified config to: `webSocket` + `logging` only
+
+### How it works now
+Module connects to Gateway via WebSocket and responds to incoming commands (pull architecture). All data is requested on demand by the server — no outbound HTTP, no timers, no periodic sync.
+
+### Removed
+- `src/api/` — ApiClient, SessionInfo, ApiError
+- `src/core/` — UpdateLoop with backoff logic
+- `src/collectors/` — WorldDataCollector, CompendiumCollector
+- `src/config/loader.ts` — config file migration
+- `src/config/merger.ts` — deep merge utility
+- `src/utils/` — validation helpers
+- `pauseGame` hook (no loop to pause)
+- UI: API Server Settings, Features toggles, Compendia Auto-Load selector
+- Types: `WorldData`, `ActorData`, `SceneData`, `SessionInfo`, `Window.FoundryAPIBridge`
+
+### Technical
+- 476 tests (from 572 — removed 96 push-related tests)
+- Bundle size: 70KB (down from 94KB, -25%)
+- Config form: WebSocket + Logging only
+
 ## [6.13.0] - 2026-04-03
 
 ### Added

@@ -1,8 +1,5 @@
 import type { ModuleConfig } from '@/config/types';
-import { DEFAULT_CONFIG } from '@/config/defaults';
-import { loadConfigFromUrl } from '@/config/loader';
 import { validateConfig } from '@/config/validator';
-import { mergeWithDefaults } from '@/config/merger';
 import { getConfig as getSettingsConfig, setConfig as setSettingsConfig } from '@/settings/SettingsManager';
 
 export class ConfigManager {
@@ -17,28 +14,6 @@ export class ConfigManager {
     const config = getSettingsConfig();
     this.instance = new ConfigManager(config);
     return this.instance;
-  }
-
-  static async migrateFromFile(configUrl: string): Promise<void> {
-    try {
-      const loadedConfig = await loadConfigFromUrl(configUrl);
-
-      if (validateConfig(loadedConfig)) {
-        await setSettingsConfig(loadedConfig);
-        if (this.instance) {
-          this.instance.config = loadedConfig;
-        }
-      } else {
-        const partialConfig = loadedConfig as Partial<ModuleConfig>;
-        const mergedConfig = mergeWithDefaults(partialConfig, DEFAULT_CONFIG);
-        await setSettingsConfig(mergedConfig);
-        if (this.instance) {
-          this.instance.config = mergedConfig;
-        }
-      }
-    } catch (error) {
-      console.warn('Foundry API Bridge | Failed to migrate config from file:', error);
-    }
   }
 
   static async updateConfig(newConfig: ModuleConfig): Promise<void> {

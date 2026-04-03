@@ -1,9 +1,5 @@
 import { ConfigManager } from '@/config/ConfigManager';
-import { ApiClient } from '@/api/ApiClient';
-import { WorldDataCollector } from '@/collectors/WorldDataCollector';
-import { CompendiumCollector } from '@/collectors/CompendiumCollector';
-import { UpdateLoop } from '@/core/UpdateLoop';
-import { registerSettings, registerMenu, getServerUrl, getWsUrl, getApiKey } from '@/settings/SettingsManager';
+import { registerSettings, registerMenu, getWsUrl, getApiKey } from '@/settings/SettingsManager';
 import { WebSocketClient } from '@/transport';
 import {
   CommandRouter,
@@ -70,19 +66,11 @@ import {
   removeActorEffectHandler,
   updateActorEffectHandler
 } from '@/commands';
-import type { WorldData, CompendiumData, CompendiumMetadata } from '@/types/foundry';
-import type { SessionInfo } from '@/api/ApiClient';
-import { isDefaultOrEmptySettings } from '@/utils/validation';
 
-const MODULE_VERSION = '6.4.0';
+const MODULE_VERSION = '7.0.0';
 
-let updateLoop: UpdateLoop | null = null;
-let apiClient: ApiClient | null = null;
-let worldCollector: WorldDataCollector | null = null;
-let compendiumCollector: CompendiumCollector | null = null;
 let wsClient: WebSocketClient | null = null;
 let commandRouter: CommandRouter | null = null;
-let sessionInfo: SessionInfo | null = null;
 
 Hooks.once('init', () => {
   registerSettings();
@@ -122,59 +110,24 @@ Hooks.once('ready', () => {
     return;
   }
 
-  void initializeModule();
+  initializeModule();
 });
 
-async function initializeModule(): Promise<void> {
+function initializeModule(): void {
   try {
     ConfigManager.initialize();
     const config = ConfigManager.getConfig();
 
-    const serverUrl = getServerUrl();
     const wsUrl = getWsUrl();
     const apiKey = getApiKey();
 
-    if (isDefaultOrEmptySettings(serverUrl, wsUrl, apiKey)) {
-      console.log(`Foundry API Bridge | v${MODULE_VERSION} loaded. Configure Server URL, WebSocket URL, and API Key in module settings to connect.`);
+    if (!wsUrl || !apiKey) {
+      console.log(`Foundry API Bridge | v${MODULE_VERSION} loaded. Configure WebSocket URL and API Key in module settings to connect.`);
       return;
     }
 
-    apiClient = new ApiClient(serverUrl, apiKey);
-    worldCollector = new WorldDataCollector();
-    compendiumCollector = new CompendiumCollector();
-
-    sessionInfo = await apiClient.getSession();
-    console.log(`Foundry API Bridge | Session: tier=${sessionInfo.tier}, compendiums=${String(sessionInfo.features.compendiums)}`);
-
-    if (config.features.periodicUpdates && config.features.collectWorldData) {
-      updateLoop = new UpdateLoop(
-        config.apiServer.updateInterval,
-        worldCollector,
-        apiClient,
-        config.apiServer.endpoints.worldData
-      );
-      updateLoop.start();
-    }
-
+    initializeWebSocket(config.webSocket, wsUrl, apiKey);
     console.log(`Foundry API Bridge | v${MODULE_VERSION} initialized`);
-
-    if (config.features.autoLoadCompendium && config.compendium.autoLoad.length > 0) {
-      if (sessionInfo.features.compendiums) {
-        compendiumCollector.autoLoad(
-          config.compendium.autoLoad,
-          apiClient,
-          config.apiServer.endpoints.compendium
-        ).catch((error: unknown) => {
-          console.error('Foundry API Bridge | Error during auto-load:', error);
-        });
-      } else {
-        console.log('Foundry API Bridge | Compendium upload requires Adventurer tier or higher');
-      }
-    }
-
-    if (config.webSocket.enabled) {
-      initializeWebSocket(config.webSocket, wsUrl, apiKey);
-    }
 
   } catch (error: unknown) {
     console.error('Foundry API Bridge | Initialization failed:', error);
@@ -183,6 +136,8 @@ async function initializeModule(): Promise<void> {
 
 function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnectAttempts: number }, wsUrl: string, apiKey: string): void {
   commandRouter = new CommandRouter();
+
+  // Pull queries
   commandRouter.register('get-world-info', getWorldInfoHandler);
   commandRouter.register('get-actors', getActorsHandler);
   commandRouter.register('get-actor', getActorHandler);
@@ -192,6 +147,14 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
   commandRouter.register('get-item', getItemHandler);
   commandRouter.register('get-compendiums', getCompendiumsHandler);
   commandRouter.register('get-compendium', getCompendiumHandler);
+  commandRouter.register('get-scene', getSceneHandler);
+  commandRouter.register('get-scenes-list', getScenesListHandler);
+  commandRouter.register('get-scene-tokens', getSceneTokensHandler);
+  commandRouter.register('get-actor-items', getActorItemsHandler);
+  commandRouter.register('get-actor-effects', getActorEffectsHandler);
+  commandRouter.register('get-combat-state', getCombatStateHandler);
+
+  // Dice & chat
   commandRouter.register('roll-dice', rollDiceHandler);
   commandRouter.register('send-chat-message', sendChatMessageHandler);
   commandRouter.register('roll-skill', rollSkillHandler);
@@ -199,16 +162,22 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
   commandRouter.register('roll-ability', rollAbilityHandler);
   commandRouter.register('roll-attack', rollAttackHandler);
   commandRouter.register('roll-damage', rollDamageHandler);
+
+  // Actor CRUD
   commandRouter.register('create-actor', createActorHandler);
   commandRouter.register('create-actor-from-compendium', createActorFromCompendiumHandler);
   commandRouter.register('update-actor', updateActorHandler);
   commandRouter.register('delete-actor', deleteActorHandler);
+
+  // Journal CRUD
   commandRouter.register('create-journal', createJournalHandler);
   commandRouter.register('update-journal', updateJournalHandler);
   commandRouter.register('delete-journal', deleteJournalHandler);
   commandRouter.register('create-journal-page', createJournalPageHandler);
   commandRouter.register('update-journal-page', updateJournalPageHandler);
   commandRouter.register('delete-journal-page', deleteJournalPageHandler);
+
+  // Combat
   commandRouter.register('create-combat', createCombatHandler);
   commandRouter.register('add-combatant', addCombatantHandler);
   commandRouter.register('remove-combatant', removeCombatantHandler);
@@ -217,7 +186,6 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
   commandRouter.register('delete-combat', deleteCombatHandler);
   commandRouter.register('next-turn', nextTurnHandler);
   commandRouter.register('previous-turn', previousTurnHandler);
-  commandRouter.register('get-combat-state', getCombatStateHandler);
   commandRouter.register('set-turn', setTurnHandler);
   commandRouter.register('roll-initiative', rollInitiativeHandler);
   commandRouter.register('set-initiative', setInitiativeHandler);
@@ -225,28 +193,31 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
   commandRouter.register('update-combatant', updateCombatantHandler);
   commandRouter.register('set-combatant-defeated', setCombatantDefeatedHandler);
   commandRouter.register('toggle-combatant-visibility', toggleCombatantVisibilityHandler);
+
+  // Tokens
   commandRouter.register('create-token', createTokenHandler);
   commandRouter.register('delete-token', deleteTokenHandler);
   commandRouter.register('move-token', moveTokenHandler);
   commandRouter.register('update-token', updateTokenHandler);
-  commandRouter.register('get-scene-tokens', getSceneTokensHandler);
-  commandRouter.register('get-scene', getSceneHandler);
-  commandRouter.register('get-scenes-list', getScenesListHandler);
-  commandRouter.register('activate-scene', activateSceneHandler);
-  commandRouter.register('get-actor-items', getActorItemsHandler);
+
+  // Items
   commandRouter.register('use-item', useItemHandler);
   commandRouter.register('activate-item', activateItemHandler);
   commandRouter.register('add-item-to-actor', addItemToActorHandler);
   commandRouter.register('add-item-from-compendium', addItemFromCompendiumHandler);
   commandRouter.register('update-actor-item', updateActorItemHandler);
   commandRouter.register('delete-actor-item', deleteActorItemHandler);
-  commandRouter.register('get-actor-effects', getActorEffectsHandler);
+
+  // Effects
   commandRouter.register('toggle-actor-status', toggleActorStatusHandler);
   commandRouter.register('add-actor-effect', addActorEffectHandler);
   commandRouter.register('remove-actor-effect', removeActorEffectHandler);
   commandRouter.register('update-actor-effect', updateActorEffectHandler);
 
-  const wsConnectUrl = apiKey ? `${wsUrl}?apiKey=${encodeURIComponent(apiKey)}` : wsUrl;
+  // Scene actions
+  commandRouter.register('activate-scene', activateSceneHandler);
+
+  const wsConnectUrl = `${wsUrl}?apiKey=${encodeURIComponent(apiKey)}`;
   wsClient = new WebSocketClient({
     url: wsConnectUrl,
     reconnectInterval: wsConfig.reconnectInterval,
@@ -281,94 +252,5 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
 
   wsClient.connect();
 }
-
-Hooks.on('pauseGame', (paused: boolean) => {
-  if (!updateLoop) return;
-
-  if (paused) {
-    updateLoop.stop();
-  } else {
-    updateLoop.start();
-  }
-});
-
-window.FoundryAPIBridge = {
-  collectWorldData: (): WorldData => {
-    if (!worldCollector) throw new Error('Module not initialized');
-    return worldCollector.collect();
-  },
-  sendDataToServer: async (data: WorldData): Promise<void> => {
-    if (!apiClient) throw new Error('Module not initialized');
-    const config = ConfigManager.getConfig();
-    await apiClient.sendWorldData(config.apiServer.endpoints.worldData, data);
-  },
-  startUpdateLoop: (): void => {
-    if (!updateLoop) throw new Error('Update loop not initialized');
-    updateLoop.start();
-  },
-  stopUpdateLoop: (): void => {
-    if (!updateLoop) throw new Error('Update loop not initialized');
-    updateLoop.stop();
-  },
-  collectCompendiumMetadata: (): CompendiumMetadata[] => {
-    if (!compendiumCollector) throw new Error('Module not initialized');
-    return compendiumCollector.collectMetadata();
-  },
-  loadCompendiumContents: async (packId: string): Promise<CompendiumData | null> => {
-    if (!compendiumCollector) throw new Error('Module not initialized');
-    return compendiumCollector.loadContents(packId);
-  },
-  sendCompendiumToServer: async (packId: string, packData: CompendiumData): Promise<void> => {
-    if (!apiClient) throw new Error('Module not initialized');
-    if (!sessionInfo?.features.compendiums) {
-      if (ui.notifications) ui.notifications.warn('Foundry API Bridge | Compendium upload requires Adventurer tier or higher');
-      return;
-    }
-    const config = ConfigManager.getConfig();
-    await apiClient.sendCompendium(config.apiServer.endpoints.compendium, packId, packData);
-  },
-  loadAndSendCompendium: async (packId: string): Promise<void> => {
-    if (!compendiumCollector || !apiClient) throw new Error('Module not initialized');
-    if (!sessionInfo?.features.compendiums) {
-      if (ui.notifications) ui.notifications.warn('Foundry API Bridge | Compendium upload requires Adventurer tier or higher');
-      return;
-    }
-    const config = ConfigManager.getConfig();
-    const packData = await compendiumCollector.loadContents(packId);
-    if (packData) {
-      await apiClient.sendCompendium(config.apiServer.endpoints.compendium, packId, packData);
-      console.log(`Foundry API Bridge | Compendium ${packId} sent successfully`);
-    }
-  },
-  autoLoadCompendium: async (): Promise<void> => {
-    if (!compendiumCollector || !apiClient) throw new Error('Module not initialized');
-    if (!sessionInfo?.features.compendiums) {
-      if (ui.notifications) ui.notifications.warn('Foundry API Bridge | Compendium upload requires Adventurer tier or higher');
-      return;
-    }
-    const config = ConfigManager.getConfig();
-    await compendiumCollector.autoLoad(
-      config.compendium.autoLoad,
-      apiClient,
-      config.apiServer.endpoints.compendium
-    );
-  },
-  getSession: (): SessionInfo | null => sessionInfo,
-  API_SERVER_URL: '',
-  UPDATE_INTERVAL: 0,
-  AUTO_LOAD_COMPENDIUM: []
-};
-
-Object.defineProperties(window.FoundryAPIBridge, {
-  API_SERVER_URL: {
-    get: () => getServerUrl()
-  },
-  UPDATE_INTERVAL: {
-    get: () => ConfigManager.getConfig().apiServer.updateInterval
-  },
-  AUTO_LOAD_COMPENDIUM: {
-    get: () => ConfigManager.getConfig().compendium.autoLoad
-  }
-});
 
 export {};
