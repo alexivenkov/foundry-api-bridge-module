@@ -12,7 +12,10 @@ function mapItemToSummary(item: FoundryItem): ItemDetailSummary {
     equipped: item.system.equipped ?? false,
     quantity: item.system.quantity ?? 1,
     hasActivities: activities.length > 0,
-    activityTypes: activities.map(a => a.type)
+    activityTypes: activities.map(a => a.type),
+    description: item.system.description?.value ?? '',
+    damage: item.system.damage ?? null,
+    range: item.system.range ?? null
   };
 }
 

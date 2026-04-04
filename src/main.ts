@@ -67,7 +67,7 @@ import {
   updateActorEffectHandler
 } from '@/commands';
 
-const MODULE_VERSION = '7.0.0';
+const MODULE_VERSION = '7.1.0';
 
 let wsClient: WebSocketClient | null = null;
 let commandRouter: CommandRouter | null = null;

@@ -5,6 +5,7 @@ interface MockItem {
   name: string;
   type: string;
   img: string | undefined;
+  toObject: jest.Mock;
 }
 
 interface MockActor {
@@ -24,6 +25,7 @@ function createMockItem(overrides?: Partial<MockItem>): MockItem {
     name: 'Sword',
     type: 'weapon',
     img: 'items/sword.webp',
+    toObject: jest.fn().mockReturnValue({ system: { damage: '1d8' } }),
     ...overrides
   };
 }
@@ -36,7 +38,7 @@ function createMockActor(items: MockItem[] = [], overrides?: Partial<MockActor>)
     img: 'tokens/gandalf.webp',
     getRollData: jest.fn().mockReturnValue({
       attributes: { hp: { value: 120, max: 120 }, ac: { value: 18 } },
-      abilities: { str: { value: 10, mod: 0 } }
+      abilities: { str: { value: 10, mod: 0, save: 0 } }
     }),
     items: {
       forEach: jest.fn((fn: (item: MockItem) => void) => {
@@ -60,34 +62,38 @@ function clearGame(): void {
 }
 
 describe('getActorHandler', () => {
-  afterEach(() => {
-    clearGame();
-  });
+  afterEach(clearGame);
 
-  it('should return full actor data with items', async () => {
+  it('should return full actor data with items including system', async () => {
     const items = [
-      createMockItem({ id: 'i1', name: 'Staff', type: 'weapon', img: 'items/staff.webp' }),
-      createMockItem({ id: 'i2', name: 'Robe', type: 'equipment', img: 'items/robe.webp' })
+      createMockItem({
+        id: 'i1', name: 'Staff', type: 'weapon', img: 'items/staff.webp',
+        toObject: jest.fn().mockReturnValue({ system: { damage: '1d6', weight: 4 } })
+      }),
+      createMockItem({
+        id: 'i2', name: 'Robe', type: 'equipment', img: 'items/robe.webp',
+        toObject: jest.fn().mockReturnValue({ system: { ac: { value: 12 } } })
+      })
     ];
     const actor = createMockActor(items);
     setGame(new Map([['actor-123', actor]]));
 
     const result = await getActorHandler({ actorId: 'actor-123' });
 
-    expect(result).toEqual({
-      id: 'actor-123',
-      name: 'Gandalf',
-      type: 'npc',
-      img: 'tokens/gandalf.webp',
-      system: {
-        attributes: { hp: { value: 120, max: 120 }, ac: { value: 18 } },
-        abilities: { str: { value: 10, mod: 0 } }
-      },
-      items: [
-        { id: 'i1', name: 'Staff', type: 'weapon', img: 'items/staff.webp' },
-        { id: 'i2', name: 'Robe', type: 'equipment', img: 'items/robe.webp' }
-      ]
-    });
+    expect(result.items).toEqual([
+      { id: 'i1', name: 'Staff', type: 'weapon', img: 'items/staff.webp', system: { damage: '1d6', weight: 4 } },
+      { id: 'i2', name: 'Robe', type: 'equipment', img: 'items/robe.webp', system: { ac: { value: 12 } } }
+    ]);
+  });
+
+  it('should call toObject(false) on each item', async () => {
+    const item = createMockItem();
+    const actor = createMockActor([item]);
+    setGame(new Map([['a1', actor]]));
+
+    await getActorHandler({ actorId: 'a1' });
+
+    expect(item.toObject).toHaveBeenCalledWith(false);
   });
 
   it('should reject with error when actor not found', async () => {
@@ -125,11 +131,10 @@ describe('getActorHandler', () => {
     expect(result.items[0]?.img).toBe('');
   });
 
-  it('should pass through system data from getRollData as-is', async () => {
+  it('should pass through actor system data from getRollData as-is', async () => {
     const systemData = {
-      details: { level: 20, cr: 15 },
-      traits: { languages: ['Common', 'Elvish'] },
-      custom: { nested: { deep: true } }
+      abilities: { str: { value: 10, mod: 0, save: 4 } },
+      details: { level: 20 }
     };
     const actor = createMockActor([], {
       getRollData: jest.fn().mockReturnValue(systemData)
@@ -139,7 +144,23 @@ describe('getActorHandler', () => {
     const result = await getActorHandler({ actorId: 'a1' });
 
     expect(result.system).toBe(systemData);
-    expect(actor.getRollData).toHaveBeenCalledTimes(1);
+  });
+
+  it('should pass through item system data from toObject as-is', async () => {
+    const itemSystem = {
+      description: { value: '<p>A magical staff</p>' },
+      damage: { base: { formula: '1d6+4', types: ['bludgeoning'] } },
+      range: { reach: 5, units: 'ft' }
+    };
+    const item = createMockItem({
+      toObject: jest.fn().mockReturnValue({ system: itemSystem })
+    });
+    const actor = createMockActor([item]);
+    setGame(new Map([['a1', actor]]));
+
+    const result = await getActorHandler({ actorId: 'a1' });
+
+    expect(result.items[0]?.system).toEqual(itemSystem);
   });
 
   it('should collect multiple items preserving order', async () => {

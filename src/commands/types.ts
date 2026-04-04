@@ -365,6 +365,7 @@ export interface ItemSummary {
   name: string;
   type: string;
   img: string;
+  system: Record<string, unknown>;
 }
 
 // Journal Results
@@ -462,6 +463,9 @@ export interface ItemDetailSummary {
   quantity: number;
   hasActivities: boolean;
   activityTypes: string[];
+  description: string;
+  damage: Record<string, unknown> | null;
+  range: Record<string, unknown> | null;
 }
 
 export interface ActorItemsResult {

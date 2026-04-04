@@ -60,6 +60,9 @@ export interface FoundryItemSystem {
   equipped?: boolean;
   attunement?: number;
   identified?: boolean;
+  description?: { value?: string };
+  damage?: Record<string, unknown>;
+  range?: Record<string, unknown>;
 }
 
 export interface FoundryChatMessage {

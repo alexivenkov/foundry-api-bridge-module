@@ -5,6 +5,7 @@ interface ActorItem {
   name: string;
   type: string;
   img: string | undefined;
+  toObject(source: boolean): { system: Record<string, unknown> };
 }
 
 interface ActorItemsCollection {
@@ -45,7 +46,8 @@ export function getActorHandler(params: GetActorParams): Promise<ActorDetailResu
       id: item.id,
       name: item.name,
       type: item.type,
-      img: item.img ?? ''
+      img: item.img ?? '',
+      system: item.toObject(false).system
     });
   });
 

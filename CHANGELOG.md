@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [7.1.0] - 2026-04-04
+
+### Changed
+- **`get-actor`**: items now include full `system` data (via `toObject(false).system`) — descriptions, damage formulas, range, etc.
+- **`get-actor-items`**: `ItemDetailSummary` enriched with `description` (HTML string), `damage` (object or null), `range` (object or null)
+- **`get-actor`**: `ItemSummary` type now includes `system: Record<string, unknown>`
+
+### Technical
+- 478 tests
+- Actor system data uses `getRollData()` (computed fields including `abilities.*.save`)
+- Item system data uses `toObject(false).system` (raw data including descriptions)
+
 ## [7.0.0] - 2026-04-03
 
 ### Breaking Changes

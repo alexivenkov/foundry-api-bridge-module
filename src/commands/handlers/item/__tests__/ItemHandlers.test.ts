@@ -19,7 +19,10 @@ const mockWeapon = {
   system: {
     activities: mockActivitiesCollection,
     equipped: true,
-    quantity: 1
+    quantity: 1,
+    description: { value: '<p>A versatile sword.</p>' },
+    damage: { base: { formula: '1d8+3', types: ['slashing'] } },
+    range: { reach: 5, units: 'ft' }
   },
   use: jest.fn(),
   displayCard: jest.fn()
@@ -32,7 +35,8 @@ const mockArmor = {
   img: 'icons/armor/chest/chainmail.png',
   system: {
     equipped: true,
-    quantity: 1
+    quantity: 1,
+    description: { value: '<p>Heavy armor made of interlocking rings.</p>' }
   },
   use: jest.fn(),
   displayCard: jest.fn()
@@ -45,7 +49,8 @@ const mockPotion = {
   img: 'icons/consumables/potions/potion-red.png',
   system: {
     equipped: false,
-    quantity: 3
+    quantity: 3,
+    description: { value: '<p>Heals 2d4+2 HP.</p>' }
   },
   use: jest.fn(),
   displayCard: jest.fn()
@@ -99,7 +104,10 @@ describe('getActorItemsHandler', () => {
         equipped: true,
         quantity: 1,
         hasActivities: true,
-        activityTypes: ['attack']
+        activityTypes: ['attack'],
+        description: '<p>A versatile sword.</p>',
+        damage: { base: { formula: '1d8+3', types: ['slashing'] } },
+        range: { reach: 5, units: 'ft' }
       });
     });
 
