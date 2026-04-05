@@ -75,7 +75,14 @@ export type CommandType =
   | 'get-items'
   | 'get-item'
   | 'get-compendiums'
-  | 'get-compendium';
+  | 'get-compendium'
+  | 'list-roll-tables'
+  | 'get-roll-table'
+  | 'roll-on-table'
+  | 'reset-table'
+  | 'create-roll-table'
+  | 'update-roll-table'
+  | 'delete-roll-table';
 
 export interface RollDiceParams {
   formula: string;
@@ -842,6 +849,107 @@ export interface GetCompendiumParams {
   packId: string;
 }
 
+// Roll Table types
+export type ListRollTablesParams = Record<string, never>;
+
+export interface GetRollTableParams {
+  tableId: string;
+}
+
+export interface RollOnTableParams {
+  tableId: string;
+  displayChat?: boolean;
+}
+
+export interface ResetTableParams {
+  tableId: string;
+}
+
+export interface CreateTableResultData {
+  text: string;
+  range: [number, number];
+  weight?: number;
+  type?: number;
+  documentCollection?: string;
+  documentId?: string;
+  img?: string;
+}
+
+export interface CreateRollTableParams {
+  name: string;
+  formula?: string;
+  replacement?: boolean;
+  displayRoll?: boolean;
+  description?: string;
+  img?: string;
+  folder?: string;
+  results?: CreateTableResultData[];
+}
+
+export interface UpdateRollTableParams {
+  tableId: string;
+  name?: string;
+  formula?: string;
+  replacement?: boolean;
+  displayRoll?: boolean;
+  description?: string;
+  img?: string;
+}
+
+export interface DeleteRollTableParams {
+  tableId: string;
+}
+
+export interface TableResultData {
+  id: string;
+  type: number;
+  text: string;
+  img: string;
+  range: [number, number];
+  weight: number;
+  drawn: boolean;
+  documentCollection: string | null;
+  documentId: string | null;
+}
+
+export interface RollTableSummary {
+  id: string;
+  name: string;
+  img: string;
+  description: string;
+  formula: string;
+  replacement: boolean;
+  totalResults: number;
+  drawnResults: number;
+}
+
+export interface RollTableResult {
+  id: string;
+  name: string;
+  img: string;
+  description: string;
+  formula: string;
+  replacement: boolean;
+  displayRoll: boolean;
+  results: TableResultData[];
+}
+
+export interface RollOnTableResult {
+  tableId: string;
+  tableName: string;
+  roll: {
+    formula: string;
+    total: number;
+  };
+  results: TableResultData[];
+}
+
+export interface ResetTableResult {
+  tableId: string;
+  tableName: string;
+  resetCount: number;
+}
+
 export type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
 
 export const ABILITY_KEYS: readonly AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
@@ -913,6 +1021,13 @@ export interface CommandParamsMap {
   'get-item': GetItemParams;
   'get-compendiums': GetCompendiumsParams;
   'get-compendium': GetCompendiumParams;
+  'list-roll-tables': ListRollTablesParams;
+  'get-roll-table': GetRollTableParams;
+  'roll-on-table': RollOnTableParams;
+  'reset-table': ResetTableParams;
+  'create-roll-table': CreateRollTableParams;
+  'update-roll-table': UpdateRollTableParams;
+  'delete-roll-table': DeleteRollTableParams;
 }
 
 export interface CommandResultMap {
@@ -978,4 +1093,11 @@ export interface CommandResultMap {
   'get-item': ItemData;
   'get-compendiums': CompendiumMetadata[];
   'get-compendium': CompendiumData;
+  'list-roll-tables': RollTableSummary[];
+  'get-roll-table': RollTableResult;
+  'roll-on-table': RollOnTableResult;
+  'reset-table': ResetTableResult;
+  'create-roll-table': RollTableResult;
+  'update-roll-table': RollTableResult;
+  'delete-roll-table': DeleteResult;
 }

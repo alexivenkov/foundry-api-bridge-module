@@ -86,6 +86,17 @@ export {
   getCompendiumHandler
 } from '@/commands/handlers/world';
 
+// Table handlers
+export {
+  listRollTablesHandler,
+  getRollTableHandler,
+  rollOnTableHandler,
+  resetTableHandler,
+  createRollTableHandler,
+  updateRollTableHandler,
+  deleteRollTableHandler
+} from '@/commands/handlers/table';
+
 // Effect handlers
 export {
   getActorEffectsHandler,

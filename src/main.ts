@@ -64,10 +64,17 @@ import {
   toggleActorStatusHandler,
   addActorEffectHandler,
   removeActorEffectHandler,
-  updateActorEffectHandler
+  updateActorEffectHandler,
+  listRollTablesHandler,
+  getRollTableHandler,
+  rollOnTableHandler,
+  resetTableHandler,
+  createRollTableHandler,
+  updateRollTableHandler,
+  deleteRollTableHandler
 } from '@/commands';
 
-const MODULE_VERSION = '7.1.0';
+const MODULE_VERSION = '7.2.0';
 
 let wsClient: WebSocketClient | null = null;
 let commandRouter: CommandRouter | null = null;
@@ -213,6 +220,15 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
   commandRouter.register('add-actor-effect', addActorEffectHandler);
   commandRouter.register('remove-actor-effect', removeActorEffectHandler);
   commandRouter.register('update-actor-effect', updateActorEffectHandler);
+
+  // Tables
+  commandRouter.register('list-roll-tables', listRollTablesHandler);
+  commandRouter.register('get-roll-table', getRollTableHandler);
+  commandRouter.register('roll-on-table', rollOnTableHandler);
+  commandRouter.register('reset-table', resetTableHandler);
+  commandRouter.register('create-roll-table', createRollTableHandler);
+  commandRouter.register('update-roll-table', updateRollTableHandler);
+  commandRouter.register('delete-roll-table', deleteRollTableHandler);
 
   // Scene actions
   commandRouter.register('activate-scene', activateSceneHandler);

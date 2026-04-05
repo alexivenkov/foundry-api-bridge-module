@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [7.2.0] - 2026-04-05
+
+### Added
+- **Roll Table commands** — full CRUD + roll + reset for Foundry Roll Tables
+  - `list-roll-tables` — list all tables with summary (total/drawn counts)
+  - `get-roll-table` — full table with all results
+  - `roll-on-table` — roll dice and get result (uses `table.draw()`, respects replacement)
+  - `reset-table` — reset all drawn results back to available
+  - `create-roll-table` — create table with optional initial results
+  - `update-roll-table` — update table metadata
+  - `delete-roll-table` — delete table
+- New handler group: `src/commands/handlers/table/`
+- v12/v13 compatibility: handles both `text`/`name` and numeric/string `type` fields
+
+### Technical
+- 514 tests (36 new)
+
 ## [7.1.0] - 2026-04-04
 
 ### Changed
