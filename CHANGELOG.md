@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [7.3.1] - 2026-04-06
+
+### Fixed
+- **`capture-scene`** — fixed black/empty screenshots
+  - PIXI `extract.base64()` failed with "ICanvas.toBlob failed!" due to WebGL buffer issues
+  - PIXI `extract.canvas()` returned empty canvas (WebGL texImage2D out of range)
+  - Solution: `renderer.render(stage)` + `view.toDataURL()` — forces a fresh render then captures the WebGL canvas before buffer clear
+  - Verified in live Foundry VTT with actual scene (Cragmaw Castle, 6400x4600)
+
 ## [7.3.0] - 2026-04-06
 
 ### Added

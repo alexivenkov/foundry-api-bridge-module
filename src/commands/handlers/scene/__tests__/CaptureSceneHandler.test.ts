@@ -3,8 +3,9 @@ import { captureSceneHandler } from '../CaptureSceneHandler';
 interface MockCanvas {
   ready: boolean;
   app: {
-    renderer: {
-      extract: { base64: jest.Mock };
+    renderer: { render: jest.Mock };
+    view: {
+      toDataURL: jest.Mock;
       width: number;
       height: number;
     };
@@ -17,16 +18,15 @@ function createMockCanvas(overrides?: Partial<MockCanvas>): MockCanvas {
   return {
     ready: true,
     app: {
-      renderer: {
-        extract: {
-          base64: jest.fn().mockResolvedValue('data:image/webp;base64,abc123encodeddata')
-        },
-        width: 1920,
-        height: 1080
+      renderer: { render: jest.fn() },
+      view: {
+        toDataURL: jest.fn().mockReturnValue('data:image/webp;base64,abc123encodeddata'),
+        width: 2658,
+        height: 1864
       }
     },
     stage: {},
-    scene: { id: 'scene-1', name: 'Tavern' },
+    scene: { id: 'scene-1', name: 'Cragmaw Castle' },
     ...overrides
   };
 }
@@ -46,31 +46,62 @@ function clearCanvas(): void {
 describe('captureSceneHandler', () => {
   afterEach(clearCanvas);
 
-  it('should capture canvas and return base64 image without data URL prefix', async () => {
+  it('should render stage, capture viewport and return base64 image', async () => {
     const canvas = createMockCanvas();
     setCanvas(canvas);
 
     const result = await captureSceneHandler({} as Record<string, never>);
 
+    expect(canvas.app.renderer.render).toHaveBeenCalledWith(canvas.stage);
     expect(result.sceneId).toBe('scene-1');
-    expect(result.sceneName).toBe('Tavern');
+    expect(result.sceneName).toBe('Cragmaw Castle');
     expect(result.image).toBe('abc123encodeddata');
     expect(result.mimeType).toBe('image/webp');
-    expect(result.width).toBe(1920);
-    expect(result.height).toBe(1080);
+    expect(result.width).toBe(2658);
+    expect(result.height).toBe(1864);
   });
 
-  it('should call extract.base64 with stage, webp mime type and quality', async () => {
+  it('should call renderer.render before toDataURL', async () => {
+    const callOrder: string[] = [];
+    const canvas = createMockCanvas();
+    canvas.app.renderer.render = jest.fn(() => { callOrder.push('render'); });
+    canvas.app.view.toDataURL = jest.fn(() => {
+      callOrder.push('toDataURL');
+      return 'data:image/webp;base64,x';
+    });
+    setCanvas(canvas);
+
+    await captureSceneHandler({} as Record<string, never>);
+
+    expect(callOrder).toEqual(['render', 'toDataURL']);
+  });
+
+  it('should call toDataURL with webp and quality 0.8', async () => {
     const canvas = createMockCanvas();
     setCanvas(canvas);
 
     await captureSceneHandler({} as Record<string, never>);
 
-    expect(canvas.app.renderer.extract.base64).toHaveBeenCalledWith(
-      canvas.stage,
-      'image/webp',
-      0.8
-    );
+    expect(canvas.app.view.toDataURL).toHaveBeenCalledWith('image/webp', 0.8);
+  });
+
+  it('should strip data URL prefix from base64', async () => {
+    setCanvas(createMockCanvas());
+
+    const result = await captureSceneHandler({} as Record<string, never>);
+
+    expect(result.image).not.toContain('data:');
+    expect(result.image).toBe('abc123encodeddata');
+  });
+
+  it('should strip png prefix if browser falls back to png', async () => {
+    const canvas = createMockCanvas();
+    canvas.app.view.toDataURL = jest.fn().mockReturnValue('data:image/png;base64,pngfallback');
+    setCanvas(canvas);
+
+    const result = await captureSceneHandler({} as Record<string, never>);
+
+    expect(result.image).toBe('pngfallback');
   });
 
   it('should reject when canvas is not ready', async () => {
@@ -94,51 +125,24 @@ describe('captureSceneHandler', () => {
       .rejects.toThrow('Canvas not ready');
   });
 
-  it('should return renderer dimensions as width/height', async () => {
-    setCanvas(createMockCanvas({
-      app: {
-        renderer: {
-          extract: { base64: jest.fn().mockResolvedValue('data:image/webp;base64,x') },
-          width: 6300,
-          height: 8100
-        }
-      }
-    }));
+  it('should return view dimensions', async () => {
+    const canvas = createMockCanvas();
+    canvas.app.view.width = 3840;
+    canvas.app.view.height = 2160;
+    setCanvas(canvas);
 
     const result = await captureSceneHandler({} as Record<string, never>);
 
-    expect(result.width).toBe(6300);
-    expect(result.height).toBe(8100);
+    expect(result.width).toBe(3840);
+    expect(result.height).toBe(2160);
   });
 
-  it('should handle base64 string without data URL prefix', async () => {
-    setCanvas(createMockCanvas({
-      app: {
-        renderer: {
-          extract: { base64: jest.fn().mockResolvedValue('rawbase64withoutprefix') },
-          width: 100,
-          height: 100
-        }
-      }
-    }));
+  it('should propagate render errors', () => {
+    const canvas = createMockCanvas();
+    canvas.app.renderer.render = jest.fn(() => { throw new Error('WebGL context lost'); });
+    setCanvas(canvas);
 
-    const result = await captureSceneHandler({} as Record<string, never>);
-
-    expect(result.image).toBe('rawbase64withoutprefix');
-  });
-
-  it('should propagate extract errors', async () => {
-    setCanvas(createMockCanvas({
-      app: {
-        renderer: {
-          extract: { base64: jest.fn().mockRejectedValue(new Error('WebGL context lost')) },
-          width: 1920,
-          height: 1080
-        }
-      }
-    }));
-
-    await expect(captureSceneHandler({} as Record<string, never>))
-      .rejects.toThrow('WebGL context lost');
+    expect(() => captureSceneHandler({} as Record<string, never>))
+      .toThrow('WebGL context lost');
   });
 });
