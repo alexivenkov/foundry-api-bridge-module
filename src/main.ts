@@ -65,6 +65,7 @@ import {
   addActorEffectHandler,
   removeActorEffectHandler,
   updateActorEffectHandler,
+  captureSceneHandler,
   listRollTablesHandler,
   getRollTableHandler,
   rollOnTableHandler,
@@ -74,7 +75,7 @@ import {
   deleteRollTableHandler
 } from '@/commands';
 
-const MODULE_VERSION = '7.2.0';
+const MODULE_VERSION = '7.3.0';
 
 let wsClient: WebSocketClient | null = null;
 let commandRouter: CommandRouter | null = null;
@@ -232,6 +233,7 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
 
   // Scene actions
   commandRouter.register('activate-scene', activateSceneHandler);
+  commandRouter.register('capture-scene', captureSceneHandler);
 
   const wsConnectUrl = `${wsUrl}?apiKey=${encodeURIComponent(apiKey)}`;
   wsClient = new WebSocketClient({

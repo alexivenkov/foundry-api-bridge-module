@@ -82,7 +82,8 @@ export type CommandType =
   | 'reset-table'
   | 'create-roll-table'
   | 'update-roll-table'
-  | 'delete-roll-table';
+  | 'delete-roll-table'
+  | 'capture-scene';
 
 export interface RollDiceParams {
   formula: string;
@@ -950,6 +951,18 @@ export interface ResetTableResult {
   resetCount: number;
 }
 
+// Capture Scene types
+export type CaptureSceneParams = Record<string, never>;
+
+export interface CaptureSceneResult {
+  sceneId: string;
+  sceneName: string;
+  image: string;
+  mimeType: string;
+  width: number;
+  height: number;
+}
+
 export type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
 
 export const ABILITY_KEYS: readonly AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
@@ -1028,6 +1041,7 @@ export interface CommandParamsMap {
   'create-roll-table': CreateRollTableParams;
   'update-roll-table': UpdateRollTableParams;
   'delete-roll-table': DeleteRollTableParams;
+  'capture-scene': CaptureSceneParams;
 }
 
 export interface CommandResultMap {
@@ -1100,4 +1114,5 @@ export interface CommandResultMap {
   'create-roll-table': RollTableResult;
   'update-roll-table': RollTableResult;
   'delete-roll-table': DeleteResult;
+  'capture-scene': CaptureSceneResult;
 }

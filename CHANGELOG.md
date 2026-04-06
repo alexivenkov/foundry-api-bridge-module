@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [7.3.0] - 2026-04-06
+
+### Added
+- **`capture-scene`** — live canvas screenshot for AI DM vision
+  - Returns base64 WebP image of the current canvas (map, tokens, lighting, tiles)
+  - Graceful degradation: returns `"Canvas not ready"` error when GM's browser tab is in background
+  - Server embeds screenshot into existing `get-scene` response for AI context
+  - WebP format with 0.8 quality for reasonable payload size
+
+### Technical
+- 522 tests (8 new)
+- Uses PIXI.js `canvas.app.renderer.extract.base64(canvas.stage)`
+- Strips `data:image/webp;base64,` prefix — returns raw base64
+
 ## [7.2.0] - 2026-04-05
 
 ### Added

@@ -76,7 +76,8 @@ export {
 export {
   getSceneHandler,
   getScenesListHandler,
-  activateSceneHandler
+  activateSceneHandler,
+  captureSceneHandler
 } from '@/commands/handlers/scene';
 
 // World handlers
