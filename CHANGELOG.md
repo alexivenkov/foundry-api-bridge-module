@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [7.5.0] - 2026-04-07
+
+### Added
+- **Grid A* pathfinding in `move-token`** — tokens automatically navigate around walls
+  - When direct path is blocked by walls, module finds an alternate route using A* on the grid
+  - Uses Foundry collision API (`CONFIG.Canvas.polygonBackends.move.testCollision()`)
+  - 8-directional movement (orthogonal + diagonal)
+  - Tokens animate through each waypoint sequentially
+  - Returns error `"Path blocked — no valid route to destination"` if completely enclosed
+  - Graceful degradation: direct move when collision backend unavailable (v12 without canvas)
+- New: `GridPathfinder.ts` — pure A* function, no Foundry globals dependency, fully testable
+
+### Changed
+- `move-token` no longer teleports tokens through walls
+- API contract unchanged — same params, same result type, server needs no changes
+
+### Technical
+- 555 tests (16 new: 11 pathfinder + 5 handler)
+- Chebyshev heuristic, maxNodes=2500 safety limit
+- Elevation and rotation applied to final waypoint only
+
 ## [7.4.0] - 2026-04-07
 
 ### Added

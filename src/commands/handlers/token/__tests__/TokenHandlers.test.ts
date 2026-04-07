@@ -330,6 +330,171 @@ describe('Token Handlers', () => {
         y: 400
       })).rejects.toThrow('Token not found: nonexistent');
     });
+
+    it('uses direct move when collision backend is unavailable', async () => {
+      delete (global as Record<string, unknown>)['CONFIG'];
+      delete (global as Record<string, unknown>)['canvas'];
+      const mockToken = createMockToken();
+      const mockScene = createMockScene();
+      mockScene.tokens.get.mockReturnValue(mockToken);
+      mockGame.scenes.active = mockScene;
+
+      const result = await moveTokenHandler({
+        tokenId: 'token-123',
+        x: 500,
+        y: 600
+      });
+
+      expect(mockToken.update).toHaveBeenCalledTimes(1);
+      expect(result.x).toBe(500);
+    });
+
+    it('uses direct move when path is clear', async () => {
+      const mockCollision = {
+        testCollision: jest.fn().mockReturnValue(false)
+      };
+      (global as Record<string, unknown>)['CONFIG'] = {
+        Canvas: { polygonBackends: { move: mockCollision } }
+      };
+      (global as Record<string, unknown>)['canvas'] = {
+        scene: { grid: { size: 100 } }
+      };
+
+      const mockToken = createMockToken({ x: 100, y: 100 });
+      const mockScene = createMockScene();
+      mockScene.tokens.get.mockReturnValue(mockToken);
+      mockGame.scenes.active = mockScene;
+
+      await moveTokenHandler({
+        tokenId: 'token-123',
+        x: 300,
+        y: 100
+      });
+
+      expect(mockToken.update).toHaveBeenCalledTimes(1);
+      expect(mockToken.update).toHaveBeenCalledWith(
+        { x: 300, y: 100 },
+        { animate: true }
+      );
+
+      delete (global as Record<string, unknown>)['CONFIG'];
+      delete (global as Record<string, unknown>)['canvas'];
+    });
+
+    it('uses pathfinding when direct path is blocked', async () => {
+      // Block direct path but allow going around
+      const mockCollision = {
+        testCollision: jest.fn((origin: { x: number; y: number }, dest: { x: number; y: number }) => {
+          // Block horizontal movement from cell (1,1) to (2,1) center-to-center
+          if (origin.x === 150 && origin.y === 150 && dest.x === 350 && dest.y === 150) return true;
+          // Block the grid edge between (1,*) and (2,*) at y=1
+          if (origin.x === 150 && dest.x === 250 && origin.y === 150 && dest.y === 150) return true;
+          return false;
+        })
+      };
+      (global as Record<string, unknown>)['CONFIG'] = {
+        Canvas: { polygonBackends: { move: mockCollision } }
+      };
+      (global as Record<string, unknown>)['canvas'] = {
+        scene: { grid: { size: 100 } }
+      };
+
+      const mockToken = createMockToken({ x: 100, y: 100 });
+      mockToken.update.mockImplementation((data) => {
+        const updated = { ...mockToken, ...data };
+        updated.update = mockToken.update;
+        return Promise.resolve(updated);
+      });
+      const mockScene = createMockScene();
+      mockScene.tokens.get.mockReturnValue(mockToken);
+      mockGame.scenes.active = mockScene;
+
+      const result = await moveTokenHandler({
+        tokenId: 'token-123',
+        x: 300,
+        y: 100
+      });
+
+      // Should have called update multiple times (waypoints)
+      expect(mockToken.update.mock.calls.length).toBeGreaterThan(1);
+      expect(result.x).toBe(300);
+      expect(result.y).toBe(100);
+
+      delete (global as Record<string, unknown>)['CONFIG'];
+      delete (global as Record<string, unknown>)['canvas'];
+    });
+
+    it('throws error when path is completely blocked', async () => {
+      // Block ALL movement from starting cell
+      const mockCollision = {
+        testCollision: jest.fn().mockReturnValue(true)
+      };
+      (global as Record<string, unknown>)['CONFIG'] = {
+        Canvas: { polygonBackends: { move: mockCollision } }
+      };
+      (global as Record<string, unknown>)['canvas'] = {
+        scene: { grid: { size: 100 } }
+      };
+
+      const mockToken = createMockToken({ x: 100, y: 100 });
+      const mockScene = createMockScene();
+      mockScene.tokens.get.mockReturnValue(mockToken);
+      mockGame.scenes.active = mockScene;
+
+      await expect(moveTokenHandler({
+        tokenId: 'token-123',
+        x: 500,
+        y: 500
+      })).rejects.toThrow('Path blocked');
+
+      delete (global as Record<string, unknown>)['CONFIG'];
+      delete (global as Record<string, unknown>)['canvas'];
+    });
+
+    it('applies elevation and rotation to last waypoint in path', async () => {
+      // Block direct, force pathfinding with one intermediate step
+      const mockCollision = {
+        testCollision: jest.fn((origin: { x: number; y: number }, dest: { x: number; y: number }) => {
+          // Only block the initial direct check (center to center for full distance)
+          if (Math.abs(dest.x - origin.x) > 150) return true;
+          // Block specific grid edge
+          if (origin.x === 150 && dest.x === 250 && origin.y === 150 && dest.y === 150) return true;
+          return false;
+        })
+      };
+      (global as Record<string, unknown>)['CONFIG'] = {
+        Canvas: { polygonBackends: { move: mockCollision } }
+      };
+      (global as Record<string, unknown>)['canvas'] = {
+        scene: { grid: { size: 100 } }
+      };
+
+      const mockToken = createMockToken({ x: 100, y: 100 });
+      mockToken.update.mockImplementation((data) => {
+        const updated = { ...mockToken, ...data };
+        updated.update = mockToken.update;
+        return Promise.resolve(updated);
+      });
+      const mockScene = createMockScene();
+      mockScene.tokens.get.mockReturnValue(mockToken);
+      mockGame.scenes.active = mockScene;
+
+      await moveTokenHandler({
+        tokenId: 'token-123',
+        x: 300,
+        y: 100,
+        elevation: 10,
+        rotation: 45
+      });
+
+      // Last update call should include elevation and rotation
+      const calls = mockToken.update.mock.calls;
+      const lastCall = calls[calls.length - 1];
+      expect(lastCall?.[0]).toMatchObject({ elevation: 10, rotation: 45 });
+
+      delete (global as Record<string, unknown>)['CONFIG'];
+      delete (global as Record<string, unknown>)['canvas'];
+    });
   });
 
   describe('updateTokenHandler', () => {
