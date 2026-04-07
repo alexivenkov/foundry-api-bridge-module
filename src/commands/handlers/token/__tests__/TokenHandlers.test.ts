@@ -382,12 +382,9 @@ describe('Token Handlers', () => {
     });
 
     it('uses pathfinding when direct path is blocked', async () => {
-      // Block direct path but allow going around
       const mockCollision = {
         testCollision: jest.fn((origin: { x: number; y: number }, dest: { x: number; y: number }) => {
-          // Block horizontal movement from cell (1,1) to (2,1) center-to-center
           if (origin.x === 150 && origin.y === 150 && dest.x === 350 && dest.y === 150) return true;
-          // Block the grid edge between (1,*) and (2,*) at y=1
           if (origin.x === 150 && dest.x === 250 && origin.y === 150 && dest.y === 150) return true;
           return false;
         })
@@ -400,13 +397,13 @@ describe('Token Handlers', () => {
       };
 
       const mockToken = createMockToken({ x: 100, y: 100 });
+      // Update mutates the token so re-fetch returns current state
       mockToken.update.mockImplementation((data) => {
-        const updated = { ...mockToken, ...data };
-        updated.update = mockToken.update;
-        return Promise.resolve(updated);
+        Object.assign(mockToken, data);
+        return Promise.resolve(mockToken);
       });
       const mockScene = createMockScene();
-      mockScene.tokens.get.mockReturnValue(mockToken);
+      mockScene.tokens.get.mockImplementation(() => mockToken);
       mockGame.scenes.active = mockScene;
 
       const result = await moveTokenHandler({
@@ -415,7 +412,6 @@ describe('Token Handlers', () => {
         y: 100
       });
 
-      // Should have called update multiple times (waypoints)
       expect(mockToken.update.mock.calls.length).toBeGreaterThan(1);
       expect(result.x).toBe(300);
       expect(result.y).toBe(100);
@@ -452,12 +448,9 @@ describe('Token Handlers', () => {
     });
 
     it('applies elevation and rotation to last waypoint in path', async () => {
-      // Block direct, force pathfinding with one intermediate step
       const mockCollision = {
         testCollision: jest.fn((origin: { x: number; y: number }, dest: { x: number; y: number }) => {
-          // Only block the initial direct check (center to center for full distance)
           if (Math.abs(dest.x - origin.x) > 150) return true;
-          // Block specific grid edge
           if (origin.x === 150 && dest.x === 250 && origin.y === 150 && dest.y === 150) return true;
           return false;
         })
@@ -471,12 +464,11 @@ describe('Token Handlers', () => {
 
       const mockToken = createMockToken({ x: 100, y: 100 });
       mockToken.update.mockImplementation((data) => {
-        const updated = { ...mockToken, ...data };
-        updated.update = mockToken.update;
-        return Promise.resolve(updated);
+        Object.assign(mockToken, data);
+        return Promise.resolve(mockToken);
       });
       const mockScene = createMockScene();
-      mockScene.tokens.get.mockReturnValue(mockToken);
+      mockScene.tokens.get.mockImplementation(() => mockToken);
       mockGame.scenes.active = mockScene;
 
       await moveTokenHandler({

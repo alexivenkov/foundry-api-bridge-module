@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [7.5.1] - 2026-04-07
+
+### Fixed
+- **`move-token` crash on long pathfinding routes** — "Cannot read properties of undefined (reading 'update')"
+  - Root cause: `token.update()` return value was unreliable during sequential waypoint moves
+  - Fix: re-fetch token from scene collection by ID after each waypoint update
+  - Token now visually moves through each waypoint with animation
+  - Tested on Cragmaw Castle: cross-map diagonal routes work smoothly
+
 ## [7.5.0] - 2026-04-07
 
 ### Added

@@ -31,12 +31,14 @@ function getGlobals(): CanvasGlobals {
 }
 
 async function moveAlongPath(
-  token: FoundryToken,
+  startToken: FoundryToken,
+  scene: { tokens: { get(id: string): FoundryToken | undefined } },
   path: Array<{ x: number; y: number }>,
   animate: boolean,
   finalUpdate?: TokenUpdateData
 ): Promise<FoundryToken> {
-  let current = token;
+  const tokenId = startToken.id;
+  let current = startToken;
 
   for (let i = 0; i < path.length; i++) {
     const waypoint = path[i];
@@ -50,7 +52,13 @@ async function moveAlongPath(
       if (finalUpdate.rotation !== undefined) updateData.rotation = finalUpdate.rotation;
     }
 
-    current = await current.update(updateData, { animate });
+    await current.update(updateData, { animate });
+
+    const refreshed = scene.tokens.get(tokenId);
+    if (!refreshed) {
+      throw new Error('Token lost during movement');
+    }
+    current = refreshed;
   }
 
   return current;
@@ -89,7 +97,7 @@ export async function moveTokenHandler(params: MoveTokenParams): Promise<TokenRe
       if (params.elevation !== undefined) finalUpdate.elevation = params.elevation;
       if (params.rotation !== undefined) finalUpdate.rotation = params.rotation;
 
-      const result = await moveAlongPath(token, path, animate, finalUpdate);
+      const result = await moveAlongPath(token, scene, path, animate, finalUpdate);
       return mapTokenToResult(result);
     }
   }
