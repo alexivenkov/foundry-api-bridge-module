@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [7.4.0] - 2026-04-07
+
+### Added
+- **ASCII tactical map in `get-scene`** — always included in response
+  - Wall collision detection via `CONFIG.Canvas.polygonBackends.move.testCollision()`
+  - Walls (`|` `---`), doors (`D`), open doors (`d`), locked doors (`L`), secret doors (`?`)
+  - Numbered token IDs with multi-cell support (2x2, 3x3)
+  - Legend with token name, size, HP, grid position
+  - Coordinate axes for precise reference
+- **Optional screenshot in `get-scene`** — `includeScreenshot: true` param
+  - Returns `screenshot` field with base64 WebP image when canvas is available
+  - Graceful degradation: omitted when canvas not ready
+
+### Changed
+- `GetSceneParams` now accepts `includeScreenshot?: boolean`
+- `SceneDetailResult` now includes `asciiMap: string` and optional `screenshot: SceneScreenshot`
+
+### Technical
+- 539 tests (15 new for ASCII map generator)
+- New: `AsciiMapGenerator.ts` — pure function, fully testable without Foundry globals
+
 ## [7.3.1] - 2026-04-06
 
 ### Fixed

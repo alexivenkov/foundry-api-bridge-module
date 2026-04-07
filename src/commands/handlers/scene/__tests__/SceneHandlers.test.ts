@@ -211,7 +211,7 @@ describe('Scene Handlers', () => {
 
       const result = await getSceneHandler({});
 
-      expect(result).toEqual({
+      expect(result).toMatchObject({
         id: 'scene-123',
         name: 'Test Scene',
         active: true,
@@ -231,6 +231,7 @@ describe('Scene Handlers', () => {
           { id: 'token-2', name: 'Fighter', actorId: 'actor-2', gridX: 5, gridY: 5, x: 500, y: 500, elevation: 0, hidden: false, disposition: 1, hp: { value: 7, max: 7 }, ac: 13, conditions: [] }
         ]
       });
+      expect(typeof result.asciiMap).toBe('string');
     });
 
     it('returns detail for scene by ID', async () => {

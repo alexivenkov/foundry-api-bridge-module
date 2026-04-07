@@ -678,6 +678,7 @@ export interface ActivateItemResult {
 // Scene Commands
 export interface GetSceneParams {
   sceneId?: string;
+  includeScreenshot?: boolean;
 }
 
 export type GetScenesListParams = Record<string, never>;
@@ -780,6 +781,15 @@ export interface SceneDetailResult {
   drawings: SceneDrawingResult[];
   regions: SceneRegionResult[];
   tokens: SceneTokenSummary[];
+  asciiMap: string;
+  screenshot?: SceneScreenshot;
+}
+
+export interface SceneScreenshot {
+  image: string;
+  mimeType: string;
+  width: number;
+  height: number;
 }
 
 export interface SceneSummaryResult {

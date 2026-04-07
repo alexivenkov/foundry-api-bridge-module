@@ -23,6 +23,7 @@ export interface FoundryWall {
   move: number;
   sense: number;
   door: number;
+  ds: number | undefined;
 }
 
 export interface FoundryGrid {
@@ -82,6 +83,8 @@ export interface FoundryToken {
   name: string | undefined;
   x: number;
   y: number;
+  width: number | undefined;
+  height: number | undefined;
   elevation: number | undefined;
   hidden: boolean | undefined;
   disposition: number | undefined;
@@ -272,7 +275,8 @@ export function mapSceneToDetail(scene: FoundryScene): SceneDetailResult {
     tiles: (scene.tiles?.contents ?? []).map(mapTileToResult),
     drawings: (scene.drawings?.contents ?? []).map(mapDrawingToResult),
     regions: (scene.regions?.contents ?? []).map(mapRegionToResult),
-    tokens: (scene.tokens?.contents ?? []).map(t => mapTokenToSummary(t, gridSize))
+    tokens: (scene.tokens?.contents ?? []).map(t => mapTokenToSummary(t, gridSize)),
+    asciiMap: ''
   };
 }
 

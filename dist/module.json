@@ -2,7 +2,7 @@
   "id": "foundry-api-bridge",
   "title": "Foundry API Bridge (Foundry MCP)",
   "description": "Connect Foundry VTT to AI assistants via foundry-mcp.com. Syncs world data and enables AI to roll dice, manage combat, edit journals, move tokens, and more through the MCP protocol.",
-  "version": "7.3.1",
+  "version": "7.4.0",
   "authors": [
     {
       "name": "Alex Ivenkov",
