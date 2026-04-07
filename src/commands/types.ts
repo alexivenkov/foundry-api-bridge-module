@@ -83,7 +83,8 @@ export type CommandType =
   | 'create-roll-table'
   | 'update-roll-table'
   | 'delete-roll-table'
-  | 'capture-scene';
+  | 'capture-scene'
+  | 'get-combat-turn-context';
 
 export interface RollDiceParams {
   formula: string;
@@ -973,6 +974,45 @@ export interface CaptureSceneResult {
   height: number;
 }
 
+// Combat Turn Context types
+export interface GetCombatTurnContextParams {
+  combatId?: string;
+}
+
+export interface TurnCombatantInfo {
+  id: string;
+  actorId: string;
+  tokenId: string;
+  name: string;
+  gridX: number;
+  gridY: number;
+  hp?: TokenHpData;
+  ac?: number;
+  conditions: string[];
+}
+
+export interface NearbyTokenInfo {
+  tokenId: string;
+  actorId: string | null;
+  name: string;
+  gridX: number;
+  gridY: number;
+  distanceFt: number;
+  disposition: string;
+  hp?: TokenHpData;
+  ac?: number;
+  conditions: string[];
+  lineOfSight: boolean;
+}
+
+export interface CombatTurnContext {
+  round: number;
+  turn: number;
+  currentCombatant: TurnCombatantInfo;
+  nearbyTokens: NearbyTokenInfo[];
+  asciiMap: string;
+}
+
 export type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
 
 export const ABILITY_KEYS: readonly AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
@@ -1052,6 +1092,7 @@ export interface CommandParamsMap {
   'update-roll-table': UpdateRollTableParams;
   'delete-roll-table': DeleteRollTableParams;
   'capture-scene': CaptureSceneParams;
+  'get-combat-turn-context': GetCombatTurnContextParams;
 }
 
 export interface CommandResultMap {
@@ -1125,4 +1166,5 @@ export interface CommandResultMap {
   'update-roll-table': RollTableResult;
   'delete-roll-table': DeleteResult;
   'capture-scene': CaptureSceneResult;
+  'get-combat-turn-context': CombatTurnContext;
 }

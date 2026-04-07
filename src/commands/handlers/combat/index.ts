@@ -14,3 +14,4 @@ export { rollAllInitiativeHandler } from './RollAllInitiativeHandler';
 export { updateCombatantHandler } from './UpdateCombatantHandler';
 export { setCombatantDefeatedHandler } from './SetCombatantDefeatedHandler';
 export { toggleCombatantVisibilityHandler } from './ToggleCombatantVisibilityHandler';
+export { getCombatTurnContextHandler } from './GetCombatTurnContextHandler';

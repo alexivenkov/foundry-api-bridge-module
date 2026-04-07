@@ -31,6 +31,8 @@ export interface AsciiMapInput {
   tokens: MapToken[];
   walls: MapWall[];
   collisionBackend?: CollisionBackend | undefined;
+  center?: { gx: number; gy: number } | undefined;
+  radius?: number | undefined;
 }
 
 type WallType = 'wall' | 'door' | 'door-open' | 'door-locked' | 'secret';
@@ -132,42 +134,58 @@ export function generateAsciiMap(input: AsciiMapInput): string {
     }
   }
 
-  // Determine map bounds from walls
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minY = Infinity;
-  let maxY = -Infinity;
+  // Determine map bounds
+  let minX: number;
+  let maxX: number;
+  let minY: number;
+  let maxY: number;
 
-  for (const wall of walls) {
-    for (let i = 0; i < 4; i += 2) {
-      const wx = Math.floor((wall.c[i] ?? 0) / gridSize);
-      const wy = Math.floor((wall.c[i + 1] ?? 0) / gridSize);
-      minX = Math.min(minX, wx);
-      maxX = Math.max(maxX, wx);
-      minY = Math.min(minY, wy);
-      maxY = Math.max(maxY, wy);
+  const DEFAULT_RADIUS = 12;
+
+  if (input.center) {
+    const r = input.radius ?? DEFAULT_RADIUS;
+    minX = input.center.gx - r;
+    maxX = input.center.gx + r;
+    minY = input.center.gy - r;
+    maxY = input.center.gy + r;
+  } else {
+    minX = Infinity;
+    maxX = -Infinity;
+    minY = Infinity;
+    maxY = -Infinity;
+
+    for (const wall of walls) {
+      for (let i = 0; i < 4; i += 2) {
+        const wx = Math.floor((wall.c[i] ?? 0) / gridSize);
+        const wy = Math.floor((wall.c[i + 1] ?? 0) / gridSize);
+        minX = Math.min(minX, wx);
+        maxX = Math.max(maxX, wx);
+        minY = Math.min(minY, wy);
+        maxY = Math.max(maxY, wy);
+      }
     }
-  }
 
-  // Include token positions in bounds
-  for (const token of tokens) {
-    const gx = Math.floor(token.x / gridSize);
-    const gy = Math.floor(token.y / gridSize);
-    minX = Math.min(minX, gx);
-    maxX = Math.max(maxX, gx + token.width - 1);
-    minY = Math.min(minY, gy);
-    maxY = Math.max(maxY, gy + token.height - 1);
+    for (const token of tokens) {
+      const gx = Math.floor(token.x / gridSize);
+      const gy = Math.floor(token.y / gridSize);
+      minX = Math.min(minX, gx);
+      maxX = Math.max(maxX, gx + token.width - 1);
+      minY = Math.min(minY, gy);
+      maxY = Math.max(maxY, gy + token.height - 1);
+    }
   }
 
   if (!isFinite(minX)) {
     return `[Empty scene — no walls or tokens]`;
   }
 
-  // Padding
-  minX -= 1;
-  maxX += 1;
-  minY -= 1;
-  maxY += 1;
+  // Padding (only for auto-bounds, not for zoom)
+  if (!input.center) {
+    minX -= 1;
+    maxX += 1;
+    minY -= 1;
+    maxY += 1;
+  }
 
   // Check wall collisions between adjacent cells
   const wallTypes = new Map<string, WallType>();

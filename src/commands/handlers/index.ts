@@ -47,7 +47,8 @@ export {
   rollAllInitiativeHandler,
   updateCombatantHandler,
   setCombatantDefeatedHandler,
-  toggleCombatantVisibilityHandler
+  toggleCombatantVisibilityHandler,
+  getCombatTurnContextHandler
 } from '@/commands/handlers/combat';
 
 // Token handlers

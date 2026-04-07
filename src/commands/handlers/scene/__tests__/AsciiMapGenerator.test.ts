@@ -223,4 +223,43 @@ describe('generateAsciiMap', () => {
     expect(result).toContain('40/59');
     expect(result).toContain('2x2');
   });
+
+  it('should limit bounds when center and radius provided', () => {
+    const input = baseInput({
+      tokens: [
+        { id: 't1', name: 'Center', x: 500, y: 500, width: 1, height: 1 },
+        { id: 't2', name: 'Far Away', x: 2000, y: 2000, width: 1, height: 1 }
+      ],
+      center: { gx: 5, gy: 5 },
+      radius: 3
+    });
+
+    const result = generateAsciiMap(input);
+    const lines = result.split('\n');
+
+    // Y axis should range from 2 to 8 (5±3)
+    const dataLines = lines.filter(l => l.match(/^\s+-?\d+\s/));
+    const yCoords = dataLines.map(l => parseInt(l.trim()));
+    expect(Math.min(...yCoords)).toBe(2);
+    expect(Math.max(...yCoords)).toBe(8);
+
+    // Should include Center token (at 5,5) in legend
+    expect(result).toContain('Center');
+  });
+
+  it('should use default radius of 12 when center provided without radius', () => {
+    const input = baseInput({
+      tokens: [{ id: 't1', name: 'A', x: 1000, y: 1000, width: 1, height: 1 }],
+      center: { gx: 10, gy: 10 }
+    });
+
+    const result = generateAsciiMap(input);
+    const lines = result.split('\n');
+
+    const dataLines = lines.filter(l => l.match(/^\s+-?\d+\s/));
+    const yCoords = dataLines.map(l => parseInt(l.trim()));
+    // 10 - 12 = -2, 10 + 12 = 22
+    expect(Math.min(...yCoords)).toBe(-2);
+    expect(Math.max(...yCoords)).toBe(22);
+  });
 });

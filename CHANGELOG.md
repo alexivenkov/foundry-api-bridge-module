@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [7.7.0] - 2026-04-07
+
+### Added
+- **`get-combat-turn-context`** — tactical situation for AI DM at each combat turn
+  - Current combatant: id, actorId, tokenId, name, grid position, HP, AC, conditions
+  - Nearby combatants: sorted by distance, with distanceFt, disposition (hostile/neutral/friendly), HP, AC, conditions, actorId
+  - **Line of sight** detection via `testCollision(type: "sight")` — knows if current combatant can see each enemy
+  - **Zoomed ASCII map** centered on current token (12-cell radius) — tactical overview without full scene weight
+  - Only active combatants included (no decorative tokens)
+- **ASCII map zoom mode** — `AsciiMapGenerator` now accepts optional `center` + `radius` for focused view
+
+### Technical
+- 577 tests (14 new: 12 handler + 2 ASCII zoom)
+- Cross-domain handler: reads combat state, scene tokens, wall collisions, sight lines
+- Tested live on Cragmaw Castle combat encounter
+
 ## [7.6.0] - 2026-04-07
 
 ### Added

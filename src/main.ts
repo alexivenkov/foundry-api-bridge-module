@@ -65,6 +65,7 @@ import {
   addActorEffectHandler,
   removeActorEffectHandler,
   updateActorEffectHandler,
+  getCombatTurnContextHandler,
   captureSceneHandler,
   listRollTablesHandler,
   getRollTableHandler,
@@ -75,7 +76,7 @@ import {
   deleteRollTableHandler
 } from '@/commands';
 
-const MODULE_VERSION = '7.6.0';
+const MODULE_VERSION = '7.7.0';
 
 let wsClient: WebSocketClient | null = null;
 let commandRouter: CommandRouter | null = null;
@@ -161,6 +162,7 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
   commandRouter.register('get-actor-items', getActorItemsHandler);
   commandRouter.register('get-actor-effects', getActorEffectsHandler);
   commandRouter.register('get-combat-state', getCombatStateHandler);
+  commandRouter.register('get-combat-turn-context', getCombatTurnContextHandler);
 
   // Dice & chat
   commandRouter.register('roll-dice', rollDiceHandler);
