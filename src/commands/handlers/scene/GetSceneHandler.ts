@@ -1,6 +1,7 @@
 import type { GetSceneParams, SceneDetailResult, SceneScreenshot } from '@/commands/types';
 import { getScene, mapSceneToDetail, type FoundryGame } from './sceneTypes';
 import { generateAsciiMap, type AsciiMapInput } from './AsciiMapGenerator';
+import { addGridOverlay, removeGridOverlay, type OverlayCanvas } from './GridOverlay';
 
 declare const game: FoundryGame;
 
@@ -21,7 +22,11 @@ interface FoundryCanvas {
     view: CanvasView;
   };
   stage: unknown;
-  scene: { id: string } | null;
+  scene: {
+    id: string;
+    grid: { size: number };
+    dimensions: { sceneWidth: number; sceneHeight: number; sceneX: number; sceneY: number };
+  } | null;
 }
 
 interface CollisionBackend {
@@ -51,15 +56,19 @@ function getGlobals(): CanvasGlobals {
   return globalThis as unknown as CanvasGlobals;
 }
 
-function captureScreenshot(globals: CanvasGlobals): SceneScreenshot | undefined {
-  const canvas = globals.canvas;
-  if (!canvas?.ready || !canvas.scene) return undefined;
-
+function captureScreenshot(canvas: FoundryCanvas): SceneScreenshot | undefined {
   try {
+    const overlay = addGridOverlay(canvas as unknown as OverlayCanvas);
+
     canvas.app.renderer.render(canvas.stage);
     const view = canvas.app.view;
     const dataUrl = view.toDataURL(MIME_TYPE, QUALITY);
     const image = dataUrl.replace(BASE64_PREFIX_PATTERN, '');
+
+    if (overlay) {
+      removeGridOverlay(canvas as unknown as OverlayCanvas, overlay);
+      canvas.app.renderer.render(canvas.stage);
+    }
 
     return {
       image,
@@ -111,9 +120,12 @@ export function getSceneHandler(params: GetSceneParams): Promise<SceneDetailResu
     detail.asciiMap = generateAsciiMap(mapInput);
 
     if (params.includeScreenshot) {
-      const screenshot = captureScreenshot(globals);
-      if (screenshot) {
-        detail.screenshot = screenshot;
+      const canvas = globals.canvas;
+      if (canvas?.ready && canvas.scene) {
+        const screenshot = captureScreenshot(canvas);
+        if (screenshot) {
+          detail.screenshot = screenshot;
+        }
       }
     }
 

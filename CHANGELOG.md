@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [7.6.0] - 2026-04-07
+
+### Added
+- **Grid coordinate overlay on screenshots** — AI can now read exact grid coordinates from visual elements
+  - Each cell labeled with `x,y` coordinates in top-left corner (white text, dark outline, 65% opacity)
+  - Semi-transparent grid lines for visual alignment
+  - Overlay is temporary — created before screenshot, destroyed after. Players never see it
+  - Applied to both `get-scene` (with `includeScreenshot: true`) and standalone `capture-scene`
+  - Graceful degradation: screenshot without overlay if PIXI unavailable
+
+### Technical
+- 563 tests (8 new for GridOverlay)
+- New: `GridOverlay.ts` — PIXI Container with Graphics (lines) + Text (labels)
+- Font size: 22% of grid cell, stroke thickness: 15% of font size (min 2px)
+
 ## [7.5.1] - 2026-04-07
 
 ### Fixed

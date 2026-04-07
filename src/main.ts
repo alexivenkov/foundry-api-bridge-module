@@ -75,7 +75,7 @@ import {
   deleteRollTableHandler
 } from '@/commands';
 
-const MODULE_VERSION = '7.5.1';
+const MODULE_VERSION = '7.6.0';
 
 let wsClient: WebSocketClient | null = null;
 let commandRouter: CommandRouter | null = null;

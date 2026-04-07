@@ -1,8 +1,5 @@
 import type { CaptureSceneParams, CaptureSceneResult } from '@/commands/types';
-
-interface FoundryRenderer {
-  render(stage: unknown): void;
-}
+import { addGridOverlay, removeGridOverlay, type OverlayCanvas } from './GridOverlay';
 
 interface FoundryView {
   toDataURL(type?: string, quality?: number): string;
@@ -10,21 +7,23 @@ interface FoundryView {
   height: number;
 }
 
-interface FoundryApp {
-  renderer: FoundryRenderer;
-  view: FoundryView;
-}
-
-interface FoundryScene {
-  id: string;
-  name: string;
+interface FoundryRenderer {
+  render(stage: unknown): void;
 }
 
 interface FoundryCanvas {
   ready: boolean;
-  app: FoundryApp;
+  app: {
+    renderer: FoundryRenderer;
+    view: FoundryView;
+  };
   stage: unknown;
-  scene: FoundryScene | null;
+  scene: {
+    id: string;
+    name: string;
+    grid: { size: number };
+    dimensions: { sceneWidth: number; sceneHeight: number; sceneX: number; sceneY: number };
+  } | null;
 }
 
 const MIME_TYPE = 'image/webp';
@@ -42,10 +41,17 @@ export function captureSceneHandler(_params: CaptureSceneParams): Promise<Captur
     return Promise.reject(new Error('Canvas not ready'));
   }
 
+  const overlay = addGridOverlay(canvas as unknown as OverlayCanvas);
+
   canvas.app.renderer.render(canvas.stage);
   const view = canvas.app.view;
   const dataUrl = view.toDataURL(MIME_TYPE, QUALITY);
   const image = dataUrl.replace(BASE64_PREFIX_PATTERN, '');
+
+  if (overlay) {
+    removeGridOverlay(canvas as unknown as OverlayCanvas, overlay);
+    canvas.app.renderer.render(canvas.stage);
+  }
 
   return Promise.resolve({
     sceneId: canvas.scene.id,
