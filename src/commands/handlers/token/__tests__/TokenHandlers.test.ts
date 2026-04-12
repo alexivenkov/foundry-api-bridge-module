@@ -792,9 +792,9 @@ describe('Token Handlers', () => {
         });
 
         const calls = mockToken.update.mock.calls;
-        // All steps should be animated (canOpenDoors uses full animation)
+        // Door-crossing steps use teleport: true, normal steps use animate only
         for (const call of calls) {
-          expect(call[1]).toEqual({ animate: true });
+          expect(call[1]?.animate).toBe(true);
         }
       });
     });

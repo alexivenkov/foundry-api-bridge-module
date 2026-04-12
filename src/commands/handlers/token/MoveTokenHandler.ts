@@ -100,6 +100,12 @@ async function moveAlongPath(
   return current;
 }
 
+const DOOR_OPEN_DELAY = 400;
+
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => { setTimeout(resolve, ms); });
+}
+
 async function moveAlongPathWithDoors(
   startToken: FoundryToken,
   scene: FoundryScene,
@@ -124,13 +130,18 @@ async function moveAlongPathWithDoors(
     const waypoint = path[i];
     if (!waypoint) continue;
 
-    const doors = doorsByStep.get(i);
-    if (doors && scene.walls) {
-      for (const door of doors) {
-        const wall = scene.walls.get(door.wallId);
-        if (wall && wall.door !== 0 && (wall.ds === 0 || wall.ds === undefined)) {
-          await wall.update({ ds: 1 });
-          doorsOpened.push(door.wallId);
+    const hasDoor = doorsByStep.has(i);
+
+    if (hasDoor && scene.walls) {
+      const doors = doorsByStep.get(i);
+      if (doors) {
+        for (const door of doors) {
+          const wall = scene.walls.get(door.wallId);
+          if (wall && wall.door !== 0 && (wall.ds === 0 || wall.ds === undefined)) {
+            await wall.update({ ds: 1 });
+            doorsOpened.push(door.wallId);
+            await delay(DOOR_OPEN_DELAY);
+          }
         }
       }
     }
@@ -143,7 +154,11 @@ async function moveAlongPathWithDoors(
       if (finalUpdate.rotation !== undefined) updateData.rotation = finalUpdate.rotation;
     }
 
-    await current.update(updateData, { animate });
+    if (hasDoor) {
+      await current.update(updateData, { animate, teleport: true });
+    } else {
+      await current.update(updateData, { animate });
+    }
 
     const refreshed = scene.tokens.get(tokenId);
     if (!refreshed) {

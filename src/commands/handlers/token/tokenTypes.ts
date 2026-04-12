@@ -44,6 +44,7 @@ export interface FoundryToken {
 
 export interface TokenUpdateOptions {
   animate?: boolean;
+  teleport?: boolean;
 }
 
 export interface FoundryTokensCollection {

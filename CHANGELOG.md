@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.0.1] - 2026-04-12
+
+### Fixed
+- **Door-aware movement: endpoint-touching doors not detected** — `segmentsIntersectRelaxed` catches doors where movement ray touches wall endpoint (e.g. diagonal door at [3800,2162,3800,2400])
+- **Foundry v13 collision validation breaks token movement** — hybrid approach: normal steps use `animate: true`, door-crossing steps use `animate: true, teleport: true` to bypass stale collision cache
+- **400ms delay after door open** — gives Foundry time to update collision state before token moves through
+
+### Technical
+- 630 tests
+- New: `segmentsIntersectRelaxed` with `onSegment` endpoint check
+- `moveAlongPathWithDoors` uses hybrid animate/teleport per step
+
 ## [8.0.0] - 2026-04-12
 
 ### Added

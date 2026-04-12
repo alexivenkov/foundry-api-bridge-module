@@ -2,6 +2,7 @@ import {
   createDoorAwareCollision,
   findDoorsAlongPath,
   segmentsIntersect,
+  segmentsIntersectRelaxed,
   type WallInfo
 } from '../DoorAwareCollision';
 import type { CollisionChecker } from '../GridPathfinder';
@@ -50,6 +51,44 @@ describe('segmentsIntersect', () => {
     expect(segmentsIntersect(
       { x: 0, y: 0 }, { x: 10, y: 0 },
       { x: 20, y: 0 }, { x: 30, y: 0 }
+    )).toBe(false);
+  });
+});
+
+describe('segmentsIntersectRelaxed', () => {
+  it('detects proper crossing', () => {
+    expect(segmentsIntersectRelaxed(
+      { x: 0, y: 0 }, { x: 100, y: 100 },
+      { x: 100, y: 0 }, { x: 0, y: 100 }
+    )).toBe(true);
+  });
+
+  it('detects endpoint touching', () => {
+    // Ray from (3900,2500) to (3700,2300) touches door endpoint at (3800,2400)
+    expect(segmentsIntersectRelaxed(
+      { x: 3900, y: 2500 }, { x: 3700, y: 2300 },
+      { x: 3800, y: 2162 }, { x: 3800, y: 2400 }
+    )).toBe(true);
+  });
+
+  it('detects endpoint on segment', () => {
+    expect(segmentsIntersectRelaxed(
+      { x: 0, y: 0 }, { x: 50, y: 50 },
+      { x: 50, y: 50 }, { x: 100, y: 0 }
+    )).toBe(true);
+  });
+
+  it('returns false for parallel non-overlapping', () => {
+    expect(segmentsIntersectRelaxed(
+      { x: 0, y: 0 }, { x: 100, y: 0 },
+      { x: 0, y: 10 }, { x: 100, y: 10 }
+    )).toBe(false);
+  });
+
+  it('returns false for non-intersecting', () => {
+    expect(segmentsIntersectRelaxed(
+      { x: 0, y: 0 }, { x: 10, y: 0 },
+      { x: 20, y: 20 }, { x: 30, y: 20 }
     )).toBe(false);
   });
 });
@@ -239,5 +278,21 @@ describe('findDoorsAlongPath', () => {
 
     const doorIds = result.map(d => d.wallId);
     expect(new Set(doorIds).size).toBe(doorIds.length);
+  });
+
+  it('detects door when ray touches endpoint', () => {
+    // Real-world case: ray (3900,2500)>(3700,2300) touches door endpoint at (3800,2400)
+    // Door: [3800, 2162, 3800, 2400]
+    var doors = [makeDoor('door-endpoint', [3800, 2162, 3800, 2400], 0)];
+
+    var result = findDoorsAlongPath(
+      [{ x: 3800, y: 2400 }, { x: 3600, y: 2200 }],
+      3800, 2600,
+      200,
+      doors
+    );
+
+    expect(result.length).toBe(1);
+    expect(result[0]?.wallId).toBe('door-endpoint');
   });
 });

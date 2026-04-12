@@ -77,7 +77,7 @@ import {
   setDoorStateHandler
 } from '@/commands';
 
-const MODULE_VERSION = '8.0.0';
+const MODULE_VERSION = '8.0.1';
 
 let wsClient: WebSocketClient | null = null;
 let commandRouter: CommandRouter | null = null;
