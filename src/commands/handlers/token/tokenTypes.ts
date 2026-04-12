@@ -1,4 +1,5 @@
 import type { TokenResult } from '@/commands/types';
+import type { FoundryWallDocument } from '@/commands/handlers/door/doorTypes';
 
 export interface TokenUpdateData {
   x?: number;
@@ -18,6 +19,8 @@ export interface FoundryToken {
   name: string;
   x: number;
   y: number;
+  width: number;
+  height: number;
   elevation: number;
   rotation: number;
   hidden: boolean;
@@ -62,6 +65,10 @@ export interface FoundryScene {
   id: string;
   name: string;
   tokens: FoundryTokensCollection;
+  walls?: {
+    get(id: string): FoundryWallDocument | undefined;
+    contents: FoundryWallDocument[];
+  } | undefined;
   createEmbeddedDocuments(
     type: 'Token',
     data: TokenCreateData[]
@@ -85,6 +92,8 @@ export function mapTokenToResult(token: FoundryToken): TokenResult {
     actorId: token.actor?.id ?? null,
     x: token.x,
     y: token.y,
+    width: token.width,
+    height: token.height,
     elevation: token.elevation,
     rotation: token.rotation,
     hidden: token.hidden,

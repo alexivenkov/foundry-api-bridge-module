@@ -84,7 +84,8 @@ export type CommandType =
   | 'update-roll-table'
   | 'delete-roll-table'
   | 'capture-scene'
-  | 'get-combat-turn-context';
+  | 'get-combat-turn-context'
+  | 'set-door-state';
 
 export interface RollDiceParams {
   formula: string;
@@ -310,6 +311,7 @@ export interface MoveTokenParams {
   elevation?: number;
   rotation?: number;
   animate?: boolean;
+  canOpenDoors?: boolean | undefined;
 }
 
 export interface UpdateTokenParams {
@@ -428,6 +430,8 @@ export interface TokenResult {
   actorId: string | null;
   x: number;
   y: number;
+  width: number;
+  height: number;
   elevation: number;
   rotation: number;
   hidden: boolean;
@@ -436,6 +440,8 @@ export interface TokenResult {
   hp?: TokenHpData;
   ac?: number;
   conditions: string[];
+  pathCost?: number | undefined;
+  doorsOpened?: string[] | undefined;
 }
 
 export interface SceneTokensResult {
@@ -705,10 +711,12 @@ export interface SceneNoteResult {
 }
 
 export interface SceneWallResult {
+  id: string;
   c: number[];
   move: number;
   sense: number;
   door: number;
+  ds: number;
 }
 
 export interface SceneLightResult {
@@ -974,6 +982,20 @@ export interface CaptureSceneResult {
   height: number;
 }
 
+// Door Commands
+export interface SetDoorStateParams {
+  sceneId?: string;
+  wallId: string;
+  state: number;
+}
+
+export interface SetDoorStateResult {
+  wallId: string;
+  door: number;
+  previousState: number;
+  newState: number;
+}
+
 // Combat Turn Context types
 export interface GetCombatTurnContextParams {
   combatId?: string;
@@ -1093,6 +1115,7 @@ export interface CommandParamsMap {
   'delete-roll-table': DeleteRollTableParams;
   'capture-scene': CaptureSceneParams;
   'get-combat-turn-context': GetCombatTurnContextParams;
+  'set-door-state': SetDoorStateParams;
 }
 
 export interface CommandResultMap {
@@ -1167,4 +1190,5 @@ export interface CommandResultMap {
   'delete-roll-table': DeleteResult;
   'capture-scene': CaptureSceneResult;
   'get-combat-turn-context': CombatTurnContext;
+  'set-door-state': SetDoorStateResult;
 }

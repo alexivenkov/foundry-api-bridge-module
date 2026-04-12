@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.0.0] - 2026-04-12
+
+### Added
+- **`set-door-state` command** — open, close, or lock doors on the scene
+  - Params: `wallId`, `state` (0=closed, 1=open, 2=locked), optional `sceneId`
+  - Returns: `wallId`, `door` type, `previousState`, `newState`
+  - Validates wall is actually a door (door !== 0) and state is valid (0-2)
+- **Door-aware token movement** — `move-token` with `canOpenDoors: true`
+  - Pathfinder treats closed unlocked doors (door=1, ds=0) as passable
+  - Locked doors (ds=2) and secret doors (door=2) remain impassable
+  - During movement: token approaches door → door opens → token continues
+  - Full animation on every step for visual clarity
+  - Response includes `doorsOpened: string[]` with wall IDs of doors opened
+- **Token size in pathfinding** — Large/Huge/Gargantuan tokens correctly blocked by narrow passages
+  - `isBlocked` checks ALL cells of token footprint (W×H collision checks per step)
+  - `isDirectPathBlocked` helper for multi-cell direct path validation
+  - 2×2 token cannot pass through 1-wide corridor; 3×3 token routes around obstacles
+- **`width` and `height` in `TokenResult`** — token size in grid cells (1=Medium, 2=Large, 3=Huge)
+- **`pathCost` in `TokenResult`** — A* path cost in grid cells (only when pathfinding triggered)
+- **`id` and `ds` in `SceneWallResult`** — wall ID and door state now visible in `get-scene` response
+- **Animation smoothing** — intermediate pathfinding waypoints are instant, only final step animates
+- **`getCellCost` callback** in `PathfinderConfig` — hook for future difficult terrain support
+
+### Changed
+- **BREAKING**: `TokenResult` has two new required fields: `width: number`, `height: number`
+- **BREAKING**: `SceneWallResult` has two new required fields: `id: string`, `ds: number`
+- **BREAKING**: `findGridPath` now returns `PathResult { path, cost }` instead of `Point[]`
+- `MoveTokenParams` accepts optional `canOpenDoors?: boolean`
+- `TokenResult` has optional `pathCost?: number` and `doorsOpened?: string[]`
+
+### Technical
+- 624 tests (47 new)
+- New modules: `DoorAwareCollision.ts`, `door/SetDoorStateHandler.ts`, `door/doorTypes.ts`
+- `segmentsIntersect` — cross-product line intersection for wall/door analysis
+- `findDoorsAlongPath` — identifies doors along computed path with waypoint indices
+
 ## [7.7.0] - 2026-04-07
 
 ### Added

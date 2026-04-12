@@ -11,6 +11,11 @@ export interface CollisionChecker {
   ): boolean;
 }
 
+export interface PathResult {
+  path: Point[];
+  cost: number;
+}
+
 export interface PathfinderConfig {
   startX: number;
   startY: number;
@@ -18,6 +23,9 @@ export interface PathfinderConfig {
   endY: number;
   gridSize: number;
   collision: CollisionChecker;
+  tokenWidth?: number | undefined;
+  tokenHeight?: number | undefined;
+  getCellCost?: ((gx: number, gy: number) => number) | undefined;
   maxNodes?: number | undefined;
 }
 
@@ -53,13 +61,22 @@ function isBlocked(
   toGX: number,
   toGY: number,
   gridSize: number,
-  collision: CollisionChecker
+  collision: CollisionChecker,
+  tokenW: number,
+  tokenH: number
 ): boolean {
-  return collision.testCollision(
-    { x: gridCenter(fromGX, gridSize), y: gridCenter(fromGY, gridSize) },
-    { x: gridCenter(toGX, gridSize), y: gridCenter(toGY, gridSize) },
-    { type: 'move', mode: 'any' }
-  );
+  for (let i = 0; i < tokenW; i++) {
+    for (let j = 0; j < tokenH; j++) {
+      if (collision.testCollision(
+        { x: gridCenter(fromGX + i, gridSize), y: gridCenter(fromGY + j, gridSize) },
+        { x: gridCenter(toGX + i, gridSize), y: gridCenter(toGY + j, gridSize) },
+        { type: 'move', mode: 'any' }
+      )) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 function findLowestF(openSet: Node[]): number {
@@ -98,9 +115,12 @@ function reconstructPath(
   return path;
 }
 
-export function findGridPath(config: PathfinderConfig): Point[] | null {
+export function findGridPath(config: PathfinderConfig): PathResult | null {
   const { startX, startY, endX, endY, gridSize, collision } = config;
   const maxNodes = config.maxNodes ?? DEFAULT_MAX_NODES;
+  const tokenW = config.tokenWidth ?? 1;
+  const tokenH = config.tokenHeight ?? 1;
+  const cellCost = config.getCellCost ?? ((): number => 1);
 
   const startGX = Math.floor(startX / gridSize);
   const startGY = Math.floor(startY / gridSize);
@@ -108,7 +128,7 @@ export function findGridPath(config: PathfinderConfig): Point[] | null {
   const endGY = Math.floor(endY / gridSize);
 
   if (startGX === endGX && startGY === endGY) {
-    return [];
+    return { path: [], cost: 0 };
   }
 
   const startKey = toKey(startGX, startGY);
@@ -131,7 +151,7 @@ export function findGridPath(config: PathfinderConfig): Point[] | null {
     if (!current) break;
 
     if (current.gx === endGX && current.gy === endGY) {
-      return reconstructPath(cameFrom, endGX, endGY, gridSize);
+      return { path: reconstructPath(cameFrom, endGX, endGY, gridSize), cost: current.g };
     }
 
     openSet.splice(idx, 1);
@@ -146,9 +166,9 @@ export function findGridPath(config: PathfinderConfig): Point[] | null {
 
       if (closed.has(neighborKey)) continue;
 
-      if (isBlocked(current.gx, current.gy, nx, ny, gridSize, collision)) continue;
+      if (isBlocked(current.gx, current.gy, nx, ny, gridSize, collision, tokenW, tokenH)) continue;
 
-      const tentativeG = current.g + 1;
+      const tentativeG = current.g + cellCost(nx, ny);
       const existingG = gScore.get(neighborKey);
 
       if (existingG !== undefined && tentativeG >= existingG) continue;

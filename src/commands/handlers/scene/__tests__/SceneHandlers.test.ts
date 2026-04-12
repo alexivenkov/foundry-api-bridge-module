@@ -11,10 +11,12 @@ interface MockNote {
 }
 
 interface MockWall {
+  _id: string;
   c: number[];
   move: number;
   sense: number;
   door: number;
+  ds: number;
 }
 
 interface MockLight {
@@ -99,10 +101,12 @@ const createMockNote = (overrides: Partial<MockNote> = {}): MockNote => ({
 });
 
 const createMockWall = (overrides: Partial<MockWall> = {}): MockWall => ({
+  _id: 'wall-001',
   c: [0, 0, 100, 100],
   move: 20,
   sense: 20,
   door: 0,
+  ds: 0,
   ...overrides
 });
 
@@ -221,7 +225,7 @@ describe('Scene Handlers', () => {
         grid: { size: 100, type: 1, units: 'ft', distance: 5 },
         darkness: 0.3,
         notes: [{ x: 100, y: 200, text: 'A mysterious door', label: 'Door', entryId: 'journal-123' }],
-        walls: [{ c: [0, 0, 100, 100], move: 20, sense: 20, door: 0 }],
+        walls: [{ id: 'wall-001', c: [0, 0, 100, 100], move: 20, sense: 20, door: 0, ds: 0 }],
         lights: [{ x: 500, y: 500, bright: 30, dim: 60, color: '#ff9900', angle: 360, walls: true, hidden: false }],
         tiles: [{ x: 200, y: 300, width: 100, height: 100, img: 'tiles/table.png', hidden: false, elevation: 0, rotation: 0 }],
         drawings: [{ x: 400, y: 400, shape: { type: 'r', width: 200, height: 100, points: [] }, text: '', hidden: false, fillColor: '#00ff00', strokeColor: '#000000' }],

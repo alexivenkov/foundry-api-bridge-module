@@ -73,10 +73,11 @@ import {
   resetTableHandler,
   createRollTableHandler,
   updateRollTableHandler,
-  deleteRollTableHandler
+  deleteRollTableHandler,
+  setDoorStateHandler
 } from '@/commands';
 
-const MODULE_VERSION = '7.7.0';
+const MODULE_VERSION = '8.0.0';
 
 let wsClient: WebSocketClient | null = null;
 let commandRouter: CommandRouter | null = null;
@@ -236,6 +237,9 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
   // Scene actions
   commandRouter.register('activate-scene', activateSceneHandler);
   commandRouter.register('capture-scene', captureSceneHandler);
+
+  // Doors
+  commandRouter.register('set-door-state', setDoorStateHandler);
 
   const wsConnectUrl = `${wsUrl}?apiKey=${encodeURIComponent(apiKey)}`;
   wsClient = new WebSocketClient({

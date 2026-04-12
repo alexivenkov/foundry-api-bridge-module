@@ -19,6 +19,7 @@ export interface FoundryNote {
 }
 
 export interface FoundryWall {
+  _id: string;
   c: number[];
   move: number;
   sense: number;
@@ -165,10 +166,12 @@ export function mapNoteToResult(note: FoundryNote): SceneNoteResult {
 
 export function mapWallToResult(wall: FoundryWall): SceneWallResult {
   return {
+    id: wall._id,
     c: wall.c,
     move: wall.move,
     sense: wall.sense,
-    door: wall.door
+    door: wall.door,
+    ds: wall.ds ?? 0
   };
 }
 

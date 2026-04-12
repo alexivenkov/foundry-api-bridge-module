@@ -99,6 +99,11 @@ export {
   deleteRollTableHandler
 } from '@/commands/handlers/table';
 
+// Door handlers
+export {
+  setDoorStateHandler
+} from '@/commands/handlers/door';
+
 // Effect handlers
 export {
   getActorEffectsHandler,
