@@ -85,7 +85,12 @@ export type CommandType =
   | 'delete-roll-table'
   | 'capture-scene'
   | 'get-combat-turn-context'
-  | 'set-door-state';
+  | 'set-door-state'
+  | 'get-chat-messages'
+  | 'delete-chat-message'
+  | 'update-chat-message'
+  | 'clear-chat'
+  | 'export-chat';
 
 export interface RollDiceParams {
   formula: string;
@@ -180,6 +185,75 @@ export interface SendChatMessageParams {
 export interface SendChatMessageResult {
   messageId: string;
   sent: boolean;
+}
+
+// Chat Read/Manage Commands
+export interface GetChatMessagesParams {
+  limit?: number;
+  since?: string;
+  before?: string;
+  includeRolls?: boolean;
+  authorId?: string;
+  actorId?: string;
+  type?: 'ic' | 'ooc' | 'emote' | 'roll';
+  search?: string;
+}
+
+export interface ChatMessageSpeaker {
+  alias: string;
+  actorId: string | null;
+  tokenId: string | null;
+}
+
+export interface ChatMessageRollSummary {
+  formula: string;
+  total: number;
+}
+
+export interface ChatMessageData {
+  id: string;
+  timestamp: number;
+  author: {
+    userId: string;
+    name: string;
+  };
+  speaker: ChatMessageSpeaker;
+  content: string;
+  flavor: string | null;
+  style: 'other' | 'ooc' | 'ic' | 'emote';
+  isRoll: boolean;
+  rolls?: ChatMessageRollSummary[];
+  whisper: string[];
+  isWhisper: boolean;
+}
+
+export interface GetChatMessagesResult {
+  messages: ChatMessageData[];
+  total: number;
+  hasMore: boolean;
+}
+
+export interface DeleteChatMessageParams {
+  messageId: string;
+}
+
+export interface UpdateChatMessageParams {
+  messageId: string;
+  content?: string;
+  flavor?: string;
+}
+
+export interface ExportChatParams {
+  format?: 'text' | 'json';
+}
+
+export interface ExportChatResult {
+  content: string;
+  messageCount: number;
+}
+
+export interface ClearChatResult {
+  deletedCount: number;
 }
 
 // Journal Commands
@@ -1116,6 +1190,11 @@ export interface CommandParamsMap {
   'capture-scene': CaptureSceneParams;
   'get-combat-turn-context': GetCombatTurnContextParams;
   'set-door-state': SetDoorStateParams;
+  'get-chat-messages': GetChatMessagesParams;
+  'delete-chat-message': DeleteChatMessageParams;
+  'update-chat-message': UpdateChatMessageParams;
+  'clear-chat': Record<string, never>;
+  'export-chat': ExportChatParams;
 }
 
 export interface CommandResultMap {
@@ -1191,4 +1270,9 @@ export interface CommandResultMap {
   'capture-scene': CaptureSceneResult;
   'get-combat-turn-context': CombatTurnContext;
   'set-door-state': SetDoorStateResult;
+  'get-chat-messages': GetChatMessagesResult;
+  'delete-chat-message': DeleteResult;
+  'update-chat-message': SendChatMessageResult;
+  'clear-chat': ClearChatResult;
+  'export-chat': ExportChatResult;
 }

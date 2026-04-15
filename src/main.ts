@@ -74,10 +74,15 @@ import {
   createRollTableHandler,
   updateRollTableHandler,
   deleteRollTableHandler,
-  setDoorStateHandler
+  setDoorStateHandler,
+  getChatMessagesHandler,
+  deleteChatMessageHandler,
+  updateChatMessageHandler,
+  clearChatHandler,
+  exportChatHandler
 } from '@/commands';
 
-const MODULE_VERSION = '8.0.1';
+const MODULE_VERSION = '8.1.0';
 
 let wsClient: WebSocketClient | null = null;
 let commandRouter: CommandRouter | null = null;
@@ -168,6 +173,11 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
   // Dice & chat
   commandRouter.register('roll-dice', rollDiceHandler);
   commandRouter.register('send-chat-message', sendChatMessageHandler);
+  commandRouter.register('get-chat-messages', getChatMessagesHandler);
+  commandRouter.register('delete-chat-message', deleteChatMessageHandler);
+  commandRouter.register('update-chat-message', updateChatMessageHandler);
+  commandRouter.register('clear-chat', clearChatHandler);
+  commandRouter.register('export-chat', exportChatHandler);
   commandRouter.register('roll-skill', rollSkillHandler);
   commandRouter.register('roll-save', rollSaveHandler);
   commandRouter.register('roll-ability', rollAbilityHandler);

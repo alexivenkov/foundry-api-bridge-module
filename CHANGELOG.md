@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.1.0] - 2026-04-15
+
+### Added
+- **Chat read/manage commands** — AI DM can now read, search, edit, and manage the Foundry chat log
+  - `get-chat-messages` — read chat history with filtering (by author, actor, message type, text search), cursor-based pagination (`since`/`before`), configurable limit (default 20, max 100). Returns stripped-text content for LLM context, optional roll data
+  - `delete-chat-message` — delete a specific chat message by ID
+  - `update-chat-message` — edit content or flavor text of an existing message
+  - `clear-chat` — delete all chat messages (bulk operation)
+  - `export-chat` — export full chat log as plain text (Foundry's native format) or JSON
+- **Patreon sponsor button** — `.github/FUNDING.yml` with Patreon link
+
+### Changed
+- **README rewritten** — removed outdated REST API references, added complete command list, accurate settings, development section
+
+### Technical
+- 666 tests (36 new for chat handlers)
+- New handler group: `src/commands/handlers/chat/`
+- Shared types: `chatTypes.ts` with Foundry ChatMessage interfaces, `stripHtml` utility, style maps
+- HTML content stripped to plain text for LLM-friendly output
+
 ## [8.0.1] - 2026-04-12
 
 ### Fixed

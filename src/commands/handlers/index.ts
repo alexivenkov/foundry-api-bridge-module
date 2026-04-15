@@ -104,6 +104,15 @@ export {
   setDoorStateHandler
 } from '@/commands/handlers/door';
 
+// Chat handlers
+export {
+  getChatMessagesHandler,
+  deleteChatMessageHandler,
+  updateChatMessageHandler,
+  clearChatHandler,
+  exportChatHandler
+} from '@/commands/handlers/chat';
+
 // Effect handlers
 export {
   getActorEffectsHandler,
