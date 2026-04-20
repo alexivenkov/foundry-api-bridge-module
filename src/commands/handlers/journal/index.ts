@@ -6,3 +6,4 @@ export { updateJournalPageHandler } from './UpdateJournalPageHandler';
 export { deleteJournalPageHandler } from './DeleteJournalPageHandler';
 export { getJournalsHandler } from './GetJournalsHandler';
 export { getJournalHandler } from './GetJournalHandler';
+export { showJournalHandler } from './ShowJournalHandler';

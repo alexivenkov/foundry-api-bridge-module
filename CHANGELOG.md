@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.2.0] - 2026-04-20
+
+### Added
+- **`show-journal` command** — push journal entries or specific pages to players' screens
+  - Params: `journalId`, optional `pageId`, `force` (override permissions), `users` (specific user IDs)
+  - Returns: `shown`, `journalId`, `journalName`, optional `pageId`
+- **PDF page type** — `JournalPageType` now includes `'pdf'` alongside text, image, video
+- **`src` field for journal pages** — `create-journal-page` and `update-journal-page` accept `src` parameter for image/video/pdf page source URLs
+- **Content enrichment on read** — `get-journals` and `get-journal` now return `enrichedText` field with Foundry-processed HTML (resolved `@UUID` links, `@Embed` content, inline rolls). Raw `text` preserved alongside
+- **`src` field in journal page responses** — `get-journals`, `get-journal` now include page source URL
+
+### Technical
+- 684 tests (18 new for journal improvements)
+- `TextEditor.enrichHTML()` integration with graceful fallback when unavailable
+- `GetJournalsHandler`/`GetJournalHandler` refactored to async for enrichment pipeline
+
 ## [8.1.0] - 2026-04-15
 
 ### Added

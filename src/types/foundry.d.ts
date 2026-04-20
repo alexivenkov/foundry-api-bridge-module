@@ -46,6 +46,8 @@ export interface JournalPageData {
   type: string;
   text: string | null;
   markdown: string | null;
+  enrichedText: string | null;
+  src: string | null;
 }
 
 export interface ItemData {

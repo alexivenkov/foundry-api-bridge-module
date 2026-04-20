@@ -27,7 +27,8 @@ export {
   updateJournalPageHandler,
   deleteJournalPageHandler,
   getJournalsHandler,
-  getJournalHandler
+  getJournalHandler,
+  showJournalHandler
 } from '@/commands/handlers/journal';
 
 // Combat handlers

@@ -26,6 +26,10 @@ export async function createJournalPageHandler(
     pageData.text = { content: params.content };
   }
 
+  if (params.src !== undefined) {
+    pageData.src = params.src;
+  }
+
   const pages = await journal.createEmbeddedDocuments('JournalEntryPage', [pageData]);
 
   const createdPage = pages[0];

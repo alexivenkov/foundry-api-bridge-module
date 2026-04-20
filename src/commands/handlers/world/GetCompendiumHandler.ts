@@ -47,7 +47,9 @@ function mapDocument(doc: Record<string, unknown>): CompendiumDocument {
         name: page['name'] as string,
         type: page['type'] as string,
         text: text?.content ?? null,
-        markdown: text?.markdown ?? null
+        markdown: text?.markdown ?? null,
+        enrichedText: null,
+        src: (page['src'] as string | undefined) ?? null
       });
     });
   }

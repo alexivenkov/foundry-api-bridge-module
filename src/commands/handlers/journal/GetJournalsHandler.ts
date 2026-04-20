@@ -5,6 +5,7 @@ interface FoundryPage {
   id: string | number;
   name: string;
   type: string | number;
+  src: string | undefined;
   text: {
     content: string | undefined;
     markdown: string | undefined;
@@ -29,45 +30,71 @@ interface FoundryGame {
   journal: FoundryJournalCollection | undefined;
 }
 
+interface TextEditorClass {
+  enrichHTML(content: string, options?: { secrets?: boolean }): Promise<string>;
+}
+
 function getGame(): FoundryGame {
   return (globalThis as unknown as { game: FoundryGame }).game;
 }
 
-function mapPageToData(page: FoundryPage): JournalPageData {
+function getTextEditor(): TextEditorClass | undefined {
+  return (globalThis as unknown as { TextEditor?: TextEditorClass }).TextEditor;
+}
+
+async function mapPageToData(page: FoundryPage): Promise<JournalPageData> {
   const pageType = page.type;
+  const textContent = page.text.content ?? null;
+
+  let enrichedText: string | null = null;
+  if (textContent !== null) {
+    const editor = getTextEditor();
+    if (editor) {
+      try {
+        enrichedText = await editor.enrichHTML(textContent, { secrets: true });
+      } catch {
+        enrichedText = textContent;
+      }
+    }
+  }
+
   return {
     id: String(page.id),
     name: page.name,
     type: typeof pageType === 'string' ? pageType : String(pageType),
-    text: page.text.content ?? null,
-    markdown: page.text.markdown ?? null
+    text: textContent,
+    markdown: page.text.markdown ?? null,
+    enrichedText,
+    src: page.src ?? null
   };
 }
 
-function mapJournalToData(journal: FoundryJournal): JournalData {
-  const pages: JournalPageData[] = [];
+async function mapJournalToData(journal: FoundryJournal): Promise<JournalData> {
+  const pages: FoundryPage[] = [];
   journal.pages.forEach(page => {
-    pages.push(mapPageToData(page));
+    pages.push(page);
   });
+
+  const mappedPages = await Promise.all(pages.map(mapPageToData));
 
   return {
     id: journal.id,
     uuid: journal.uuid,
     name: journal.name,
     folder: journal.folder?.name ?? null,
-    pages
+    pages: mappedPages
   };
 }
 
 export { mapJournalToData, type FoundryJournal };
 
-export function getJournalsHandler(_params: GetJournalsParams): Promise<JournalData[]> {
+export async function getJournalsHandler(_params: GetJournalsParams): Promise<JournalData[]> {
   const game = getGame();
-  const journals: JournalData[] = [];
+  const journals: FoundryJournal[] = [];
 
   game.journal?.forEach(journal => {
-    journals.push(mapJournalToData(journal));
+    journals.push(journal);
   });
 
-  return Promise.resolve(journals);
+  return Promise.all(journals.map(mapJournalToData));
 }

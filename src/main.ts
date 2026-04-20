@@ -29,6 +29,7 @@ import {
   createJournalPageHandler,
   updateJournalPageHandler,
   deleteJournalPageHandler,
+  showJournalHandler,
   createCombatHandler,
   addCombatantHandler,
   removeCombatantHandler,
@@ -82,7 +83,7 @@ import {
   exportChatHandler
 } from '@/commands';
 
-const MODULE_VERSION = '8.1.0';
+const MODULE_VERSION = '8.2.0';
 
 let wsClient: WebSocketClient | null = null;
 let commandRouter: CommandRouter | null = null;
@@ -197,6 +198,7 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
   commandRouter.register('create-journal-page', createJournalPageHandler);
   commandRouter.register('update-journal-page', updateJournalPageHandler);
   commandRouter.register('delete-journal-page', deleteJournalPageHandler);
+  commandRouter.register('show-journal', showJournalHandler);
 
   // Combat
   commandRouter.register('create-combat', createCombatHandler);

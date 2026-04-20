@@ -4,6 +4,7 @@ interface MockPage {
   id: string;
   name: string;
   type: string;
+  src: string | undefined;
   text: { content: string | undefined; markdown: string | undefined };
 }
 
@@ -15,11 +16,14 @@ interface MockJournal {
   pages: { forEach: jest.Mock };
 }
 
+const mockEnrichHTML = jest.fn<Promise<string>, [string]>();
+
 function createMockPage(overrides?: Partial<MockPage>): MockPage {
   return {
     id: 'page-1',
     name: 'Page One',
     type: 'text',
+    src: undefined,
     text: { content: '<p>Content</p>', markdown: '# Content' },
     ...overrides
   };
@@ -42,14 +46,23 @@ function setGame(journals: Map<string, MockJournal>): void {
   (globalThis as Record<string, unknown>)['game'] = {
     journal: { get: jest.fn((id: string) => journals.get(id)) }
   };
+  (globalThis as Record<string, unknown>)['TextEditor'] = { enrichHTML: mockEnrichHTML };
 }
 
 function clearGame(): void {
   delete (globalThis as Record<string, unknown>)['game'];
+  delete (globalThis as Record<string, unknown>)['TextEditor'];
 }
 
 describe('getJournalHandler', () => {
-  afterEach(clearGame);
+  beforeEach(() => {
+    mockEnrichHTML.mockImplementation(async (content: string) => `<enriched>${content}</enriched>`);
+  });
+
+  afterEach(() => {
+    clearGame();
+    jest.clearAllMocks();
+  });
 
   it('should return full journal with pages', async () => {
     const pages = [
@@ -96,5 +109,30 @@ describe('getJournalHandler', () => {
 
     await expect(getJournalHandler({ journalId: '' }))
       .rejects.toThrow('Journal not found: ');
+  });
+
+  it('should include enrichedText in page data', async () => {
+    const pages = [
+      createMockPage({ id: 'p1', text: { content: '<p>Hello</p>', markdown: undefined } })
+    ];
+    const journal = createMockJournal(pages);
+    setGame(new Map([['journal-1', journal]]));
+
+    const result = await getJournalHandler({ journalId: 'journal-1' });
+
+    expect(result.pages[0]?.enrichedText).toBe('<enriched><p>Hello</p></enriched>');
+  });
+
+  it('should include src in page data', async () => {
+    const pages = [
+      createMockPage({ id: 'p1', type: 'pdf', src: 'docs/rules.pdf', text: { content: undefined, markdown: undefined } })
+    ];
+    const journal = createMockJournal(pages);
+    setGame(new Map([['journal-1', journal]]));
+
+    const result = await getJournalHandler({ journalId: 'journal-1' });
+
+    expect(result.pages[0]?.src).toBe('docs/rules.pdf');
+    expect(result.pages[0]?.type).toBe('pdf');
   });
 });

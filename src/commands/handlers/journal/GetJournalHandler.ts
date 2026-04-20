@@ -14,12 +14,12 @@ function getGame(): FoundryGame {
   return (globalThis as unknown as { game: FoundryGame }).game;
 }
 
-export function getJournalHandler(params: GetJournalParams): Promise<JournalData> {
+export async function getJournalHandler(params: GetJournalParams): Promise<JournalData> {
   const journal = getGame().journal.get(params.journalId);
 
   if (!journal) {
-    return Promise.reject(new Error(`Journal not found: ${params.journalId}`));
+    throw new Error(`Journal not found: ${params.journalId}`);
   }
 
-  return Promise.resolve(mapJournalToData(journal));
+  return mapJournalToData(journal);
 }

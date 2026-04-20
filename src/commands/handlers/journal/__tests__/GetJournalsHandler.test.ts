@@ -4,6 +4,7 @@ interface MockPage {
   id: string;
   name: string;
   type: string | number;
+  src: string | undefined;
   text: { content: string | undefined; markdown: string | undefined };
 }
 
@@ -15,11 +16,14 @@ interface MockJournal {
   pages: { forEach: jest.Mock };
 }
 
+const mockEnrichHTML = jest.fn<Promise<string>, [string]>();
+
 function createMockPage(overrides?: Partial<MockPage>): MockPage {
   return {
     id: 'page-1',
     name: 'Page One',
     type: 'text',
+    src: undefined,
     text: { content: '<p>Hello</p>', markdown: '# Hello' },
     ...overrides
   };
@@ -43,14 +47,23 @@ function setGame(journals: MockJournal[] | undefined): void {
     ? { forEach: jest.fn((fn: (j: MockJournal) => void) => { journals.forEach(fn); }) }
     : undefined;
   (globalThis as Record<string, unknown>)['game'] = { journal };
+  (globalThis as Record<string, unknown>)['TextEditor'] = { enrichHTML: mockEnrichHTML };
 }
 
 function clearGame(): void {
   delete (globalThis as Record<string, unknown>)['game'];
+  delete (globalThis as Record<string, unknown>)['TextEditor'];
 }
 
 describe('getJournalsHandler', () => {
-  afterEach(clearGame);
+  beforeEach(() => {
+    mockEnrichHTML.mockImplementation(async (content: string) => `<enriched>${content}</enriched>`);
+  });
+
+  afterEach(() => {
+    clearGame();
+    jest.clearAllMocks();
+  });
 
   it('should return all journals with pages', async () => {
     const pages = [
@@ -69,8 +82,8 @@ describe('getJournalsHandler', () => {
       name: 'Adventure Log',
       folder: 'Logs',
       pages: [
-        { id: 'p1', name: 'Intro', type: 'text', text: '<p>Start</p>', markdown: '# Start' },
-        { id: 'p2', name: 'Chapter 1', type: 'image', text: null, markdown: null }
+        { id: 'p1', name: 'Intro', type: 'text', text: '<p>Start</p>', markdown: '# Start', enrichedText: '<enriched><p>Start</p></enriched>', src: null },
+        { id: 'p2', name: 'Chapter 1', type: 'image', text: null, markdown: null, enrichedText: null, src: null }
       ]
     }]);
   });
@@ -107,6 +120,7 @@ describe('getJournalsHandler', () => {
 
     expect(result[0]?.pages[0]?.text).toBeNull();
     expect(result[0]?.pages[0]?.markdown).toBeNull();
+    expect(result[0]?.pages[0]?.enrichedText).toBeNull();
   });
 
   it('should convert numeric page type to string', async () => {
@@ -137,5 +151,59 @@ describe('getJournalsHandler', () => {
 
     expect(result).toHaveLength(3);
     expect(result.map(j => j.name)).toEqual(['First', 'Second', 'Third']);
+  });
+
+  it('should enrich text content via TextEditor.enrichHTML', async () => {
+    const page = createMockPage({ text: { content: '<p>@UUID[Actor.123]{Hero}</p>', markdown: undefined } });
+    setGame([createMockJournal([page])]);
+
+    const result = await getJournalsHandler({} as Record<string, never>);
+
+    expect(mockEnrichHTML).toHaveBeenCalledWith('<p>@UUID[Actor.123]{Hero}</p>', { secrets: true });
+    expect(result[0]?.pages[0]?.enrichedText).toBe('<enriched><p>@UUID[Actor.123]{Hero}</p></enriched>');
+    expect(result[0]?.pages[0]?.text).toBe('<p>@UUID[Actor.123]{Hero}</p>');
+  });
+
+  it('should fallback to raw text when enrichHTML throws', async () => {
+    mockEnrichHTML.mockRejectedValue(new Error('Enrichment failed'));
+    const page = createMockPage({ text: { content: '<p>Content</p>', markdown: undefined } });
+    setGame([createMockJournal([page])]);
+
+    const result = await getJournalsHandler({} as Record<string, never>);
+
+    expect(result[0]?.pages[0]?.enrichedText).toBe('<p>Content</p>');
+  });
+
+  it('should return src field for pages', async () => {
+    const page = createMockPage({ type: 'image', src: 'images/map.png', text: { content: undefined, markdown: undefined } });
+    setGame([createMockJournal([page])]);
+
+    const result = await getJournalsHandler({} as Record<string, never>);
+
+    expect(result[0]?.pages[0]?.src).toBe('images/map.png');
+  });
+
+  it('should return null src when page has no src', async () => {
+    const page = createMockPage();
+    setGame([createMockJournal([page])]);
+
+    const result = await getJournalsHandler({} as Record<string, never>);
+
+    expect(result[0]?.pages[0]?.src).toBeNull();
+  });
+
+  it('should work without TextEditor global', async () => {
+    const page = createMockPage({ text: { content: '<p>Content</p>', markdown: undefined } });
+    const journal = createMockJournal([page]);
+    const journals = [journal];
+    (globalThis as Record<string, unknown>)['game'] = {
+      journal: { forEach: jest.fn((fn: (j: MockJournal) => void) => { journals.forEach(fn); }) }
+    };
+    delete (globalThis as Record<string, unknown>)['TextEditor'];
+
+    const result = await getJournalsHandler({} as Record<string, never>);
+
+    expect(result[0]?.pages[0]?.enrichedText).toBeNull();
+    expect(result[0]?.pages[0]?.text).toBe('<p>Content</p>');
   });
 });

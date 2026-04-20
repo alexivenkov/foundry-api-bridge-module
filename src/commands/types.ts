@@ -90,7 +90,8 @@ export type CommandType =
   | 'delete-chat-message'
   | 'update-chat-message'
   | 'clear-chat'
-  | 'export-chat';
+  | 'export-chat'
+  | 'show-journal';
 
 export interface RollDiceParams {
   formula: string;
@@ -257,7 +258,7 @@ export interface ClearChatResult {
 }
 
 // Journal Commands
-export type JournalPageType = 'text' | 'image' | 'video';
+export type JournalPageType = 'text' | 'image' | 'video' | 'pdf';
 
 export interface CreateJournalParams {
   name: string;
@@ -281,6 +282,7 @@ export interface CreateJournalPageParams {
   name: string;
   type?: JournalPageType;
   content?: string;
+  src?: string;
 }
 
 export interface UpdateJournalPageParams {
@@ -288,11 +290,26 @@ export interface UpdateJournalPageParams {
   pageId: string;
   name?: string;
   content?: string;
+  src?: string;
 }
 
 export interface DeleteJournalPageParams {
   journalId: string;
   pageId: string;
+}
+
+export interface ShowJournalParams {
+  journalId: string;
+  pageId?: string;
+  force?: boolean;
+  users?: string[];
+}
+
+export interface ShowJournalResult {
+  shown: boolean;
+  journalId: string;
+  journalName: string;
+  pageId?: string;
 }
 
 // Combat Commands
@@ -1195,6 +1212,7 @@ export interface CommandParamsMap {
   'update-chat-message': UpdateChatMessageParams;
   'clear-chat': Record<string, never>;
   'export-chat': ExportChatParams;
+  'show-journal': ShowJournalParams;
 }
 
 export interface CommandResultMap {
@@ -1275,4 +1293,5 @@ export interface CommandResultMap {
   'update-chat-message': SendChatMessageResult;
   'clear-chat': ClearChatResult;
   'export-chat': ExportChatResult;
+  'show-journal': ShowJournalResult;
 }

@@ -274,6 +274,44 @@ describe('Journal Handlers', () => {
         createJournalPageHandler({ journalId: 'journal-123', name: 'Page' })
       ).rejects.toThrow('Failed to create journal page');
     });
+
+    it('creates a page with src for image type', async () => {
+      const mockPage = createMockPage({ type: 'image' });
+      const mockJournal = createMockJournal();
+      mockJournal.createEmbeddedDocuments.mockResolvedValue([mockPage]);
+      mockGame.journal.get.mockReturnValue(mockJournal);
+
+      await createJournalPageHandler({
+        journalId: 'journal-123',
+        name: 'Map Image',
+        type: 'image',
+        src: 'images/dungeon-map.png'
+      });
+
+      expect(mockJournal.createEmbeddedDocuments).toHaveBeenCalledWith(
+        'JournalEntryPage',
+        [{ name: 'Map Image', type: 'image', src: 'images/dungeon-map.png' }]
+      );
+    });
+
+    it('creates a pdf page with src', async () => {
+      const mockPage = createMockPage({ type: 'pdf' });
+      const mockJournal = createMockJournal();
+      mockJournal.createEmbeddedDocuments.mockResolvedValue([mockPage]);
+      mockGame.journal.get.mockReturnValue(mockJournal);
+
+      await createJournalPageHandler({
+        journalId: 'journal-123',
+        name: 'Rules PDF',
+        type: 'pdf',
+        src: 'docs/rules.pdf'
+      });
+
+      expect(mockJournal.createEmbeddedDocuments).toHaveBeenCalledWith(
+        'JournalEntryPage',
+        [{ name: 'Rules PDF', type: 'pdf', src: 'docs/rules.pdf' }]
+      );
+    });
   });
 
   describe('updateJournalPageHandler', () => {
@@ -349,6 +387,24 @@ describe('Journal Handlers', () => {
       });
 
       expect(result.name).toBe('Updated Page');
+    });
+
+    it('updates page src', async () => {
+      const mockPage = createMockPage();
+      mockPage.update.mockResolvedValue(mockPage);
+      const mockJournal = createMockJournal();
+      mockJournal.pages.get.mockReturnValue(mockPage);
+      mockGame.journal.get.mockReturnValue(mockJournal);
+
+      await updateJournalPageHandler({
+        journalId: 'journal-123',
+        pageId: 'page-123',
+        src: 'images/new-map.png'
+      });
+
+      expect(mockPage.update).toHaveBeenCalledWith({
+        src: 'images/new-map.png'
+      });
     });
   });
 

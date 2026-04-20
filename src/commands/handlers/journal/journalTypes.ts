@@ -12,6 +12,7 @@ export interface FoundryPageUpdateData {
   text?: {
     content?: string;
   };
+  src?: string;
 }
 
 export interface FoundryPagesCollection {
@@ -44,6 +45,7 @@ export interface FoundryPageCreateData {
   text?: {
     content: string;
   };
+  src?: string;
 }
 
 export interface FoundryJournalCreateData {

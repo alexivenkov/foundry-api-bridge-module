@@ -109,7 +109,7 @@ describe('getCompendiumHandler', () => {
 
     expect(result.system).toBe('');
     expect(result.documents[0]?.pages).toHaveLength(2);
-    expect(result.documents[0]?.pages?.[0]).toEqual({ id: 'p1', name: 'Intro', type: 'text', text: '<p>Hello</p>', markdown: '# Hello' });
+    expect(result.documents[0]?.pages?.[0]).toEqual({ id: 'p1', name: 'Intro', type: 'text', text: '<p>Hello</p>', markdown: '# Hello', enrichedText: null, src: null });
     expect(result.documents[0]?.pages?.[1]?.text).toBeNull();
     expect(result.documents[0]?.pages?.[1]?.markdown).toBeNull();
   });

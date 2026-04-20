@@ -32,6 +32,10 @@ export async function updateJournalPageHandler(
     updateData.text = { content: params.content };
   }
 
+  if (params.src !== undefined) {
+    updateData.src = params.src;
+  }
+
   const updatedPage = await page.update(updateData);
 
   return mapPageToResult(updatedPage);
