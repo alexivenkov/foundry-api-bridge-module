@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.3.0] - 2026-04-27
+
+### Added
+- **`filter-actors` command** — structured search across world actors with 12 D&D 5e-aware filters
+  - Filters: `name` (substring), `type`, `creatureType` (14 SRD types), `size`, `disposition`, `hasPlayerOwner`, `cr` (D&D-valid values), `level`, `maxHp`, `currentHp`, `ac`, `abilities` (per-stat ranges), `folder` (id/name + recursive)
+  - Range type with inclusive bounds, AND between filters, OR within array enums
+  - Pagination: `limit` (default 50, max 200), `offset`, response with `total`/`hasMore`
+  - Stable sorting: name ASC, id tiebreaker
+  - Silent exclude for incompatible fields (e.g. `cr` filter on PCs)
+  - Strict validation via Zod with descriptive error messages
+
+### Technical
+- 1420 tests (+736 new for filter-actors feature)
+- New DDD architecture in `src/filtering/`:
+  - **Shared kernel** (`shared/`): Specification Pattern + composites (And/Or/Not/AlwaysTrue/AlwaysFalse), Value Objects (Range, PaginationParams, EnumSet, SubstringQuery), generic FilterableRepository, validation helpers, SpecificationBuilder, executeFilterQuery
+  - **Bounded context** (`actors/`): 7 D&D 5e Value Objects, 13 Specifications (one per filter), Zod schemas + RequestToQueryMapper, FilterActorsService + ActorSpecificationBuilder, FoundryActorMapper / FoundryFolderResolver / FoundryActorRepository (anti-corruption layer)
+- Reusable kernel — adding `filter-items`/`filter-journals` requires only new VOs + Specifications + Repository, shared kernel untouched
+- `zod ^4.3.6` added as production dependency
+- 100% statement/branch/line coverage on all 60+ new production files
+
 ## [8.2.0] - 2026-04-20
 
 ### Added

@@ -1,0 +1,6 @@
+import { makeRangeSchema } from '@/filtering/shared/validation';
+import { ChallengeRating } from '@/filtering/actors/domain/value-objects';
+
+export const challengeRatingRangeSchema = makeRangeSchema({
+  allowedValues: ChallengeRating.VALID_VALUES
+});

@@ -16,6 +16,7 @@ import {
   deleteActorHandler,
   getActorsHandler,
   getActorHandler,
+  filterActorsHandler,
   getWorldInfoHandler,
   getJournalsHandler,
   getJournalHandler,
@@ -156,6 +157,7 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
   // Pull queries
   commandRouter.register('get-world-info', getWorldInfoHandler);
   commandRouter.register('get-actors', getActorsHandler);
+  commandRouter.register('filter-actors', filterActorsHandler);
   commandRouter.register('get-actor', getActorHandler);
   commandRouter.register('get-journals', getJournalsHandler);
   commandRouter.register('get-journal', getJournalHandler);

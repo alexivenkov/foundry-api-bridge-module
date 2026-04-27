@@ -9,3 +9,4 @@ export { updateActorHandler } from './UpdateActorHandler';
 export { deleteActorHandler } from './DeleteActorHandler';
 export { getActorsHandler } from './GetActorsHandler';
 export { getActorHandler } from './GetActorHandler';
+export { filterActorsHandler, createFilterActorsHandler } from './FilterActorsHandler';

@@ -22,6 +22,7 @@ export type CommandType =
   | 'roll-damage'
   | 'get-world-info'
   | 'get-actors'
+  | 'filter-actors'
   | 'get-actor'
   | 'create-actor'
   | 'create-actor-from-compendium'
@@ -172,6 +173,56 @@ export interface ActorResult {
   type: string;
   img: string;
   folder: string | null;
+}
+
+// Filter Actors Commands
+export interface FilterActorsRange {
+  min?: number;
+  max?: number;
+}
+
+export interface FilterActorsAbilities {
+  str?: FilterActorsRange;
+  dex?: FilterActorsRange;
+  con?: FilterActorsRange;
+  int?: FilterActorsRange;
+  wis?: FilterActorsRange;
+  cha?: FilterActorsRange;
+}
+
+export interface FilterActorsFolder {
+  id?: string;
+  name?: string;
+  recursive?: boolean;
+}
+
+export interface FilterActorsParams {
+  name?: string;
+  type?: string[];
+  creatureType?: string[];
+  size?: string[];
+  disposition?: string[];
+  hasPlayerOwner?: boolean;
+  cr?: FilterActorsRange;
+  level?: FilterActorsRange;
+  maxHp?: FilterActorsRange;
+  currentHp?: FilterActorsRange;
+  ac?: FilterActorsRange;
+  abilities?: FilterActorsAbilities;
+  folder?: FilterActorsFolder;
+  limit?: number;
+  offset?: number;
+}
+
+export interface FilterActorsResultEntry {
+  id: string;
+  name: string;
+}
+
+export interface FilterActorsResult {
+  results: FilterActorsResultEntry[];
+  total: number;
+  hasMore: boolean;
 }
 
 export interface SendChatMessageParams {
@@ -1143,6 +1194,7 @@ export interface CommandParamsMap {
   'roll-damage': RollDamageParams;
   'get-world-info': GetWorldInfoParams;
   'get-actors': Record<string, never>;
+  'filter-actors': FilterActorsParams;
   'get-actor': GetActorParams;
   'create-actor': CreateActorParams;
   'create-actor-from-compendium': CreateActorFromCompendiumParams;
@@ -1224,6 +1276,7 @@ export interface CommandResultMap {
   'roll-damage': RollResult;
   'get-world-info': WorldInfoResult;
   'get-actors': ActorSummary[];
+  'filter-actors': FilterActorsResult;
   'get-actor': ActorDetailResult;
   'create-actor': ActorResult;
   'create-actor-from-compendium': ActorResult;

@@ -15,7 +15,9 @@ export {
   updateActorHandler,
   deleteActorHandler,
   getActorsHandler,
-  getActorHandler
+  getActorHandler,
+  filterActorsHandler,
+  createFilterActorsHandler
 } from '@/commands/handlers/actor';
 
 // Journal handlers

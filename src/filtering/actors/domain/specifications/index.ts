@@ -1,0 +1,14 @@
+export { NameContainsSpecification } from './NameContainsSpecification';
+export { ActorTypeSpecification } from './ActorTypeSpecification';
+export { CreatureTypeSpecification } from './CreatureTypeSpecification';
+export { SizeSpecification } from './SizeSpecification';
+export { DispositionSpecification } from './DispositionSpecification';
+export { HasPlayerOwnerSpecification } from './HasPlayerOwnerSpecification';
+export { ChallengeRatingRangeSpecification } from './ChallengeRatingRangeSpecification';
+export { LevelRangeSpecification } from './LevelRangeSpecification';
+export { MaxHpRangeSpecification } from './MaxHpRangeSpecification';
+export { CurrentHpRangeSpecification } from './CurrentHpRangeSpecification';
+export { ArmorClassRangeSpecification } from './ArmorClassRangeSpecification';
+export { AbilityScoreRangeSpecification } from './AbilityScoreRangeSpecification';
+export type { AbilityRangeMap } from './AbilityScoreRangeSpecification';
+export { FolderSpecification } from './FolderSpecification';
