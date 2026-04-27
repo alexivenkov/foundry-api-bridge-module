@@ -1,26 +1,65 @@
-import { andSpec, notSpec, orSpec } from './compose';
 import type { ISpecification } from './Specification';
 
 export abstract class CompositeSpecification<T> implements ISpecification<T> {
   abstract isSatisfiedBy(candidate: T): boolean;
 
   and(other: ISpecification<T>): ISpecification<T> {
-    return andSpec<T>(this, other);
+    return new AndSpecification<T>(this, other);
   }
 
   or(other: ISpecification<T>): ISpecification<T> {
-    return orSpec<T>(this, other);
+    return new OrSpecification<T>(this, other);
   }
 
   not(): ISpecification<T> {
-    return notSpec<T>(this);
+    return new NotSpecification<T>(this);
   }
 }
 
-// Side-effect imports placed AFTER class declaration to break the circular
-// dependency: each composite extends CompositeSpecification, so they must load
-// after this class is declared, but they need to register their factories with
-// `compose.ts` so that `and/or/not` work for any subclass.
-import './AndSpecification';
-import './OrSpecification';
-import './NotSpecification';
+export class AndSpecification<T> extends CompositeSpecification<T> {
+  constructor(
+    private readonly left: ISpecification<T>,
+    private readonly right: ISpecification<T>
+  ) {
+    super();
+  }
+
+  override isSatisfiedBy(candidate: T): boolean {
+    return this.left.isSatisfiedBy(candidate) && this.right.isSatisfiedBy(candidate);
+  }
+}
+
+export class OrSpecification<T> extends CompositeSpecification<T> {
+  constructor(
+    private readonly left: ISpecification<T>,
+    private readonly right: ISpecification<T>
+  ) {
+    super();
+  }
+
+  override isSatisfiedBy(candidate: T): boolean {
+    return this.left.isSatisfiedBy(candidate) || this.right.isSatisfiedBy(candidate);
+  }
+}
+
+export class NotSpecification<T> extends CompositeSpecification<T> {
+  constructor(private readonly inner: ISpecification<T>) {
+    super();
+  }
+
+  override isSatisfiedBy(candidate: T): boolean {
+    return !this.inner.isSatisfiedBy(candidate);
+  }
+}
+
+export class AlwaysTrueSpecification<T> extends CompositeSpecification<T> {
+  override isSatisfiedBy(_candidate: T): boolean {
+    return true;
+  }
+}
+
+export class AlwaysFalseSpecification<T> extends CompositeSpecification<T> {
+  override isSatisfiedBy(_candidate: T): boolean {
+    return false;
+  }
+}

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.3.1] - 2026-04-27
+
+### Fixed
+- **Module fails to initialize in production build (v8.3.0)** — `Cannot access 'CompositeSpecification' before initialization` ReferenceError on module load. Caused by Vite bundler reordering Specification pattern modules in a way that broke the registry-with-deferred-wireup approach used to resolve the circular dependency. Symptoms: module showed in module list but disappeared from settings, and WebSocket never connected.
+- Consolidated all Specification primitives (`CompositeSpecification`, `AndSpecification`, `OrSpecification`, `NotSpecification`, `AlwaysTrueSpecification`, `AlwaysFalseSpecification`) into a single source file. Within-module declaration order is deterministic regardless of bundler. Individual class files retained as thin re-export shims so existing tests and imports keep working.
+
+### Technical
+- 1416 tests passing (was 1420 in v8.3.0; 4 tests removed with the now-redundant `compose.ts` registry helper)
+- No public API change — `import { AndSpecification } from '@/filtering/shared/domain/specification'` works identically
+
 ## [8.3.0] - 2026-04-27
 
 ### Added
