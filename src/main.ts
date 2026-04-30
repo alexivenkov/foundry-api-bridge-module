@@ -1,5 +1,5 @@
 import { ConfigManager } from '@/config/ConfigManager';
-import { registerSettings, registerMenu, getWsUrl, getApiKey } from '@/settings/SettingsManager';
+import { registerSettings, registerMenu, getWsUrl, getApiUrl, getApiKey } from '@/settings/SettingsManager';
 import { WebSocketClient } from '@/transport';
 import {
   CommandRouter,
@@ -86,7 +86,8 @@ import {
 
 const MODULE_VERSION = '8.2.0';
 
-let wsClient: WebSocketClient | null = null;
+let mcpClient: WebSocketClient | null = null;
+let apiClient: WebSocketClient | null = null;
 let commandRouter: CommandRouter | null = null;
 
 Hooks.once('init', () => {
@@ -136,14 +137,20 @@ function initializeModule(): void {
     const config = ConfigManager.getConfig();
 
     const wsUrl = getWsUrl();
+    const apiUrl = getApiUrl();
     const apiKey = getApiKey();
 
-    if (!wsUrl || !apiKey) {
-      console.log(`Foundry API Bridge | v${MODULE_VERSION} loaded. Configure WebSocket URL and API Key in module settings to connect.`);
+    if (!apiKey) {
+      console.log(`Foundry API Bridge | v${MODULE_VERSION} loaded. Configure API Key in module settings to connect.`);
       return;
     }
 
-    initializeWebSocket(config.webSocket, wsUrl, apiKey);
+    if (!wsUrl && !apiUrl) {
+      console.warn(`Foundry API Bridge | v${MODULE_VERSION} loaded. Both MCP and API URLs are empty — nothing to connect to.`);
+      return;
+    }
+
+    initializeWebSocket(config.webSocket, wsUrl, apiUrl, apiKey);
     console.log(`Foundry API Bridge | v${MODULE_VERSION} initialized`);
 
   } catch (error: unknown) {
@@ -151,7 +158,12 @@ function initializeModule(): void {
   }
 }
 
-function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnectAttempts: number }, wsUrl: string, apiKey: string): void {
+function initializeWebSocket(
+  wsConfig: { reconnectInterval: number; maxReconnectAttempts: number },
+  wsUrl: string,
+  apiUrl: string,
+  apiKey: string
+): void {
   commandRouter = new CommandRouter();
 
   // Pull queries
@@ -255,40 +267,56 @@ function initializeWebSocket(wsConfig: { reconnectInterval: number; maxReconnect
   // Doors
   commandRouter.register('set-door-state', setDoorStateHandler);
 
-  const wsConnectUrl = `${wsUrl}?apiKey=${encodeURIComponent(apiKey)}`;
-  wsClient = new WebSocketClient({
-    url: wsConnectUrl,
+  if (wsUrl) {
+    mcpClient = createChannel('MCP', wsUrl, apiKey, wsConfig);
+    mcpClient.connect();
+  }
+
+  if (apiUrl) {
+    apiClient = createChannel('API', apiUrl, apiKey, wsConfig);
+    apiClient.connect();
+  }
+}
+
+function createChannel(
+  label: string,
+  baseUrl: string,
+  apiKey: string,
+  wsConfig: { reconnectInterval: number; maxReconnectAttempts: number }
+): WebSocketClient {
+  const url = `${baseUrl}?apiKey=${encodeURIComponent(apiKey)}`;
+  const client = new WebSocketClient({
+    url,
     reconnectInterval: wsConfig.reconnectInterval,
-    maxReconnectAttempts: wsConfig.maxReconnectAttempts
+    maxReconnectAttempts: wsConfig.maxReconnectAttempts,
+    logPrefix: label
   });
 
-  wsClient.onConnect(() => {
-    console.log('Foundry API Bridge | WebSocket connected to server');
+  client.onConnect(() => {
     if (ui.notifications) {
-      ui.notifications.info('Foundry API Bridge | Connected to server');
+      ui.notifications.info(`Foundry API Bridge | [${label}] Connected to server`);
     }
   });
 
-  wsClient.onDisconnect(() => {
-    console.log('Foundry API Bridge | WebSocket disconnected from server');
+  client.onDisconnect(() => {
     if (ui.notifications) {
-      ui.notifications.warn('Foundry API Bridge | Disconnected from server');
+      ui.notifications.warn(`Foundry API Bridge | [${label}] Disconnected from server`);
     }
   });
 
-  wsClient.onMessage((command) => {
-    if (!commandRouter || !wsClient) return;
+  client.onMessage((command) => {
+    if (!commandRouter) return;
 
     commandRouter.execute(command)
       .then(response => {
-        wsClient?.send(response);
+        client.send(response);
       })
       .catch((error: unknown) => {
-        console.error('Foundry API Bridge | Command execution failed:', error);
+        console.error(`Foundry API Bridge | [${label}] Command execution failed:`, error);
       });
   });
 
-  wsClient.connect();
+  return client;
 }
 
 export {};

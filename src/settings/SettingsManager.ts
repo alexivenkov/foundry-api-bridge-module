@@ -17,12 +17,22 @@ export function registerSettings(): void {
   });
 
   game.settings.register(MODULE_ID, 'wsUrl', {
-    name: 'WebSocket URL',
-    hint: 'URL for WebSocket connection to the server',
+    name: 'MCP WebSocket URL',
+    hint: 'WebSocket URL for MCP server (Claude / AI assistants integration)',
     scope: 'world',
     config: true,
     type: String,
     default: 'wss://foundry-mcp.com/ws',
+    requiresReload: true
+  });
+
+  game.settings.register(MODULE_ID, 'apiUrl', {
+    name: 'API WebSocket URL',
+    hint: 'WebSocket URL for public Foundry API (REST/WS integrations for bots, dashboards, etc.)',
+    scope: 'world',
+    config: true,
+    type: String,
+    default: 'wss://api.foundry-mcp.com/v1/connect',
     requiresReload: true
   });
 
@@ -59,6 +69,13 @@ export function getWsUrl(): string {
     throw new Error('game.settings is not available');
   }
   return game.settings.get(MODULE_ID, 'wsUrl') as string;
+}
+
+export function getApiUrl(): string {
+  if (!game.settings) {
+    throw new Error('game.settings is not available');
+  }
+  return game.settings.get(MODULE_ID, 'apiUrl') as string;
 }
 
 export function getApiKey(): string {

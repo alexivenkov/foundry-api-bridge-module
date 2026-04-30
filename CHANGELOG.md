@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.4.0] - 2026-04-27
+
+### Added
+- **Second WebSocket channel for public Foundry API** — module now opens two independent WebSocket connections in parallel:
+  - **MCP channel** (existing): connects to `wss://foundry-mcp.com/ws` for Claude / AI assistant integrations via the MCP protocol
+  - **API channel** (new): connects to `wss://api.foundry-mcp.com/v1/connect` for the public REST/WebSocket API used by third-party developers (bots, dashboards, mobile apps, Discord integrations)
+- Both channels are fully independent: failure or reconnection of one has no effect on the other. Each has its own retry loop and auto-reconnect with exponential backoff.
+- Both channels share the same `apiKey` (validated server-side for both products) and the same `commandRouter` — every existing command handler (get-actor, roll-dice, etc.) works identically regardless of which channel the request arrived on.
+- Responses are routed back via the originating socket — guaranteed by closure capture, no cross-channel leakage.
+
+### Changed
+- **Settings UI** — existing "WebSocket URL" label renamed to **"MCP WebSocket URL"** for clarity. New **"API WebSocket URL"** field added below it (default `wss://api.foundry-mcp.com/v1/connect`). The persisted setting key `wsUrl` is unchanged for backward compatibility — existing user values are preserved.
+- **Logging** — connection logs now use channel prefixes `[MCP]` / `[API]` for easier debugging when both channels are active.
+
+### Technical
+- 1424 tests passing (was 1416 in v8.3.1; +8 new tests covering logPrefix and apiUrl getter/registration)
+- `WebSocketClient` constructor accepts optional `logPrefix?: string`
+- `SettingsManager` exposes new getter `getApiUrl()`
+- `main.ts` refactored: single `wsClient` replaced by separate `mcpClient` and `apiClient` module-level handles, dual wiring extracted into `createChannel()` helper
+- No public API change to command handlers; no protocol or wire-format changes
+- Both channels start automatically when `apiKey` is set and at least one URL is configured (no opt-in toggle)
+
 ## [8.3.1] - 2026-04-27
 
 ### Fixed

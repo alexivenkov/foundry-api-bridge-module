@@ -502,4 +502,94 @@ describe('WebSocketClient', () => {
       expect(client.isConnected()).toBe(false);
     });
   });
+
+  describe('logPrefix', () => {
+    it('should prefix log messages when logPrefix is provided', () => {
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const factoryMock = jest.fn(() => {
+        mockSocket = new MockWebSocket();
+        return mockSocket;
+      });
+
+      client = new WebSocketClient(
+        { url: 'ws://localhost:8080', reconnectInterval: 1000, maxReconnectAttempts: 3, logPrefix: 'MCP' },
+        factoryMock
+      );
+
+      client.connect();
+      mockSocket.simulateOpen();
+
+      expect(consoleSpy).toHaveBeenCalledWith('Foundry API Bridge | [MCP] WebSocket connected');
+      consoleSpy.mockRestore();
+    });
+
+    it('should not include prefix when logPrefix is omitted (backward compat)', () => {
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+      client.connect();
+      mockSocket.simulateOpen();
+
+      expect(consoleSpy).toHaveBeenCalledWith('Foundry API Bridge | WebSocket connected');
+      consoleSpy.mockRestore();
+    });
+
+    it('should prefix warn messages when logPrefix is provided', () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+      client = new WebSocketClient(
+        { url: 'ws://localhost:8080', reconnectInterval: 1000, maxReconnectAttempts: 3, logPrefix: 'API' },
+        () => mockSocket
+      );
+
+      const response: CommandResponse = { id: '123', success: true };
+      client.send(response);
+
+      expect(consoleSpy).toHaveBeenCalledWith('Foundry API Bridge | [API] WebSocket is not connected');
+      consoleSpy.mockRestore();
+    });
+
+    it('should prefix error messages when logPrefix is provided', () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const factoryMock = jest.fn(() => {
+        mockSocket = new MockWebSocket();
+        return mockSocket;
+      });
+
+      client = new WebSocketClient(
+        { url: 'ws://localhost:8080', reconnectInterval: 1000, maxReconnectAttempts: 3, logPrefix: 'API' },
+        factoryMock
+      );
+
+      client.connect();
+      mockSocket.simulateOpen();
+      mockSocket.simulateMessage({ invalid: 'data' });
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Foundry API Bridge | [API] Invalid command format:',
+        expect.anything()
+      );
+      consoleSpy.mockRestore();
+    });
+
+    it('should prefix reconnect messages when logPrefix is provided', () => {
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const factoryMock = jest.fn(() => {
+        mockSocket = new MockWebSocket();
+        return mockSocket;
+      });
+
+      client = new WebSocketClient(
+        { url: 'ws://localhost:8080', reconnectInterval: 1000, maxReconnectAttempts: 5, logPrefix: 'MCP' },
+        factoryMock
+      );
+
+      client.connect();
+      mockSocket.simulateClose();
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Foundry API Bridge | [MCP] Reconnecting in 1000ms (attempt 1/5)')
+      );
+      consoleSpy.mockRestore();
+    });
+  });
 });

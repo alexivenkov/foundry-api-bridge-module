@@ -5,7 +5,7 @@ jest.mock('@/ui/ApiConfigForm', () => ({
   ApiConfigForm: class MockApiConfigForm {}
 }));
 
-import { registerSettings, registerMenu, getConfig, setConfig } from '@/settings/SettingsManager';
+import { registerSettings, registerMenu, getConfig, setConfig, getWsUrl, getApiUrl } from '@/settings/SettingsManager';
 
 const mockSettings = {
   register: jest.fn(),
@@ -40,19 +40,68 @@ describe('SettingsManager', () => {
       );
     });
 
-    it('should register wsUrl and apiKey settings', () => {
+    it('should register wsUrl, apiUrl and apiKey settings', () => {
       registerSettings();
 
       expect(mockSettings.register).toHaveBeenCalledWith(
         'foundry-api-bridge',
         'wsUrl',
-        expect.objectContaining({ name: 'WebSocket URL', type: String })
+        expect.objectContaining({
+          name: 'MCP WebSocket URL',
+          hint: 'WebSocket URL for MCP server (Claude / AI assistants integration)',
+          type: String,
+          default: 'wss://foundry-mcp.com/ws',
+          requiresReload: true
+        })
+      );
+      expect(mockSettings.register).toHaveBeenCalledWith(
+        'foundry-api-bridge',
+        'apiUrl',
+        expect.objectContaining({
+          name: 'API WebSocket URL',
+          hint: 'WebSocket URL for public Foundry API (REST/WS integrations for bots, dashboards, etc.)',
+          scope: 'world',
+          config: true,
+          type: String,
+          default: 'wss://api.foundry-mcp.com/v1/connect',
+          requiresReload: true
+        })
       );
       expect(mockSettings.register).toHaveBeenCalledWith(
         'foundry-api-bridge',
         'apiKey',
         expect.objectContaining({ name: 'API Key', type: String })
       );
+    });
+  });
+
+  describe('getWsUrl', () => {
+    it('returns the registered wsUrl value', () => {
+      mockSettings.get.mockReturnValue('wss://custom-mcp.example/ws');
+
+      const result = getWsUrl();
+
+      expect(mockSettings.get).toHaveBeenCalledWith('foundry-api-bridge', 'wsUrl');
+      expect(result).toBe('wss://custom-mcp.example/ws');
+    });
+  });
+
+  describe('getApiUrl', () => {
+    it('returns the registered apiUrl value', () => {
+      mockSettings.get.mockReturnValue('wss://custom-api.example/v1/connect');
+
+      const result = getApiUrl();
+
+      expect(mockSettings.get).toHaveBeenCalledWith('foundry-api-bridge', 'apiUrl');
+      expect(result).toBe('wss://custom-api.example/v1/connect');
+    });
+
+    it('returns default when not explicitly set', () => {
+      mockSettings.get.mockReturnValue('wss://api.foundry-mcp.com/v1/connect');
+
+      const result = getApiUrl();
+
+      expect(result).toBe('wss://api.foundry-mcp.com/v1/connect');
     });
   });
 
