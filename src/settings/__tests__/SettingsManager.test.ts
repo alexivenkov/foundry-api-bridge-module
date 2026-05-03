@@ -5,7 +5,7 @@ jest.mock('@/ui/ApiConfigForm', () => ({
   ApiConfigForm: class MockApiConfigForm {}
 }));
 
-import { registerSettings, registerMenu, getConfig, setConfig, getWsUrl, getApiUrl } from '@/settings/SettingsManager';
+import { registerSettings, registerMenu, getConfig, setConfig, getWsUrl, getApiUrl, getAllowScriptMacros } from '@/settings/SettingsManager';
 
 const mockSettings = {
   register: jest.fn(),
@@ -72,6 +72,42 @@ describe('SettingsManager', () => {
         'apiKey',
         expect.objectContaining({ name: 'API Key', type: String })
       );
+    });
+
+    it('should register allowScriptMacros boolean setting (default false)', () => {
+      registerSettings();
+
+      expect(mockSettings.register).toHaveBeenCalledWith(
+        'foundry-api-bridge',
+        'allowScriptMacros',
+        expect.objectContaining({
+          name: 'Allow Script Macros',
+          scope: 'world',
+          config: true,
+          type: Boolean,
+          default: false,
+          requiresReload: false
+        })
+      );
+    });
+  });
+
+  describe('getAllowScriptMacros', () => {
+    it('returns false when setting is false', () => {
+      mockSettings.get.mockReturnValue(false);
+
+      const result = getAllowScriptMacros();
+
+      expect(mockSettings.get).toHaveBeenCalledWith('foundry-api-bridge', 'allowScriptMacros');
+      expect(result).toBe(false);
+    });
+
+    it('returns true when setting is true', () => {
+      mockSettings.get.mockReturnValue(true);
+
+      const result = getAllowScriptMacros();
+
+      expect(result).toBe(true);
     });
   });
 

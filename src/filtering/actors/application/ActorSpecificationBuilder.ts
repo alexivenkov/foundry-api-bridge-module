@@ -3,8 +3,8 @@ import {
   type SpecificationFactory
 } from '@/filtering/shared/application';
 import type { ISpecification } from '@/filtering/shared/domain/specification';
+import type { FolderResolver } from '@/filtering/shared/domain/repository';
 import type { ActorSnapshot } from '@/filtering/actors/domain/snapshot';
-import type { FolderReference } from '@/filtering/actors/domain/value-objects';
 import {
   AbilityScoreRangeSpecification,
   ActorTypeSpecification,
@@ -23,9 +23,9 @@ import {
 
 import type { FilterActorsQuery } from './FilterActorsQuery';
 
-export interface FolderResolver {
-  resolve(ref: FolderReference): ReadonlySet<string>;
-}
+// Re-exported here so existing handler/test consumers can keep importing
+// `FolderResolver` from the actors application barrel.
+export type { FolderResolver };
 
 type ActorSpecFactory = SpecificationFactory<FilterActorsQuery, ActorSnapshot>;
 

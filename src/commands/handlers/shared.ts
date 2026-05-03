@@ -3,7 +3,7 @@ import type { DiceResult } from '@/commands/types';
 export interface FoundryDiceTerm {
   faces?: number;
   number?: number;
-  results?: Array<{ result: number }>;
+  results?: Array<{ result: number; active?: boolean }>;
 }
 
 export interface FoundryD20Roll {

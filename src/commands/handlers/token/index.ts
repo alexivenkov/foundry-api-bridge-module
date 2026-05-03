@@ -3,3 +3,8 @@ export { deleteTokenHandler } from './DeleteTokenHandler';
 export { moveTokenHandler } from './MoveTokenHandler';
 export { updateTokenHandler } from './UpdateTokenHandler';
 export { getSceneTokensHandler } from './GetSceneTokensHandler';
+export { getTokenHandler } from './GetTokenHandler';
+export { getTokenByActorHandler } from './GetTokenByActorHandler';
+export { setTokenTargetHandler } from './SetTokenTargetHandler';
+export { clearTargetsHandler } from './ClearTargetsHandler';
+export { getTokensInRangeHandler } from './GetTokensInRangeHandler';

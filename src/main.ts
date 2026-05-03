@@ -17,6 +17,7 @@ import {
   getActorsHandler,
   getActorHandler,
   filterActorsHandler,
+  filterItemsHandler,
   getWorldInfoHandler,
   getJournalsHandler,
   getJournalHandler,
@@ -24,6 +25,10 @@ import {
   getItemHandler,
   getCompendiumsHandler,
   getCompendiumHandler,
+  getCompendiumIndexHandler,
+  searchCompendiumHandler,
+  getCompendiumDocumentHandler,
+  importFromCompendiumHandler,
   createJournalHandler,
   updateJournalHandler,
   deleteJournalHandler,
@@ -52,9 +57,19 @@ import {
   moveTokenHandler,
   updateTokenHandler,
   getSceneTokensHandler,
+  getTokenHandler,
+  getTokenByActorHandler,
+  setTokenTargetHandler,
+  clearTargetsHandler,
+  getTokensInRangeHandler,
   getSceneHandler,
   getScenesListHandler,
   activateSceneHandler,
+  createSceneHandler,
+  updateSceneHandler,
+  deleteSceneHandler,
+  cloneSceneHandler,
+  viewSceneHandler,
   getActorItemsHandler,
   useItemHandler,
   activateItemHandler,
@@ -62,6 +77,10 @@ import {
   addItemFromCompendiumHandler,
   updateActorItemHandler,
   deleteActorItemHandler,
+  createItemHandler,
+  createItemFromCompendiumHandler,
+  updateItemHandler,
+  deleteItemHandler,
   getActorEffectsHandler,
   toggleActorStatusHandler,
   addActorEffectHandler,
@@ -77,11 +96,47 @@ import {
   updateRollTableHandler,
   deleteRollTableHandler,
   setDoorStateHandler,
+  getWallsHandler,
+  createWallHandler,
+  updateWallHandler,
+  deleteWallHandler,
+  getNotesHandler,
+  createNoteHandler,
+  updateNoteHandler,
+  deleteNoteHandler,
   getChatMessagesHandler,
   deleteChatMessageHandler,
   updateChatMessageHandler,
   clearChatHandler,
-  exportChatHandler
+  exportChatHandler,
+  getFoldersHandler,
+  getFolderHandler,
+  createFolderHandler,
+  updateFolderHandler,
+  deleteFolderHandler,
+  getMacrosHandler,
+  getMacroHandler,
+  createMacroHandler,
+  updateMacroHandler,
+  deleteMacroHandler,
+  executeMacroHandler,
+  getPlaylistsHandler,
+  getPlaylistHandler,
+  playPlaylistHandler,
+  stopPlaylistHandler,
+  playSoundInPlaylistHandler,
+  stopSoundInPlaylistHandler,
+  playSoundOnceHandler,
+  addSoundToPlaylistHandler,
+  getWorldTimeHandler,
+  advanceTimeHandler,
+  setWorldTimeHandler,
+  pauseGameHandler,
+  resumeGameHandler,
+  getPauseStateHandler,
+  notifyHandler,
+  panCanvasHandler,
+  pingLocationHandler
 } from '@/commands';
 
 const MODULE_VERSION = '8.2.0';
@@ -170,6 +225,7 @@ function initializeWebSocket(
   commandRouter.register('get-world-info', getWorldInfoHandler);
   commandRouter.register('get-actors', getActorsHandler);
   commandRouter.register('filter-actors', filterActorsHandler);
+  commandRouter.register('filter-items', filterItemsHandler);
   commandRouter.register('get-actor', getActorHandler);
   commandRouter.register('get-journals', getJournalsHandler);
   commandRouter.register('get-journal', getJournalHandler);
@@ -177,6 +233,10 @@ function initializeWebSocket(
   commandRouter.register('get-item', getItemHandler);
   commandRouter.register('get-compendiums', getCompendiumsHandler);
   commandRouter.register('get-compendium', getCompendiumHandler);
+  commandRouter.register('get-compendium-index', getCompendiumIndexHandler);
+  commandRouter.register('search-compendium', searchCompendiumHandler);
+  commandRouter.register('get-compendium-document', getCompendiumDocumentHandler);
+  commandRouter.register('import-from-compendium', importFromCompendiumHandler);
   commandRouter.register('get-scene', getSceneHandler);
   commandRouter.register('get-scenes-list', getScenesListHandler);
   commandRouter.register('get-scene-tokens', getSceneTokensHandler);
@@ -236,6 +296,11 @@ function initializeWebSocket(
   commandRouter.register('delete-token', deleteTokenHandler);
   commandRouter.register('move-token', moveTokenHandler);
   commandRouter.register('update-token', updateTokenHandler);
+  commandRouter.register('get-token', getTokenHandler);
+  commandRouter.register('get-token-by-actor', getTokenByActorHandler);
+  commandRouter.register('set-token-target', setTokenTargetHandler);
+  commandRouter.register('clear-targets', clearTargetsHandler);
+  commandRouter.register('get-tokens-in-range', getTokensInRangeHandler);
 
   // Items
   commandRouter.register('use-item', useItemHandler);
@@ -244,6 +309,12 @@ function initializeWebSocket(
   commandRouter.register('add-item-from-compendium', addItemFromCompendiumHandler);
   commandRouter.register('update-actor-item', updateActorItemHandler);
   commandRouter.register('delete-actor-item', deleteActorItemHandler);
+
+  // Item world-level CRUD
+  commandRouter.register('create-item', createItemHandler);
+  commandRouter.register('create-item-from-compendium', createItemFromCompendiumHandler);
+  commandRouter.register('update-item', updateItemHandler);
+  commandRouter.register('delete-item', deleteItemHandler);
 
   // Effects
   commandRouter.register('toggle-actor-status', toggleActorStatusHandler);
@@ -264,8 +335,67 @@ function initializeWebSocket(
   commandRouter.register('activate-scene', activateSceneHandler);
   commandRouter.register('capture-scene', captureSceneHandler);
 
+  // Scene CRUD
+  commandRouter.register('create-scene', createSceneHandler);
+  commandRouter.register('update-scene', updateSceneHandler);
+  commandRouter.register('delete-scene', deleteSceneHandler);
+  commandRouter.register('clone-scene', cloneSceneHandler);
+  commandRouter.register('view-scene', viewSceneHandler);
+
   // Doors
   commandRouter.register('set-door-state', setDoorStateHandler);
+
+  // Walls
+  commandRouter.register('get-walls', getWallsHandler);
+  commandRouter.register('create-wall', createWallHandler);
+  commandRouter.register('update-wall', updateWallHandler);
+  commandRouter.register('delete-wall', deleteWallHandler);
+
+  // Notes
+  commandRouter.register('get-notes', getNotesHandler);
+  commandRouter.register('create-note', createNoteHandler);
+  commandRouter.register('update-note', updateNoteHandler);
+  commandRouter.register('delete-note', deleteNoteHandler);
+
+  // Folders
+  commandRouter.register('get-folders', getFoldersHandler);
+  commandRouter.register('get-folder', getFolderHandler);
+  commandRouter.register('create-folder', createFolderHandler);
+  commandRouter.register('update-folder', updateFolderHandler);
+  commandRouter.register('delete-folder', deleteFolderHandler);
+
+  // Macros
+  commandRouter.register('get-macros', getMacrosHandler);
+  commandRouter.register('get-macro', getMacroHandler);
+  commandRouter.register('create-macro', createMacroHandler);
+  commandRouter.register('update-macro', updateMacroHandler);
+  commandRouter.register('delete-macro', deleteMacroHandler);
+  commandRouter.register('execute-macro', executeMacroHandler);
+
+  // Playlists
+  commandRouter.register('get-playlists', getPlaylistsHandler);
+  commandRouter.register('get-playlist', getPlaylistHandler);
+  commandRouter.register('play-playlist', playPlaylistHandler);
+  commandRouter.register('stop-playlist', stopPlaylistHandler);
+  commandRouter.register('play-sound-in-playlist', playSoundInPlaylistHandler);
+  commandRouter.register('stop-sound-in-playlist', stopSoundInPlaylistHandler);
+  commandRouter.register('play-sound-once', playSoundOnceHandler);
+  commandRouter.register('add-sound-to-playlist', addSoundToPlaylistHandler);
+
+  // World time
+  commandRouter.register('get-world-time', getWorldTimeHandler);
+  commandRouter.register('advance-time', advanceTimeHandler);
+  commandRouter.register('set-world-time', setWorldTimeHandler);
+
+  // Pause/Resume
+  commandRouter.register('pause-game', pauseGameHandler);
+  commandRouter.register('resume-game', resumeGameHandler);
+  commandRouter.register('get-pause-state', getPauseStateHandler);
+
+  // UI helpers
+  commandRouter.register('notify', notifyHandler);
+  commandRouter.register('pan-canvas', panCanvasHandler);
+  commandRouter.register('ping-location', pingLocationHandler);
 
   if (wsUrl) {
     mcpClient = createChannel('MCP', wsUrl, apiKey, wsConfig);

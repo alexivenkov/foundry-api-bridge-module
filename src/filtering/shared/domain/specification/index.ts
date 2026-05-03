@@ -5,3 +5,5 @@ export { OrSpecification } from './OrSpecification';
 export { NotSpecification } from './NotSpecification';
 export { AlwaysTrueSpecification } from './AlwaysTrueSpecification';
 export { AlwaysFalseSpecification } from './AlwaysFalseSpecification';
+export { FolderSpecification } from './FolderSpecification';
+export type { FolderIdExtractor } from './FolderSpecification';

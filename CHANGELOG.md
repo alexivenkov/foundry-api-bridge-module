@@ -2,6 +2,90 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.5.0] - 2026-05-03
+
+Major release adding **55 new commands across 11 categories**, plus a critical fix for the dice rolling logic. Total command surface grows from ~80 to ~135 commands. All new commands work on both WebSocket channels (MCP + public API) automatically.
+
+### Added
+
+**Folders (5 commands)** — universal CRUD for Foundry folders of any document type (Actor / Item / Scene / JournalEntry / RollTable / Macro / Cards / Playlist / Compendium).
+- `get-folders` — list all folders, optional filter by type
+- `get-folder` — single folder with recursive subfolder tree + optional content IDs
+- `create-folder` — `{name, type, parentId?, color?, description?, sort?}`
+- `update-folder` — partial update including reparenting (`parentId: null` → root)
+- `delete-folder` — with `deleteSubfolders` and `deleteContents` options
+
+**World-level Item CRUD (4 commands)** — manage items in `game.items` (Items Directory), parallel to existing actor CRUD. Previously the module only supported embedded items inside actors.
+- `create-item`, `update-item`, `delete-item` — symmetric to actor CRUD
+- `create-item-from-compendium` — clone item from compendium pack into world
+
+**`filter-items` (1 command, full DDD bounded context)** — D&D 5e-aware structured search across world items with 12 filters: name, type, rarity, requiresAttunement, identified, weight range, price range (normalized to gp), spellLevel range, spellSchool, hasActivities, isContainer, folder. Reuses the shared kernel from `filter-actors`. Anti-corruption layer in `FoundryItemMapper` handles all known D&D 5e schema variants (cr as number/object, attunement as string/number/object/boolean, weight forms, price denominations, 3-letter spell school codes).
+
+**Compendium efficient access (4 commands)** — replace heavy `pack.getDocuments()` (loads all documents) with native `pack.getIndex()` and `pack.search()`. Critical for large packs (D&D 5e SRD has 300+ items, 200+ monsters).
+- `get-compendium-index` — lightweight index with optional dot-path fields
+- `search-compendium` — Foundry's native full-text search + structured `FieldFilter[]` (operators: EQUALS / CONTAINS / STARTS_WITH / ENDS_WITH / LESS_THAN / LESS_THAN_EQUAL / GREATER_THAN / GREATER_THAN_EQUAL / BETWEEN / IS_EMPTY)
+- `get-compendium-document` — single full document by id (no full-pack load)
+- `import-from-compendium` — generic import for any document type via `pack.metadata.type` lookup
+
+**Macros (6 commands, security-gated)** — completely new category. Foundry macros support `chat` (safe — chat-style commands) and `script` (arbitrary JavaScript with GM privileges — critical security risk).
+- `get-macros`, `get-macro` — read operations (always safe)
+- `create-macro`, `update-macro`, `execute-macro` — gated by new opt-in setting `allowScriptMacros` (default false). Throws if attempting to create / modify / execute a `script`-type macro without explicit user permission.
+- `delete-macro` — ungated (deletion doesn't execute code)
+- New Foundry setting `allowScriptMacros` registered in module settings UI with explicit security warning hint.
+
+**Scene CRUD (5 commands)** — previously only read + activate + capture were supported.
+- `create-scene` — full scene creation with grid config, background, navigation
+- `update-scene` — partial update of any field
+- `delete-scene`
+- `clone-scene` — duplicate via `scene.clone({}, {save: true})` with optional name/folder override
+- `view-scene` — GM-only navigation (preview without activating for players)
+
+**Wall full CRUD (4 commands)** — previously only `set-door-state` existed.
+- `get-walls` — list all walls of a scene with `c[x1,y1,x2,y2]`, door type/state, restrictions
+- `create-wall`, `update-wall`, `delete-wall` — full wall lifecycle, all enum fields use string wire DTOs (door: `none/door/secret`, doorState: `closed/open/locked`, move/sense/sound/light: `none/normal/limited`, dir: `both/left/right`)
+
+**Note CRUD (4 commands)** — journal pins on scene maps, attached to JournalEntry/JournalEntryPage.
+- `get-notes`, `create-note`, `update-note`, `delete-note` — full lifecycle. Icon supports both `{src, tint}` object and bare-string forms. `textAnchor` accepts strings (`center/bottom/top/left/right`).
+
+**Token utilities (5 commands)** — beyond the existing CRUD + move + scene-list.
+- `get-token` — single token by id with full data including HP/AC from linked actor (defensive nulls)
+- `get-token-by-actor` — find first token of a given actor on scene
+- `set-token-target` — set/unset GM target via canvas placeable layer
+- `clear-targets` — clear all current targets
+- `get-tokens-in-range` — Chebyshev distance from origin point to token bounding box, scaled to scene grid units, sorted ascending
+
+**Playlist core (8 commands)** — completely new audio category.
+- `get-playlists`, `get-playlist` — read with embedded sounds and play state
+- `play-playlist`, `stop-playlist` — `playAll()` / `stopAll()`
+- `play-sound-in-playlist`, `stop-sound-in-playlist` — individual track control
+- `play-sound-once` — fire-and-forget SFX via `foundry.audio.AudioHelper.play()` with v11 fallback to global `AudioHelper`
+- `add-sound-to-playlist` — load new track into existing playlist
+
+**System runtime (9 commands)** — new category for non-document operations.
+- World time: `get-world-time`, `advance-time` (positive or negative seconds — triggers calendar hooks), `set-world-time` (validated `>= 0`)
+- Pause: `pause-game`, `resume-game`, `get-pause-state` — explicit state via `togglePause(state, {broadcast: true})`
+- UI: `notify` (info/warn/error/success — fallback to info on Foundry < v11), `pan-canvas` (animated pan), `ping-location` (highlight a point with style/color/duration)
+
+### Fixed
+
+- **`roll-dice` lost `isCritical` / `isFumble` flags on advantage/disadvantage rolls (2d20kh1, 2d20kl1)** — the previous `checkCritical()` implementation filtered for d20 dice groups with `count === 1`, which excluded the entire 2d20 group used by D&D 5e advantage/disadvantage. Empirically: 60 advantage rolls with 7 natural 20s in raw results → all 7 returned `isCritical: false`. Plain `1d20` rolls were unaffected. **Fix:** `checkCritical()` now walks `roll.terms` directly, finds d20 die terms, and inspects each result's `.active: boolean` flag (Foundry sets this to `false` for results discarded by `kh` / `kl` modifiers). Only `active !== false` results count. Backward compat: results missing the `active` field are treated as kept.
+
+### Changed
+
+- **DDD shared kernel promoted** — `FolderReference`, `FolderSpecification`, `FoundryFolderResolver`, and `folderReferenceSchema` migrated from `src/filtering/actors/` to `src/filtering/shared/`. `FoundryFolderResolver` is now parameterized by `folderType: string` (works for any document type). `FolderSpecification` is generic `<T>` with extractor function. Validates the shared kernel as truly reusable — third bounded context will need only ~600 lines vs ~1500.
+
+### Technical
+
+- 2336 tests passing (was 1430 in v8.4.0; +906 new tests across 11 new handler categories)
+- 100% statement / branch / function / line coverage on all new production files
+- New dependency: none (zod, already present from v8.3.0, used in `filter-items`)
+- New module config setting: `allowScriptMacros` (boolean, default `false`)
+- New directories: `src/commands/handlers/folder/`, `macro/`, `note/`, `playlist/`, `system/`, `wall/`, `src/filtering/items/`
+- Shared kernel additions: `src/filtering/shared/infrastructure/`, generic FolderSpecification, FolderResolver interface, folderReferenceSchema
+- Anti-corruption layer (`FoundryItemMapper`) handles dnd5e schema variations across versions
+- Bundle size: 339 KB / 65 KB gzipped (was ~272 KB / 53 KB in v8.4.0)
+- All 55 new commands automatically available on both WebSocket channels (MCP + public API) with no per-channel configuration
+
 ## [8.4.0] - 2026-04-27
 
 ### Added

@@ -1,0 +1,12 @@
+export { NameContainsSpecification } from './NameContainsSpecification';
+export { ItemTypeSpecification } from './ItemTypeSpecification';
+export { ItemRaritySpecification } from './ItemRaritySpecification';
+export { SpellSchoolSpecification } from './SpellSchoolSpecification';
+export { RequiresAttunementSpecification } from './RequiresAttunementSpecification';
+export { IdentifiedSpecification } from './IdentifiedSpecification';
+export { HasActivitiesSpecification } from './HasActivitiesSpecification';
+export { IsContainerSpecification } from './IsContainerSpecification';
+export { WeightRangeSpecification } from './WeightRangeSpecification';
+export { PriceRangeSpecification } from './PriceRangeSpecification';
+export { SpellLevelRangeSpecification } from './SpellLevelRangeSpecification';
+export { FolderSpecification } from './FolderSpecification';

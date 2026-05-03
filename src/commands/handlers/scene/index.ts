@@ -2,3 +2,8 @@ export { getSceneHandler } from './GetSceneHandler';
 export { getScenesListHandler } from './GetScenesListHandler';
 export { activateSceneHandler } from './ActivateSceneHandler';
 export { captureSceneHandler } from './CaptureSceneHandler';
+export { createSceneHandler } from './CreateSceneHandler';
+export { updateSceneHandler } from './UpdateSceneHandler';
+export { deleteSceneHandler } from './DeleteSceneHandler';
+export { cloneSceneHandler } from './CloneSceneHandler';
+export { viewSceneHandler } from './ViewSceneHandler';

@@ -7,3 +7,8 @@ export { updateActorItemHandler } from './UpdateActorItemHandler';
 export { deleteActorItemHandler } from './DeleteActorItemHandler';
 export { getItemsHandler } from './GetItemsHandler';
 export { getItemHandler } from './GetItemHandler';
+export { createItemHandler } from './CreateItemHandler';
+export { createItemFromCompendiumHandler } from './CreateItemFromCompendiumHandler';
+export { updateItemHandler } from './UpdateItemHandler';
+export { deleteItemHandler } from './DeleteItemHandler';
+export { filterItemsHandler, createFilterItemsHandler } from './FilterItemsHandler';

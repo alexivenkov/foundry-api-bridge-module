@@ -45,6 +45,16 @@ export function registerSettings(): void {
     default: '',
     requiresReload: true
   });
+
+  game.settings.register(MODULE_ID, 'allowScriptMacros', {
+    name: 'Allow Script Macros',
+    hint: 'CRITICAL SECURITY: When enabled, the API can create, modify, and execute script-type macros (arbitrary JavaScript with GM privileges). Only enable if you trust all clients connecting via this module.',
+    scope: 'world',
+    config: true,
+    type: Boolean,
+    default: false,
+    requiresReload: false
+  });
 }
 
 export async function registerMenu(): Promise<void> {
@@ -83,6 +93,13 @@ export function getApiKey(): string {
     throw new Error('game.settings is not available');
   }
   return game.settings.get(MODULE_ID, 'apiKey') as string;
+}
+
+export function getAllowScriptMacros(): boolean {
+  if (!game.settings) {
+    throw new Error('game.settings is not available');
+  }
+  return game.settings.get(MODULE_ID, 'allowScriptMacros') as boolean;
 }
 
 export function getConfig(): ModuleConfig {

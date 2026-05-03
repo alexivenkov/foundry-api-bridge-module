@@ -1,4 +1,4 @@
-import type { RollDiceParams, RollResult, DiceResult } from '@/commands/types';
+import type { RollDiceParams, RollResult } from '@/commands/types';
 import { extractDiceResults } from '@/commands/handlers/shared';
 import type { FoundryDiceTerm } from '@/commands/handlers/shared';
 
@@ -16,17 +16,14 @@ interface RollConstructor {
 
 declare const Roll: RollConstructor;
 
-function checkCritical(dice: DiceResult[]): { isCritical: boolean; isFumble: boolean } {
-  const d20 = dice.find(d => d.type === 'd20' && d.count === 1);
+function checkCritical(terms: FoundryDiceTerm[]): { isCritical: boolean; isFumble: boolean } {
+  const activeD20Results = terms
+    .filter(t => t.faces === 20 && t.results !== undefined)
+    .flatMap(t => (t.results ?? []).filter(r => r.active !== false).map(r => r.result));
 
-  if (!d20 || d20.results.length !== 1) {
-    return { isCritical: false, isFumble: false };
-  }
-
-  const result = d20.results[0];
   return {
-    isCritical: result === 20,
-    isFumble: result === 1
+    isCritical: activeD20Results.includes(20),
+    isFumble: activeD20Results.includes(1)
   };
 }
 
@@ -40,7 +37,7 @@ export async function rollDiceHandler(params: RollDiceParams): Promise<RollResul
   }
 
   const dice = extractDiceResults(roll.terms);
-  const { isCritical, isFumble } = checkCritical(dice);
+  const { isCritical, isFumble } = checkCritical(roll.terms);
 
   const result: RollResult = {
     total: roll.total,

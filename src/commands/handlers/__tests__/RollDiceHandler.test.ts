@@ -8,7 +8,7 @@ interface MockRollInstance {
   terms: Array<{
     faces?: number;
     number?: number;
-    results?: Array<{ result: number }>;
+    results?: Array<{ result: number; active?: boolean }>;
   }>;
 }
 
@@ -129,5 +129,116 @@ describe('rollDiceHandler', () => {
     const result = await rollDiceHandler({ formula: '1d6+4' });
 
     expect(result.dice).toEqual([{ type: 'd6', count: 1, results: [6] }]);
+  });
+
+  it('should detect critical on advantage (2d20kh1) when kept die is 20', async () => {
+    mockRollInstance.total = 20;
+    mockRollInstance.formula = '2d20kh1';
+    mockRollInstance.terms = [
+      {
+        faces: 20,
+        number: 2,
+        results: [
+          { result: 20, active: true },
+          { result: 5, active: false }
+        ]
+      }
+    ];
+
+    const result = await rollDiceHandler({ formula: '2d20kh1' });
+
+    expect(result.isCritical).toBe(true);
+    expect(result.isFumble).toBeUndefined();
+  });
+
+  it('should NOT detect critical on disadvantage (2d20kl1) when discarded die is 20', async () => {
+    mockRollInstance.total = 5;
+    mockRollInstance.formula = '2d20kl1';
+    mockRollInstance.terms = [
+      {
+        faces: 20,
+        number: 2,
+        results: [
+          { result: 20, active: false },
+          { result: 5, active: true }
+        ]
+      }
+    ];
+
+    const result = await rollDiceHandler({ formula: '2d20kl1' });
+
+    expect(result.isCritical).toBeUndefined();
+    expect(result.isFumble).toBeUndefined();
+  });
+
+  it('should detect fumble on disadvantage (2d20kl1) when kept die is 1', async () => {
+    mockRollInstance.total = 1;
+    mockRollInstance.formula = '2d20kl1';
+    mockRollInstance.terms = [
+      {
+        faces: 20,
+        number: 2,
+        results: [
+          { result: 1, active: true },
+          { result: 18, active: false }
+        ]
+      }
+    ];
+
+    const result = await rollDiceHandler({ formula: '2d20kl1' });
+
+    expect(result.isFumble).toBe(true);
+    expect(result.isCritical).toBeUndefined();
+  });
+
+  it('should NOT detect fumble on advantage (2d20kh1) when discarded die is 1', async () => {
+    mockRollInstance.total = 18;
+    mockRollInstance.formula = '2d20kh1';
+    mockRollInstance.terms = [
+      {
+        faces: 20,
+        number: 2,
+        results: [
+          { result: 1, active: false },
+          { result: 18, active: true }
+        ]
+      }
+    ];
+
+    const result = await rollDiceHandler({ formula: '2d20kh1' });
+
+    expect(result.isFumble).toBeUndefined();
+    expect(result.isCritical).toBeUndefined();
+  });
+
+  it('should detect critical on plain 2d20 (no kh/kl) when any kept die is 20', async () => {
+    mockRollInstance.total = 27;
+    mockRollInstance.formula = '2d20';
+    mockRollInstance.terms = [
+      {
+        faces: 20,
+        number: 2,
+        results: [
+          { result: 7, active: true },
+          { result: 20, active: true }
+        ]
+      }
+    ];
+
+    const result = await rollDiceHandler({ formula: '2d20' });
+
+    expect(result.isCritical).toBe(true);
+  });
+
+  it('should treat missing active flag as kept (backward compat)', async () => {
+    mockRollInstance.total = 20;
+    mockRollInstance.formula = '1d20';
+    mockRollInstance.terms = [
+      { faces: 20, number: 1, results: [{ result: 20 }] }
+    ];
+
+    const result = await rollDiceHandler({ formula: '1d20' });
+
+    expect(result.isCritical).toBe(true);
   });
 });

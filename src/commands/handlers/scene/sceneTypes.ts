@@ -1,6 +1,8 @@
 import type {
   SceneDetailResult,
   SceneSummaryResult,
+  SceneSummary,
+  SceneGridType,
   SceneNoteResult,
   SceneWallResult,
   SceneLightResult,
@@ -289,5 +291,100 @@ export function mapSceneToSummary(scene: FoundryScene): SceneSummaryResult {
     name: scene.name,
     active: scene.active,
     img: scene.img ?? ''
+  };
+}
+
+// === Scene CRUD ===
+
+export interface FoundrySceneCrud {
+  id: string;
+  uuid: string;
+  name: string;
+  active: boolean;
+  width: number | undefined;
+  height: number | undefined;
+  background: { src?: string } | string | null | undefined;
+  navigation: boolean | undefined;
+  navName: string | null | undefined;
+  navOrder: number | undefined;
+  folder: { id: string; name: string } | null | undefined;
+  grid: { type: number | undefined; size: number | undefined; distance: number | undefined; units: string | undefined } | undefined;
+  update(data: Record<string, unknown>): Promise<FoundrySceneCrud>;
+  delete(): Promise<FoundrySceneCrud>;
+  clone(data?: Record<string, unknown>, options?: { save?: boolean }): Promise<FoundrySceneCrud> | FoundrySceneCrud;
+  view(): Promise<FoundrySceneCrud>;
+}
+
+export interface FoundrySceneCrudCollection {
+  get(id: string): FoundrySceneCrud | undefined;
+}
+
+export interface FoundryGameCrud {
+  scenes: FoundrySceneCrudCollection;
+}
+
+export interface FoundrySceneConstructor {
+  create(data: Record<string, unknown>): Promise<FoundrySceneCrud>;
+}
+
+export function getGameCrud(): FoundryGameCrud {
+  return (globalThis as unknown as { game: FoundryGameCrud }).game;
+}
+
+export function getSceneClass(): FoundrySceneConstructor {
+  return (globalThis as unknown as { Scene: FoundrySceneConstructor }).Scene;
+}
+
+const GRID_TYPE_TO_NUMBER: Record<SceneGridType, number> = {
+  gridless: 0,
+  square: 1,
+  hexPointyOdd: 2,
+  hexPointyEven: 3,
+  hexFlatOdd: 4,
+  hexFlatEven: 5
+};
+
+const GRID_TYPE_FROM_NUMBER: Record<number, SceneGridType> = {
+  0: 'gridless',
+  1: 'square',
+  2: 'hexPointyOdd',
+  3: 'hexPointyEven',
+  4: 'hexFlatOdd',
+  5: 'hexFlatEven'
+};
+
+export function gridTypeStringToNumber(type: SceneGridType): number {
+  return GRID_TYPE_TO_NUMBER[type];
+}
+
+export function gridTypeNumberToString(num: number): SceneGridType {
+  return GRID_TYPE_FROM_NUMBER[num] ?? 'square';
+}
+
+function extractBackgroundSrc(bg: { src?: string } | string | null | undefined): string | null {
+  if (bg === null || bg === undefined) return null;
+  if (typeof bg === 'string') return bg.length > 0 ? bg : null;
+  return bg.src ?? null;
+}
+
+export function mapSceneToCrudSummary(scene: FoundrySceneCrud): SceneSummary {
+  return {
+    id: scene.id,
+    uuid: scene.uuid,
+    name: scene.name,
+    active: scene.active,
+    width: scene.width ?? 0,
+    height: scene.height ?? 0,
+    background: extractBackgroundSrc(scene.background),
+    navigation: scene.navigation ?? false,
+    navName: scene.navName ?? null,
+    navOrder: scene.navOrder ?? 0,
+    folder: scene.folder?.name ?? null,
+    grid: {
+      type: gridTypeNumberToString(scene.grid?.type ?? 1),
+      size: scene.grid?.size ?? 100,
+      distance: scene.grid?.distance ?? 5,
+      units: scene.grid?.units ?? 'ft'
+    }
   };
 }

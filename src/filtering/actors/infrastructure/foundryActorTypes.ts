@@ -1,3 +1,8 @@
+import type {
+  FoundryFolderDocument,
+  FoundryFoldersCollection
+} from '@/filtering/shared/infrastructure';
+
 // Possible CR formats in D&D 5e:
 //   - number  (legacy dnd5e versions)
 //   - { value: number }  (dnd5e v3+)
@@ -64,18 +69,9 @@ export interface FoundryActorsCollection {
   contents: readonly FoundryActor[];
 }
 
-export interface FoundryFolderDocument {
-  readonly id: string;
-  readonly name: string;
-  readonly type: string;
-  readonly parent: FoundryFolderDocument | null;
-  getSubfolders(recursive: boolean): FoundryFolderDocument[];
-}
-
-export interface FoundryFoldersCollection {
-  get(id: string): FoundryFolderDocument | undefined;
-  contents: readonly FoundryFolderDocument[];
-}
+// Folder document/collection types are owned by the shared kernel — re-exported
+// here so existing actor-context consumers do not need to chase the new path.
+export type { FoundryFolderDocument, FoundryFoldersCollection };
 
 export interface FoundryGameGlobals {
   actors: FoundryActorsCollection;

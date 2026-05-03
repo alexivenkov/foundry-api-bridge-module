@@ -1,4 +1,4 @@
-import type { TokenResult } from '@/commands/types';
+import type { TokenResult, TokenDetail, TokenDisposition } from '@/commands/types';
 import type { FoundryWallDocument } from '@/commands/handlers/door/doorTypes';
 
 export interface TokenUpdateData {
@@ -28,6 +28,7 @@ export interface FoundryToken {
     src: string;
   };
   disposition: number;
+  actorId?: string | null;
   actor: {
     id: string;
     system?: {
@@ -62,10 +63,17 @@ export interface TokenCreateData {
   scale?: number;
 }
 
+export interface FoundrySceneGrid {
+  size?: number;
+  distance?: number;
+  units?: string;
+}
+
 export interface FoundryScene {
   id: string;
   name: string;
   tokens: FoundryTokensCollection;
+  grid?: FoundrySceneGrid | undefined;
   walls?: {
     get(id: string): FoundryWallDocument | undefined;
     contents: FoundryWallDocument[];
@@ -138,4 +146,59 @@ export function getToken(scene: FoundryScene, tokenId: string): FoundryToken {
     throw new Error(`Token not found: ${tokenId}`);
   }
   return token;
+}
+
+const DISPOSITION_TO_NUMBER: Record<TokenDisposition, number> = {
+  secret: -2,
+  hostile: -1,
+  neutral: 0,
+  friendly: 1
+};
+
+const DISPOSITION_FROM_NUMBER: Record<number, TokenDisposition> = {
+  [-2]: 'secret',
+  [-1]: 'hostile',
+  0: 'neutral',
+  1: 'friendly'
+};
+
+export function dispositionToNumber(value: TokenDisposition): number {
+  return DISPOSITION_TO_NUMBER[value];
+}
+
+export function dispositionFromNumber(value: number): TokenDisposition {
+  return DISPOSITION_FROM_NUMBER[value] ?? 'neutral';
+}
+
+export function mapTokenToDetail(token: FoundryToken, scene: FoundryScene): TokenDetail {
+  const actor = token.actor;
+  const hpData = actor?.system?.attributes?.hp;
+  const acData = actor?.system?.attributes?.ac;
+
+  const actorIdField = token.actorId;
+  const actorId = actorIdField !== undefined ? actorIdField : (actor?.id ?? null);
+
+  const hp = (hpData && typeof hpData.value === 'number' && typeof hpData.max === 'number')
+    ? { current: hpData.value, max: hpData.max }
+    : null;
+
+  const ac = (acData && typeof acData.value === 'number') ? acData.value : null;
+
+  return {
+    id: token.id,
+    sceneId: scene.id,
+    name: token.name,
+    x: token.x,
+    y: token.y,
+    width: token.width,
+    height: token.height,
+    elevation: token.elevation,
+    rotation: token.rotation,
+    hidden: token.hidden,
+    disposition: dispositionFromNumber(token.disposition),
+    actorId,
+    textureSrc: token.texture.src,
+    hp,
+    ac
+  };
 }

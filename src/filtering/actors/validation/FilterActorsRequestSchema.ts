@@ -1,12 +1,11 @@
 import { z } from 'zod';
-import { makeRangeSchema } from '@/filtering/shared/validation';
+import { makeRangeSchema, folderReferenceSchema } from '@/filtering/shared/validation';
 import { actorTypeArraySchema } from './ActorTypeSchema';
 import { creatureTypeArraySchema } from './CreatureTypeSchema';
 import { sizeArraySchema } from './SizeSchema';
 import { dispositionArraySchema } from './DispositionSchema';
 import { challengeRatingRangeSchema } from './ChallengeRatingRangeSchema';
 import { abilityScoresSchema } from './AbilityScoresSchema';
-import { folderReferenceSchema } from './FolderReferenceSchema';
 
 const integerNonNegativeRange = makeRangeSchema({ integerOnly: true, minBound: 0 });
 

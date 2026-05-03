@@ -23,11 +23,17 @@ export type CommandType =
   | 'get-world-info'
   | 'get-actors'
   | 'filter-actors'
+  | 'filter-items'
   | 'get-actor'
   | 'create-actor'
   | 'create-actor-from-compendium'
   | 'update-actor'
   | 'delete-actor'
+  | 'create-scene'
+  | 'update-scene'
+  | 'delete-scene'
+  | 'clone-scene'
+  | 'view-scene'
   | 'send-chat-message'
   | 'create-journal'
   | 'update-journal'
@@ -56,12 +62,21 @@ export type CommandType =
   | 'move-token'
   | 'update-token'
   | 'get-scene-tokens'
+  | 'get-token'
+  | 'get-token-by-actor'
+  | 'set-token-target'
+  | 'clear-targets'
+  | 'get-tokens-in-range'
   | 'get-actor-items'
   | 'use-item'
   | 'add-item-to-actor'
   | 'add-item-from-compendium'
   | 'update-actor-item'
   | 'delete-actor-item'
+  | 'create-item'
+  | 'create-item-from-compendium'
+  | 'update-item'
+  | 'delete-item'
   | 'get-actor-effects'
   | 'toggle-actor-status'
   | 'add-actor-effect'
@@ -77,6 +92,10 @@ export type CommandType =
   | 'get-item'
   | 'get-compendiums'
   | 'get-compendium'
+  | 'get-compendium-index'
+  | 'search-compendium'
+  | 'get-compendium-document'
+  | 'import-from-compendium'
   | 'list-roll-tables'
   | 'get-roll-table'
   | 'roll-on-table'
@@ -87,12 +106,48 @@ export type CommandType =
   | 'capture-scene'
   | 'get-combat-turn-context'
   | 'set-door-state'
+  | 'get-walls'
+  | 'create-wall'
+  | 'update-wall'
+  | 'delete-wall'
+  | 'get-notes'
+  | 'create-note'
+  | 'update-note'
+  | 'delete-note'
   | 'get-chat-messages'
   | 'delete-chat-message'
   | 'update-chat-message'
   | 'clear-chat'
   | 'export-chat'
-  | 'show-journal';
+  | 'show-journal'
+  | 'get-folders'
+  | 'get-folder'
+  | 'create-folder'
+  | 'update-folder'
+  | 'delete-folder'
+  | 'get-macros'
+  | 'get-macro'
+  | 'create-macro'
+  | 'update-macro'
+  | 'delete-macro'
+  | 'execute-macro'
+  | 'get-playlists'
+  | 'get-playlist'
+  | 'play-playlist'
+  | 'stop-playlist'
+  | 'play-sound-in-playlist'
+  | 'stop-sound-in-playlist'
+  | 'play-sound-once'
+  | 'add-sound-to-playlist'
+  | 'get-world-time'
+  | 'advance-time'
+  | 'set-world-time'
+  | 'pause-game'
+  | 'resume-game'
+  | 'get-pause-state'
+  | 'notify'
+  | 'pan-canvas'
+  | 'ping-location';
 
 export interface RollDiceParams {
   formula: string;
@@ -221,6 +276,79 @@ export interface FilterActorsResultEntry {
 
 export interface FilterActorsResult {
   results: FilterActorsResultEntry[];
+  total: number;
+  hasMore: boolean;
+}
+
+// Filter Items Commands
+export type ItemTypeWire =
+  | 'weapon'
+  | 'equipment'
+  | 'consumable'
+  | 'tool'
+  | 'container'
+  | 'loot'
+  | 'spell'
+  | 'feat'
+  | 'background'
+  | 'race'
+  | 'class'
+  | 'subclass'
+  | 'feature';
+
+export type ItemRarityWire =
+  | 'common'
+  | 'uncommon'
+  | 'rare'
+  | 'veryRare'
+  | 'legendary'
+  | 'artifact';
+
+export type SpellSchoolWire =
+  | 'abjuration'
+  | 'conjuration'
+  | 'divination'
+  | 'enchantment'
+  | 'evocation'
+  | 'illusion'
+  | 'necromancy'
+  | 'transmutation';
+
+export interface FilterItemsRange {
+  min?: number;
+  max?: number;
+}
+
+export interface FilterItemsFolder {
+  id?: string;
+  name?: string;
+  recursive?: boolean;
+}
+
+export interface FilterItemsParams {
+  name?: string;
+  type?: ItemTypeWire[];
+  rarity?: ItemRarityWire[];
+  spellSchool?: SpellSchoolWire[];
+  requiresAttunement?: boolean;
+  identified?: boolean;
+  hasActivities?: boolean;
+  isContainer?: boolean;
+  weight?: FilterItemsRange;
+  price?: FilterItemsRange;
+  spellLevel?: FilterItemsRange;
+  folder?: FilterItemsFolder;
+  limit?: number;
+  offset?: number;
+}
+
+export interface FilterItemsResultEntry {
+  id: string;
+  name: string;
+}
+
+export interface FilterItemsResult {
+  results: FilterItemsResultEntry[];
   total: number;
   hasMore: boolean;
 }
@@ -473,6 +601,84 @@ export interface GetSceneTokensParams {
   sceneId?: string;
 }
 
+export type TokenDisposition = 'hostile' | 'neutral' | 'friendly' | 'secret';
+
+export interface TokenDetail {
+  id: string;
+  sceneId: string;
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  elevation: number;
+  rotation: number;
+  hidden: boolean;
+  disposition: TokenDisposition;
+  actorId: string | null;
+  textureSrc: string;
+  hp: { current: number; max: number } | null;
+  ac: number | null;
+}
+
+export interface GetTokenParams {
+  sceneId?: string;
+  tokenId: string;
+}
+
+export type GetTokenResult = TokenDetail;
+
+export interface GetTokenByActorParams {
+  sceneId?: string;
+  actorId: string;
+}
+
+export type GetTokenByActorResult = TokenDetail;
+
+export interface SetTokenTargetParams {
+  tokenId: string;
+  targeted: boolean;
+  releaseOthers?: boolean;
+}
+
+export interface SetTokenTargetResult {
+  tokenId: string;
+  targeted: boolean;
+}
+
+export type ClearTargetsParams = Record<string, never>;
+
+export interface ClearTargetsResult {
+  cleared: true;
+  count: number;
+}
+
+export interface GetTokensInRangeParams {
+  sceneId?: string;
+  originX: number;
+  originY: number;
+  range: number;
+  excludeTokenId?: string;
+}
+
+export interface TokenInRangeEntry {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  distance: number;
+  actorId: string | null;
+  disposition: TokenDisposition;
+}
+
+export interface GetTokensInRangeResult {
+  sceneId: string;
+  origin: { x: number; y: number };
+  range: number;
+  units: string;
+  tokens: TokenInRangeEntry[];
+}
+
 export interface InitiativeResult {
   combatantId: string;
   name: string;
@@ -694,6 +900,48 @@ export interface ItemResult {
   img: string;
   actorId: string;
   actorName: string;
+}
+
+// World-level Item CRUD Commands
+export interface CreateItemParams {
+  name: string;
+  type: string;
+  folder?: string;
+  img?: string;
+  system?: Record<string, unknown>;
+}
+
+export interface CreateItemFromCompendiumParams {
+  packId: string;
+  itemId: string;
+  name?: string;
+  folder?: string;
+}
+
+export interface UpdateItemParams {
+  itemId: string;
+  name?: string;
+  img?: string;
+  folder?: string | null;
+  system?: Record<string, unknown>;
+}
+
+export interface DeleteItemParams {
+  itemId: string;
+}
+
+export interface WorldItemResult {
+  id: string;
+  uuid: string;
+  name: string;
+  type: string;
+  img: string;
+  folder: string | null;
+}
+
+export interface DeleteItemResult {
+  deleted: true;
+  itemId: string;
 }
 
 // Effect Commands
@@ -960,6 +1208,105 @@ export interface ActivateSceneResult {
   active: boolean;
 }
 
+// Scene CRUD
+export type SceneGridType =
+  | 'gridless'
+  | 'square'
+  | 'hexPointyOdd'
+  | 'hexPointyEven'
+  | 'hexFlatOdd'
+  | 'hexFlatEven';
+
+export interface SceneGridConfig {
+  type?: SceneGridType;
+  size?: number;
+  distance?: number;
+  units?: string;
+}
+
+export interface SceneSummary {
+  id: string;
+  uuid: string;
+  name: string;
+  active: boolean;
+  width: number;
+  height: number;
+  background: string | null;
+  navigation: boolean;
+  navName: string | null;
+  navOrder: number;
+  folder: string | null;
+  grid: {
+    type: SceneGridType;
+    size: number;
+    distance: number;
+    units: string;
+  };
+}
+
+export interface CreateSceneParams {
+  name: string;
+  width?: number;
+  height?: number;
+  grid?: SceneGridConfig;
+  background?: string;
+  foreground?: string;
+  padding?: number;
+  navigation?: boolean;
+  navName?: string;
+  navOrder?: number;
+  fogExploration?: boolean;
+  darkness?: number;
+  folder?: string;
+}
+
+export type CreateSceneResult = SceneSummary;
+
+export interface UpdateSceneParams {
+  sceneId: string;
+  name?: string;
+  width?: number;
+  height?: number;
+  grid?: SceneGridConfig;
+  background?: string;
+  foreground?: string;
+  padding?: number;
+  navigation?: boolean;
+  navName?: string | null;
+  navOrder?: number;
+  fogExploration?: boolean;
+  darkness?: number;
+  folder?: string | null;
+}
+
+export type UpdateSceneResult = SceneSummary;
+
+export interface DeleteSceneParams {
+  sceneId: string;
+}
+
+export interface DeleteSceneResult {
+  deleted: true;
+  sceneId: string;
+}
+
+export interface CloneSceneParams {
+  sourceId: string;
+  name?: string;
+  folder?: string;
+}
+
+export type CloneSceneResult = SceneSummary;
+
+export interface ViewSceneParams {
+  sceneId: string;
+}
+
+export interface ViewSceneResult {
+  viewed: true;
+  sceneId: string;
+}
+
 // World Info (pull query)
 export type GetWorldInfoParams = Record<string, never>;
 
@@ -1009,6 +1356,94 @@ export type GetCompendiumsParams = Record<string, never>;
 
 export interface GetCompendiumParams {
   packId: string;
+}
+
+// Compendium efficient access
+export interface CompendiumIndexEntry {
+  id: string;
+  name: string;
+  img: string | null;
+  type: string | null;
+  fields?: Record<string, unknown>;
+}
+
+export interface GetCompendiumIndexParams {
+  packId: string;
+  fields?: string[];
+}
+
+export interface GetCompendiumIndexResult {
+  packId: string;
+  packType: string;
+  packLabel: string;
+  total: number;
+  entries: CompendiumIndexEntry[];
+}
+
+export type CompendiumFieldOperator =
+  | 'EQUALS'
+  | 'CONTAINS'
+  | 'STARTS_WITH'
+  | 'ENDS_WITH'
+  | 'LESS_THAN'
+  | 'LESS_THAN_EQUAL'
+  | 'GREATER_THAN'
+  | 'GREATER_THAN_EQUAL'
+  | 'BETWEEN'
+  | 'IS_EMPTY';
+
+export interface CompendiumFilter {
+  field: string;
+  operator?: CompendiumFieldOperator;
+  value?: unknown;
+  negate?: boolean;
+}
+
+export interface SearchCompendiumParams {
+  packId: string;
+  query?: string;
+  filters?: CompendiumFilter[];
+  exclude?: string[];
+  fields?: string[];
+  limit?: number;
+  offset?: number;
+}
+
+export interface SearchCompendiumResult {
+  packId: string;
+  results: CompendiumIndexEntry[];
+  total: number;
+  hasMore: boolean;
+}
+
+export interface GetCompendiumDocumentParams {
+  packId: string;
+  documentId: string;
+}
+
+export interface CompendiumDocumentResult {
+  id: string;
+  uuid: string;
+  name: string;
+  type: string;
+  img: string | null;
+  documentType: string;
+  data: Record<string, unknown>;
+}
+
+export interface ImportFromCompendiumParams {
+  packId: string;
+  documentId: string;
+  folder?: string;
+  name?: string;
+}
+
+export interface ImportFromCompendiumResult {
+  imported: true;
+  worldId: string;
+  uuid: string;
+  name: string;
+  documentType: string;
 }
 
 // Roll Table types
@@ -1138,6 +1573,149 @@ export interface SetDoorStateResult {
   newState: number;
 }
 
+// Wall CRUD Commands
+export type WallDoorType = 'none' | 'door' | 'secret';
+export type WallDoorState = 'closed' | 'open' | 'locked';
+export type WallRestriction = 'none' | 'normal' | 'limited';
+export type WallDirection = 'both' | 'left' | 'right';
+
+export interface WallSummary {
+  id: string;
+  c: [number, number, number, number];
+  door: WallDoorType;
+  doorState: WallDoorState;
+  move: WallRestriction;
+  sense: WallRestriction;
+  sound: WallRestriction;
+  light: WallRestriction;
+  dir: WallDirection;
+}
+
+export interface GetWallsParams {
+  sceneId?: string;
+}
+
+export interface GetWallsResult {
+  sceneId: string;
+  walls: WallSummary[];
+}
+
+export interface CreateWallParams {
+  sceneId?: string;
+  c: [number, number, number, number];
+  door?: WallDoorType;
+  doorState?: WallDoorState;
+  move?: WallRestriction;
+  sense?: WallRestriction;
+  sound?: WallRestriction;
+  light?: WallRestriction;
+  dir?: WallDirection;
+}
+
+export type CreateWallResult = WallSummary;
+
+export interface UpdateWallParams {
+  sceneId?: string;
+  wallId: string;
+  c?: [number, number, number, number];
+  door?: WallDoorType;
+  doorState?: WallDoorState;
+  move?: WallRestriction;
+  sense?: WallRestriction;
+  sound?: WallRestriction;
+  light?: WallRestriction;
+  dir?: WallDirection;
+}
+
+export type UpdateWallResult = WallSummary;
+
+export interface DeleteWallParams {
+  sceneId?: string;
+  wallId: string;
+}
+
+export interface DeleteWallResult {
+  deleted: true;
+  wallId: string;
+  sceneId: string;
+}
+
+// Note CRUD Commands
+export type NoteTextAnchor = 'center' | 'bottom' | 'top' | 'left' | 'right';
+
+export interface NoteSummary {
+  id: string;
+  x: number;
+  y: number;
+  entryId: string | null;
+  pageId: string | null;
+  text: string | null;
+  iconSrc: string;
+  iconTint: string | null;
+  iconSize: number;
+  fontSize: number;
+  textAnchor: NoteTextAnchor;
+  textColor: string | null;
+  global: boolean;
+}
+
+export interface GetNotesParams {
+  sceneId?: string;
+}
+
+export interface GetNotesResult {
+  sceneId: string;
+  notes: NoteSummary[];
+}
+
+export interface CreateNoteParams {
+  sceneId?: string;
+  x: number;
+  y: number;
+  entryId?: string;
+  pageId?: string;
+  text?: string;
+  iconSrc?: string;
+  iconTint?: string;
+  iconSize?: number;
+  fontSize?: number;
+  textAnchor?: NoteTextAnchor;
+  textColor?: string;
+  global?: boolean;
+}
+
+export type CreateNoteResult = NoteSummary;
+
+export interface UpdateNoteParams {
+  sceneId?: string;
+  noteId: string;
+  x?: number;
+  y?: number;
+  entryId?: string | null;
+  pageId?: string | null;
+  text?: string | null;
+  iconSrc?: string;
+  iconTint?: string | null;
+  iconSize?: number;
+  fontSize?: number;
+  textAnchor?: NoteTextAnchor;
+  textColor?: string | null;
+  global?: boolean;
+}
+
+export type UpdateNoteResult = NoteSummary;
+
+export interface DeleteNoteParams {
+  sceneId?: string;
+  noteId: string;
+}
+
+export interface DeleteNoteResult {
+  deleted: true;
+  noteId: string;
+  sceneId: string;
+}
+
 // Combat Turn Context types
 export interface GetCombatTurnContextParams {
   combatId?: string;
@@ -1177,6 +1755,338 @@ export interface CombatTurnContext {
   asciiMap: string;
 }
 
+// Folder Commands
+export type FolderDocumentType =
+  | 'Actor'
+  | 'Item'
+  | 'Scene'
+  | 'JournalEntry'
+  | 'RollTable'
+  | 'Macro'
+  | 'Cards'
+  | 'Playlist'
+  | 'Compendium';
+
+export interface FolderSummary {
+  id: string;
+  name: string;
+  type: FolderDocumentType;
+  color: string | null;
+  description: string | null;
+  parentId: string | null;
+  sort: number;
+}
+
+export interface GetFoldersParams {
+  type?: FolderDocumentType;
+}
+
+export type GetFoldersResult = FolderSummary[];
+
+export interface GetFolderParams {
+  folderId: string;
+  includeSubfolders?: boolean;
+  includeContents?: boolean;
+}
+
+export interface FolderTreeEntry extends FolderSummary {
+  subfolders: FolderTreeEntry[];
+  contentIds?: string[];
+}
+
+export type GetFolderResult = FolderTreeEntry;
+
+export interface CreateFolderParams {
+  name: string;
+  type: FolderDocumentType;
+  parentId?: string;
+  color?: string;
+  description?: string;
+  sort?: number;
+}
+
+export type CreateFolderResult = FolderSummary;
+
+export interface UpdateFolderParams {
+  folderId: string;
+  name?: string;
+  parentId?: string | null;
+  color?: string;
+  description?: string;
+  sort?: number;
+}
+
+export type UpdateFolderResult = FolderSummary;
+
+export interface DeleteFolderParams {
+  folderId: string;
+  deleteSubfolders?: boolean;
+  deleteContents?: boolean;
+}
+
+export interface DeleteFolderResult {
+  deleted: true;
+  folderId: string;
+}
+
+// Macro Commands
+export type MacroType = 'chat' | 'script';
+export type MacroScope = 'global' | 'actors' | 'actor';
+
+export interface MacroSummary {
+  id: string;
+  uuid: string;
+  name: string;
+  type: MacroType;
+  img: string;
+  scope: MacroScope;
+  folder: string | null;
+  authorId: string | null;
+}
+
+export interface MacroDetail extends MacroSummary {
+  command: string;
+}
+
+export interface GetMacrosParams {
+  type?: MacroType;
+}
+
+export type GetMacrosResult = MacroSummary[];
+
+export interface GetMacroParams {
+  macroId: string;
+}
+
+export type GetMacroResult = MacroDetail;
+
+export interface CreateMacroParams {
+  name: string;
+  type: MacroType;
+  command: string;
+  scope?: MacroScope;
+  img?: string;
+  folder?: string;
+}
+
+export type CreateMacroResult = MacroDetail;
+
+export interface UpdateMacroParams {
+  macroId: string;
+  name?: string;
+  type?: MacroType;
+  command?: string;
+  scope?: MacroScope;
+  img?: string;
+  folder?: string | null;
+}
+
+export type UpdateMacroResult = MacroDetail;
+
+export interface DeleteMacroParams {
+  macroId: string;
+}
+
+export interface DeleteMacroResult {
+  deleted: true;
+  macroId: string;
+}
+
+export interface ExecuteMacroParams {
+  macroId: string;
+  actorId?: string;
+  tokenId?: string;
+}
+
+export interface ExecuteMacroResult {
+  executed: true;
+  macroId: string;
+  macroName: string;
+  macroType: MacroType;
+}
+
+// Playlist Commands
+export type PlaylistMode = 'disabled' | 'sequential' | 'shuffle' | 'simultaneous' | 'soundboard';
+export type PlaylistChannel = 'music' | 'environment' | 'interface';
+
+export interface PlaylistSoundSummary {
+  id: string;
+  name: string;
+  path: string;
+  playing: boolean;
+  volume: number;
+  repeat: boolean;
+}
+
+export interface PlaylistSummary {
+  id: string;
+  uuid: string;
+  name: string;
+  mode: PlaylistMode;
+  channel: PlaylistChannel | null;
+  fade: number | null;
+  playing: boolean;
+  description: string | null;
+  folder: string | null;
+  soundCount: number;
+}
+
+export interface PlaylistDetail extends PlaylistSummary {
+  sounds: PlaylistSoundSummary[];
+}
+
+export type GetPlaylistsParams = Record<string, never>;
+export type GetPlaylistsResult = PlaylistSummary[];
+
+export interface GetPlaylistParams {
+  playlistId: string;
+}
+export type GetPlaylistResult = PlaylistDetail;
+
+export interface PlayPlaylistParams {
+  playlistId: string;
+}
+export interface PlayPlaylistResult {
+  playing: true;
+  playlistId: string;
+  soundCount: number;
+}
+
+export interface StopPlaylistParams {
+  playlistId: string;
+}
+export interface StopPlaylistResult {
+  stopped: true;
+  playlistId: string;
+}
+
+export interface PlaySoundInPlaylistParams {
+  playlistId: string;
+  soundId: string;
+}
+export interface PlaySoundInPlaylistResult {
+  playing: true;
+  playlistId: string;
+  soundId: string;
+  soundName: string;
+}
+
+export interface StopSoundInPlaylistParams {
+  playlistId: string;
+  soundId: string;
+}
+export interface StopSoundInPlaylistResult {
+  stopped: true;
+  playlistId: string;
+  soundId: string;
+}
+
+export interface PlaySoundOnceParams {
+  src: string;
+  volume?: number;
+  loop?: boolean;
+  broadcast?: boolean;
+}
+export interface PlaySoundOnceResult {
+  playing: true;
+  src: string;
+  broadcast: boolean;
+}
+
+export interface AddSoundToPlaylistParams {
+  playlistId: string;
+  name: string;
+  path: string;
+  volume?: number;
+  repeat?: boolean;
+  description?: string;
+}
+export type AddSoundToPlaylistResult = PlaylistSoundSummary;
+
+// World time
+export type GetWorldTimeParams = Record<string, never>;
+
+export interface GetWorldTimeResult {
+  worldTime: number;
+}
+
+export interface AdvanceTimeParams {
+  seconds: number;
+}
+
+export interface AdvanceTimeResult {
+  worldTime: number;
+  advancedBy: number;
+}
+
+export interface SetWorldTimeParams {
+  worldTime: number;
+}
+
+export interface SetWorldTimeResult {
+  worldTime: number;
+}
+
+// Pause/Resume
+export type PauseGameParams = Record<string, never>;
+
+export interface PauseGameResult {
+  paused: true;
+}
+
+export type ResumeGameParams = Record<string, never>;
+
+export interface ResumeGameResult {
+  paused: false;
+}
+
+export type GetPauseStateParams = Record<string, never>;
+
+export interface GetPauseStateResult {
+  paused: boolean;
+}
+
+// UI helpers
+export type NotifyType = 'info' | 'warn' | 'error' | 'success';
+
+export interface NotifyParams {
+  message: string;
+  type?: NotifyType;
+  permanent?: boolean;
+}
+
+export interface NotifyResult {
+  shown: true;
+  type: NotifyType;
+}
+
+export interface PanCanvasParams {
+  x?: number;
+  y?: number;
+  scale?: number;
+  duration?: number;
+}
+
+export interface PanCanvasResult {
+  panned: true;
+}
+
+export type PingStyle = 'pulse' | 'arrow' | 'alert' | 'chevron';
+
+export interface PingLocationParams {
+  x: number;
+  y: number;
+  style?: PingStyle;
+  color?: string;
+  duration?: number;
+}
+
+export interface PingLocationResult {
+  pinged: true;
+  x: number;
+  y: number;
+}
+
 export type AbilityKey = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
 
 export const ABILITY_KEYS: readonly AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
@@ -1195,6 +2105,7 @@ export interface CommandParamsMap {
   'get-world-info': GetWorldInfoParams;
   'get-actors': Record<string, never>;
   'filter-actors': FilterActorsParams;
+  'filter-items': FilterItemsParams;
   'get-actor': GetActorParams;
   'create-actor': CreateActorParams;
   'create-actor-from-compendium': CreateActorFromCompendiumParams;
@@ -1228,12 +2139,21 @@ export interface CommandParamsMap {
   'move-token': MoveTokenParams;
   'update-token': UpdateTokenParams;
   'get-scene-tokens': GetSceneTokensParams;
+  'get-token': GetTokenParams;
+  'get-token-by-actor': GetTokenByActorParams;
+  'set-token-target': SetTokenTargetParams;
+  'clear-targets': ClearTargetsParams;
+  'get-tokens-in-range': GetTokensInRangeParams;
   'get-actor-items': GetActorItemsParams;
   'use-item': UseItemParams;
   'add-item-to-actor': AddItemToActorParams;
   'add-item-from-compendium': AddItemFromCompendiumParams;
   'update-actor-item': UpdateActorItemParams;
   'delete-actor-item': DeleteActorItemParams;
+  'create-item': CreateItemParams;
+  'create-item-from-compendium': CreateItemFromCompendiumParams;
+  'update-item': UpdateItemParams;
+  'delete-item': DeleteItemParams;
   'get-actor-effects': GetActorEffectsParams;
   'toggle-actor-status': ToggleActorStatusParams;
   'add-actor-effect': AddActorEffectParams;
@@ -1242,6 +2162,11 @@ export interface CommandParamsMap {
   'get-scene': GetSceneParams;
   'get-scenes-list': GetScenesListParams;
   'activate-scene': ActivateSceneParams;
+  'create-scene': CreateSceneParams;
+  'update-scene': UpdateSceneParams;
+  'delete-scene': DeleteSceneParams;
+  'clone-scene': CloneSceneParams;
+  'view-scene': ViewSceneParams;
   'activate-item': ActivateItemParams;
   'get-journals': GetJournalsParams;
   'get-journal': GetJournalParams;
@@ -1249,6 +2174,10 @@ export interface CommandParamsMap {
   'get-item': GetItemParams;
   'get-compendiums': GetCompendiumsParams;
   'get-compendium': GetCompendiumParams;
+  'get-compendium-index': GetCompendiumIndexParams;
+  'search-compendium': SearchCompendiumParams;
+  'get-compendium-document': GetCompendiumDocumentParams;
+  'import-from-compendium': ImportFromCompendiumParams;
   'list-roll-tables': ListRollTablesParams;
   'get-roll-table': GetRollTableParams;
   'roll-on-table': RollOnTableParams;
@@ -1259,12 +2188,48 @@ export interface CommandParamsMap {
   'capture-scene': CaptureSceneParams;
   'get-combat-turn-context': GetCombatTurnContextParams;
   'set-door-state': SetDoorStateParams;
+  'get-walls': GetWallsParams;
+  'create-wall': CreateWallParams;
+  'update-wall': UpdateWallParams;
+  'delete-wall': DeleteWallParams;
+  'get-notes': GetNotesParams;
+  'create-note': CreateNoteParams;
+  'update-note': UpdateNoteParams;
+  'delete-note': DeleteNoteParams;
   'get-chat-messages': GetChatMessagesParams;
   'delete-chat-message': DeleteChatMessageParams;
   'update-chat-message': UpdateChatMessageParams;
   'clear-chat': Record<string, never>;
   'export-chat': ExportChatParams;
   'show-journal': ShowJournalParams;
+  'get-folders': GetFoldersParams;
+  'get-folder': GetFolderParams;
+  'create-folder': CreateFolderParams;
+  'update-folder': UpdateFolderParams;
+  'delete-folder': DeleteFolderParams;
+  'get-macros': GetMacrosParams;
+  'get-macro': GetMacroParams;
+  'create-macro': CreateMacroParams;
+  'update-macro': UpdateMacroParams;
+  'delete-macro': DeleteMacroParams;
+  'execute-macro': ExecuteMacroParams;
+  'get-playlists': GetPlaylistsParams;
+  'get-playlist': GetPlaylistParams;
+  'play-playlist': PlayPlaylistParams;
+  'stop-playlist': StopPlaylistParams;
+  'play-sound-in-playlist': PlaySoundInPlaylistParams;
+  'stop-sound-in-playlist': StopSoundInPlaylistParams;
+  'play-sound-once': PlaySoundOnceParams;
+  'add-sound-to-playlist': AddSoundToPlaylistParams;
+  'get-world-time': GetWorldTimeParams;
+  'advance-time': AdvanceTimeParams;
+  'set-world-time': SetWorldTimeParams;
+  'pause-game': PauseGameParams;
+  'resume-game': ResumeGameParams;
+  'get-pause-state': GetPauseStateParams;
+  'notify': NotifyParams;
+  'pan-canvas': PanCanvasParams;
+  'ping-location': PingLocationParams;
 }
 
 export interface CommandResultMap {
@@ -1277,6 +2242,7 @@ export interface CommandResultMap {
   'get-world-info': WorldInfoResult;
   'get-actors': ActorSummary[];
   'filter-actors': FilterActorsResult;
+  'filter-items': FilterItemsResult;
   'get-actor': ActorDetailResult;
   'create-actor': ActorResult;
   'create-actor-from-compendium': ActorResult;
@@ -1310,12 +2276,21 @@ export interface CommandResultMap {
   'move-token': TokenResult;
   'update-token': TokenResult;
   'get-scene-tokens': SceneTokensResult;
+  'get-token': GetTokenResult;
+  'get-token-by-actor': GetTokenByActorResult;
+  'set-token-target': SetTokenTargetResult;
+  'clear-targets': ClearTargetsResult;
+  'get-tokens-in-range': GetTokensInRangeResult;
   'get-actor-items': ActorItemsResult;
   'use-item': UseItemResult;
   'add-item-to-actor': ItemResult;
   'add-item-from-compendium': ItemResult;
   'update-actor-item': ItemResult;
   'delete-actor-item': DeleteResult;
+  'create-item': WorldItemResult;
+  'create-item-from-compendium': WorldItemResult;
+  'update-item': WorldItemResult;
+  'delete-item': DeleteItemResult;
   'get-actor-effects': ActorEffectsResult;
   'toggle-actor-status': ToggleStatusResult;
   'add-actor-effect': AddEffectResult;
@@ -1324,6 +2299,11 @@ export interface CommandResultMap {
   'get-scene': SceneDetailResult;
   'get-scenes-list': SceneListResult;
   'activate-scene': ActivateSceneResult;
+  'create-scene': CreateSceneResult;
+  'update-scene': UpdateSceneResult;
+  'delete-scene': DeleteSceneResult;
+  'clone-scene': CloneSceneResult;
+  'view-scene': ViewSceneResult;
   'activate-item': ActivateItemResult;
   'get-journals': JournalData[];
   'get-journal': JournalData;
@@ -1331,6 +2311,10 @@ export interface CommandResultMap {
   'get-item': ItemData;
   'get-compendiums': CompendiumMetadata[];
   'get-compendium': CompendiumData;
+  'get-compendium-index': GetCompendiumIndexResult;
+  'search-compendium': SearchCompendiumResult;
+  'get-compendium-document': CompendiumDocumentResult;
+  'import-from-compendium': ImportFromCompendiumResult;
   'list-roll-tables': RollTableSummary[];
   'get-roll-table': RollTableResult;
   'roll-on-table': RollOnTableResult;
@@ -1341,10 +2325,46 @@ export interface CommandResultMap {
   'capture-scene': CaptureSceneResult;
   'get-combat-turn-context': CombatTurnContext;
   'set-door-state': SetDoorStateResult;
+  'get-walls': GetWallsResult;
+  'create-wall': CreateWallResult;
+  'update-wall': UpdateWallResult;
+  'delete-wall': DeleteWallResult;
+  'get-notes': GetNotesResult;
+  'create-note': CreateNoteResult;
+  'update-note': UpdateNoteResult;
+  'delete-note': DeleteNoteResult;
   'get-chat-messages': GetChatMessagesResult;
   'delete-chat-message': DeleteResult;
   'update-chat-message': SendChatMessageResult;
   'clear-chat': ClearChatResult;
   'export-chat': ExportChatResult;
   'show-journal': ShowJournalResult;
+  'get-folders': GetFoldersResult;
+  'get-folder': GetFolderResult;
+  'create-folder': CreateFolderResult;
+  'update-folder': UpdateFolderResult;
+  'delete-folder': DeleteFolderResult;
+  'get-macros': GetMacrosResult;
+  'get-macro': GetMacroResult;
+  'create-macro': CreateMacroResult;
+  'update-macro': UpdateMacroResult;
+  'delete-macro': DeleteMacroResult;
+  'execute-macro': ExecuteMacroResult;
+  'get-playlists': GetPlaylistsResult;
+  'get-playlist': GetPlaylistResult;
+  'play-playlist': PlayPlaylistResult;
+  'stop-playlist': StopPlaylistResult;
+  'play-sound-in-playlist': PlaySoundInPlaylistResult;
+  'stop-sound-in-playlist': StopSoundInPlaylistResult;
+  'play-sound-once': PlaySoundOnceResult;
+  'add-sound-to-playlist': AddSoundToPlaylistResult;
+  'get-world-time': GetWorldTimeResult;
+  'advance-time': AdvanceTimeResult;
+  'set-world-time': SetWorldTimeResult;
+  'pause-game': PauseGameResult;
+  'resume-game': ResumeGameResult;
+  'get-pause-state': GetPauseStateResult;
+  'notify': NotifyResult;
+  'pan-canvas': PanCanvasResult;
+  'ping-location': PingLocationResult;
 }

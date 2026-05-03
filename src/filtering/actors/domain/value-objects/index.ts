@@ -4,4 +4,6 @@ export { Size, parseSize } from './Size';
 export { Disposition, parseDisposition } from './Disposition';
 export { ChallengeRating } from './ChallengeRating';
 export { AbilityKey, ABILITY_KEYS } from './AbilityScore';
-export { FolderReference } from './FolderReference';
+// FolderReference now lives in the shared kernel; re-exported here for
+// backwards compatibility with existing actor-context consumers.
+export { FolderReference } from '@/filtering/shared/domain/value-objects';

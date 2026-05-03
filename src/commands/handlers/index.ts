@@ -60,7 +60,12 @@ export {
   deleteTokenHandler,
   moveTokenHandler,
   updateTokenHandler,
-  getSceneTokensHandler
+  getSceneTokensHandler,
+  getTokenHandler,
+  getTokenByActorHandler,
+  setTokenTargetHandler,
+  clearTargetsHandler,
+  getTokensInRangeHandler
 } from '@/commands/handlers/token';
 
 // Item handlers
@@ -73,7 +78,13 @@ export {
   updateActorItemHandler,
   deleteActorItemHandler,
   getItemsHandler,
-  getItemHandler
+  getItemHandler,
+  createItemHandler,
+  createItemFromCompendiumHandler,
+  updateItemHandler,
+  deleteItemHandler,
+  filterItemsHandler,
+  createFilterItemsHandler
 } from '@/commands/handlers/item';
 
 // Scene handlers
@@ -81,14 +92,23 @@ export {
   getSceneHandler,
   getScenesListHandler,
   activateSceneHandler,
-  captureSceneHandler
+  captureSceneHandler,
+  createSceneHandler,
+  updateSceneHandler,
+  deleteSceneHandler,
+  cloneSceneHandler,
+  viewSceneHandler
 } from '@/commands/handlers/scene';
 
 // World handlers
 export {
   getWorldInfoHandler,
   getCompendiumsHandler,
-  getCompendiumHandler
+  getCompendiumHandler,
+  getCompendiumIndexHandler,
+  searchCompendiumHandler,
+  getCompendiumDocumentHandler,
+  importFromCompendiumHandler
 } from '@/commands/handlers/world';
 
 // Table handlers
@@ -107,6 +127,22 @@ export {
   setDoorStateHandler
 } from '@/commands/handlers/door';
 
+// Wall handlers
+export {
+  getWallsHandler,
+  createWallHandler,
+  updateWallHandler,
+  deleteWallHandler
+} from '@/commands/handlers/wall';
+
+// Note handlers
+export {
+  getNotesHandler,
+  createNoteHandler,
+  updateNoteHandler,
+  deleteNoteHandler
+} from '@/commands/handlers/note';
+
 // Chat handlers
 export {
   getChatMessagesHandler,
@@ -124,3 +160,47 @@ export {
   removeActorEffectHandler,
   updateActorEffectHandler
 } from '@/commands/handlers/effect';
+
+// Folder handlers
+export {
+  getFoldersHandler,
+  getFolderHandler,
+  createFolderHandler,
+  updateFolderHandler,
+  deleteFolderHandler
+} from '@/commands/handlers/folder';
+
+// Macro handlers
+export {
+  getMacrosHandler,
+  getMacroHandler,
+  createMacroHandler,
+  updateMacroHandler,
+  deleteMacroHandler,
+  executeMacroHandler
+} from '@/commands/handlers/macro';
+
+// Playlist handlers
+export {
+  getPlaylistsHandler,
+  getPlaylistHandler,
+  playPlaylistHandler,
+  stopPlaylistHandler,
+  playSoundInPlaylistHandler,
+  stopSoundInPlaylistHandler,
+  playSoundOnceHandler,
+  addSoundToPlaylistHandler
+} from '@/commands/handlers/playlist';
+
+// System runtime handlers (world time, pause/resume, UI helpers)
+export {
+  getWorldTimeHandler,
+  advanceTimeHandler,
+  setWorldTimeHandler,
+  pauseGameHandler,
+  resumeGameHandler,
+  getPauseStateHandler,
+  notifyHandler,
+  panCanvasHandler,
+  pingLocationHandler
+} from '@/commands/handlers/system';
