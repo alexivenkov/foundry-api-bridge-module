@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.5.1] - 2026-05-04
+
+### Fixed
+
+- **`end-combat` blocked on Foundry UI confirmation dialog** — calling `end-combat` programmatically (via WebSocket on either MCP or public API channel) opened a Foundry UI dialog ("End Encounter? End this encounter and empty the turn tracker?") with Yes/No buttons and waited for a human click. The command never resolved without manual interaction. Foundry's `combat.endCombat()` is implemented as a `Dialog.confirm()` wrapper around `this.delete()` — unsuitable for automation. **Fix:** handler now calls `combat.delete()` directly, bypassing the dialog. Behavior is semantically identical (Foundry's design treats encounter end = combat document deletion). Note: `delete-combat` already worked correctly; this aligns `end-combat` with the same direct path.
+
+- **`set-combatant-defeated` (and related combatant-update commands) crashed on idempotent no-op calls** — calling `set-combatant-defeated` with `defeated: false` on a combatant whose current state was already `defeated: false` returned a 502 with `Cannot read properties of undefined (reading 'id')`. Root cause: Foundry's `Document#update()` returns `undefined` when there are no actual changes (no-op optimization), but the handler then tried to map the undefined result through `mapCombatantToResult()`. Symmetric crash existed for `defeated: true` on already-defeated combatants. **Fix:** handlers now fall back to the existing combatant reference when `update()` returns undefined (`updated ?? combatant`), making idempotent calls a successful no-op as expected. Same fix proactively applied to `update-combatant` and `toggle-combatant-visibility` (same bug class).
+
+### Technical
+
+- 2340 tests passing (was 2336 in v8.5.0; +4 new regression tests for end-combat-without-dialog and idempotent combatant updates)
+- `FoundryCombatant#update()` type signature changed from `Promise<FoundryCombatant>` to `Promise<FoundryCombatant | undefined>` to reflect Foundry's actual no-op behavior
+- No public wire API changes — both fixes are internal handler corrections
+
 ## [8.5.0] - 2026-05-03
 
 Major release adding **55 new commands across 11 categories**, plus a critical fix for the dice rolling logic. Total command surface grows from ~80 to ~135 commands. All new commands work on both WebSocket channels (MCP + public API) automatically.

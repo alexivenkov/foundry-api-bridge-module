@@ -13,5 +13,5 @@ export async function toggleCombatantVisibilityHandler(params: ToggleCombatantVi
   const combatant = getCombatant(combat, params.combatantId);
 
   const updated = await combatant.update({ hidden: !combatant.hidden });
-  return mapCombatantToResult(updated);
+  return mapCombatantToResult(updated ?? combatant);
 }

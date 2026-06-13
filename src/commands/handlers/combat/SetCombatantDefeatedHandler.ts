@@ -12,6 +12,8 @@ export async function setCombatantDefeatedHandler(params: SetCombatantDefeatedPa
   const combat = getActiveCombat(game, params.combatId);
   const combatant = getCombatant(combat, params.combatantId);
 
+  // Foundry returns undefined for idempotent no-op updates.
+  // Fall back to the existing combatant reference in that case.
   const updated = await combatant.update({ defeated: params.defeated });
-  return mapCombatantToResult(updated);
+  return mapCombatantToResult(updated ?? combatant);
 }

@@ -441,7 +441,7 @@ describe('Combat Handlers', () => {
 
       const result = await endCombatHandler({});
 
-      expect(mockCombat.endCombat).toHaveBeenCalled();
+      expect(mockCombat.delete).toHaveBeenCalled();
       expect(result).toEqual({ deleted: true });
     });
 
@@ -452,7 +452,19 @@ describe('Combat Handlers', () => {
       await endCombatHandler({ combatId: 'combat-123' });
 
       expect(mockGame.combats.get).toHaveBeenCalledWith('combat-123');
-      expect(mockCombat.endCombat).toHaveBeenCalled();
+      expect(mockCombat.delete).toHaveBeenCalled();
+    });
+
+    it('uses delete() to bypass Foundry confirmation dialog', async () => {
+      const mockCombat = createMockCombat();
+      mockGame.combat = mockCombat;
+
+      await endCombatHandler({});
+
+      // combat.endCombat() opens a UI dialog ("End Encounter?") that blocks
+      // programmatic workflows. We must use delete() directly.
+      expect(mockCombat.endCombat).not.toHaveBeenCalled();
+      expect(mockCombat.delete).toHaveBeenCalled();
     });
   });
 
@@ -970,6 +982,25 @@ describe('Combat Handlers', () => {
       expect(mockGame.combats.get).toHaveBeenCalledWith('combat-123');
       expect(mockCombatant.update).toHaveBeenCalled();
     });
+
+    it('handles idempotent no-op update by returning current combatant', async () => {
+      // Foundry returns undefined when update has no actual changes.
+      const mockCombatant = createMockCombatant({ initiative: 15, defeated: false });
+      mockCombatant.update.mockResolvedValue(undefined);
+      const mockCombat = createMockCombat();
+      mockCombat.combatants.get.mockReturnValue(mockCombatant);
+      mockGame.combat = mockCombat;
+
+      const result = await updateCombatantHandler({
+        combatantId: 'combatant-123',
+        initiative: 15,
+        defeated: false
+      });
+
+      expect(result.id).toBe('combatant-123');
+      expect(result.initiative).toBe(15);
+      expect(result.defeated).toBe(false);
+    });
   });
 
   describe('setCombatantDefeatedHandler', () => {
@@ -1034,6 +1065,40 @@ describe('Combat Handlers', () => {
       });
 
       expect(mockGame.combats.get).toHaveBeenCalledWith('combat-123');
+    });
+
+    it('handles idempotent no-op update (defeated: false on already-not-defeated)', async () => {
+      // Foundry returns undefined when update has no actual changes.
+      // Handler must fall back to the existing combatant reference.
+      const mockCombatant = createMockCombatant({ defeated: false });
+      mockCombatant.update.mockResolvedValue(undefined);
+      const mockCombat = createMockCombat();
+      mockCombat.combatants.get.mockReturnValue(mockCombatant);
+      mockGame.combat = mockCombat;
+
+      const result = await setCombatantDefeatedHandler({
+        combatantId: 'combatant-123',
+        defeated: false
+      });
+
+      expect(result.defeated).toBe(false);
+      expect(result.id).toBe('combatant-123');
+    });
+
+    it('handles idempotent no-op update (defeated: true on already-defeated)', async () => {
+      const mockCombatant = createMockCombatant({ defeated: true });
+      mockCombatant.update.mockResolvedValue(undefined);
+      const mockCombat = createMockCombat();
+      mockCombat.combatants.get.mockReturnValue(mockCombatant);
+      mockGame.combat = mockCombat;
+
+      const result = await setCombatantDefeatedHandler({
+        combatantId: 'combatant-123',
+        defeated: true
+      });
+
+      expect(result.defeated).toBe(true);
+      expect(result.id).toBe('combatant-123');
     });
   });
 

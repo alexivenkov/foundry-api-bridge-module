@@ -15,7 +15,8 @@ export interface FoundryCombatant {
   initiative: number | null;
   defeated: boolean;
   hidden: boolean;
-  update(data: CombatantUpdateData): Promise<FoundryCombatant>;
+  // Foundry returns undefined for no-op updates (when new value matches current).
+  update(data: CombatantUpdateData): Promise<FoundryCombatant | undefined>;
 }
 
 export interface FoundryCombatantsCollection {

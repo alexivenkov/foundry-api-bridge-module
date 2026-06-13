@@ -30,5 +30,5 @@ export async function updateCombatantHandler(params: UpdateCombatantParams): Pro
   }
 
   const updated = await combatant.update(updateData);
-  return mapCombatantToResult(updated);
+  return mapCombatantToResult(updated ?? combatant);
 }
