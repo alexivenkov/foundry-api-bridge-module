@@ -16,7 +16,8 @@ export interface CommandResponse<T = unknown> {
 export type CommandType =
   | 'roll-dice'
   | 'roll-ability'
-  | 'roll-skill'
+  | 'dnd5e/roll-skill'
+  | 'roll-skill' // @deprecated alias of 'dnd5e/roll-skill'
   | 'roll-save'
   | 'roll-attack'
   | 'roll-damage'
@@ -2098,7 +2099,8 @@ export type CommandHandler<TParams = unknown, TResult = unknown> = (
 export interface CommandParamsMap {
   'roll-dice': RollDiceParams;
   'roll-ability': RollAbilityParams;
-  'roll-skill': RollSkillParams;
+  'dnd5e/roll-skill': RollSkillParams;
+  'roll-skill': RollSkillParams; // @deprecated alias of 'dnd5e/roll-skill'
   'roll-save': RollSaveParams;
   'roll-attack': RollAttackParams;
   'roll-damage': RollDamageParams;
@@ -2235,7 +2237,8 @@ export interface CommandParamsMap {
 export interface CommandResultMap {
   'roll-dice': RollResult;
   'roll-ability': RollResult;
-  'roll-skill': RollResult;
+  'dnd5e/roll-skill': RollResult;
+  'roll-skill': RollResult; // @deprecated alias of 'dnd5e/roll-skill'
   'roll-save': RollResult;
   'roll-attack': RollResult;
   'roll-damage': RollResult;

@@ -253,7 +253,8 @@ function initializeWebSocket(
   commandRouter.register('update-chat-message', updateChatMessageHandler);
   commandRouter.register('clear-chat', clearChatHandler);
   commandRouter.register('export-chat', exportChatHandler);
-  commandRouter.register('roll-skill', rollSkillHandler);
+  commandRouter.register('dnd5e/roll-skill', rollSkillHandler);
+  commandRouter.register('roll-skill', rollSkillHandler); // @deprecated alias of 'dnd5e/roll-skill'
   commandRouter.register('roll-save', rollSaveHandler);
   commandRouter.register('roll-ability', rollAbilityHandler);
   commandRouter.register('roll-attack', rollAttackHandler);

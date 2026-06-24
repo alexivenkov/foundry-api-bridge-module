@@ -1,4 +1,4 @@
-import { rollSkillHandler, SKILL_KEYS } from '../RollSkillHandler';
+import { rollSkillHandler } from '../RollSkillHandler';
 
 interface MockD20Roll {
   total: number;
@@ -133,19 +133,4 @@ describe('rollSkillHandler', () => {
     });
   });
 
-  describe('skill keys', () => {
-    it('should accept all valid D&D 5e skill keys', async () => {
-      for (const skill of SKILL_KEYS) {
-        mockActor.rollSkill.mockResolvedValue([mockRoll]);
-
-        await expect(
-          rollSkillHandler({ actorId: 'actor-123', skill })
-        ).resolves.toBeDefined();
-      }
-    });
-
-    it('should have 18 skill keys (D&D 5e standard)', () => {
-      expect(SKILL_KEYS).toHaveLength(18);
-    });
-  });
 });

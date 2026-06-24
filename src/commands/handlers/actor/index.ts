@@ -1,4 +1,4 @@
-export { rollSkillHandler, SKILL_KEYS, type SkillKey } from './RollSkillHandler';
+export { rollSkillHandler } from './RollSkillHandler';
 export { rollSaveHandler } from './RollSaveHandler';
 export { rollAbilityHandler } from './RollAbilityHandler';
 export { rollAttackHandler } from './RollAttackHandler';

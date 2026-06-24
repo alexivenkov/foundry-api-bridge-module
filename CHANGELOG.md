@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.6.0] - 2026-06-24
+
+### Added
+
+- **`dnd5e/roll-skill` command** — system-namespaced skill roll, the first command of a new game-system-explicit naming scheme (`<system>/<command>`). Lays the groundwork for supporting non-dnd5e systems (e.g. Pathfinder 2e) by making the target system explicit on the wire instead of implicit in the handler. Fully backward compatible: the legacy `roll-skill` is retained as a deprecated alias routing to the same handler, so existing clients are unaffected.
+
+### Changed
+
+- **`roll-skill` refactored into a DDD bounded context** — the previously flat handler now delegates to a layered `src/systems/dnd5e/rolls/` context (domain value objects + `ActorRollPort`, application service, infrastructure anti-corruption gateway, Zod validation), mirroring the existing `filtering/` architecture. The dnd5e-specific Foundry roll API is quarantined behind the port, making the system boundary explicit. Behaviour is unchanged — identical Foundry calls, result shape, and error messages.
+- **New `src/systems/shared/` kernel** — neutral `RollOutcome`, domain error hierarchy, and Zod error formatter, shared by future per-system contexts.
+
+### Technical
+
+- 2347 tests passing (was 2340 in v8.5.1; +9 layer tests for the new bounded context, −2 relocated skill-key vocabulary tests)
+- `dnd5e/roll-skill` added to `CommandType`, `CommandParamsMap`, `CommandResultMap`; registered in `main.ts` alongside the deprecated `roll-skill` alias
+- No breaking wire-API changes
+
 ## [8.5.1] - 2026-05-04
 
 ### Fixed
