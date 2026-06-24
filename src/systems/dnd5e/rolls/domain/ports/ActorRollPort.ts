@@ -1,5 +1,5 @@
 import type { RollOutcome } from '@/systems/shared/domain';
-import type { SkillKey } from '@/systems/dnd5e/rolls/domain/value-objects';
+import type { SkillKey, AbilityKey } from '@/systems/dnd5e/rolls/domain/value-objects';
 
 export interface RollSkillOptions {
   readonly showInChat: boolean;
@@ -11,4 +11,6 @@ export interface RollSkillOptions {
  */
 export interface ActorRollPort {
   rollSkill(actorId: string, skill: SkillKey, options: RollSkillOptions): Promise<RollOutcome>;
+  rollAbility(actorId: string, ability: AbilityKey, options: RollSkillOptions): Promise<RollOutcome>;
+  rollSave(actorId: string, ability: AbilityKey, options: RollSkillOptions): Promise<RollOutcome>;
 }

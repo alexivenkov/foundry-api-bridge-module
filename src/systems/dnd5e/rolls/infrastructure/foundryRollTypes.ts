@@ -1,4 +1,4 @@
-import type { SkillKey } from '@/systems/dnd5e/rolls/domain';
+import type { SkillKey, AbilityKey } from '@/systems/dnd5e/rolls/domain';
 
 export interface FoundryDiceTerm {
   faces?: number;
@@ -27,6 +27,16 @@ export interface FoundryRollActor {
   name: string;
   rollSkill(
     config: { skill: SkillKey },
+    dialog?: RollDialogConfig,
+    message?: RollMessageConfig
+  ): Promise<FoundryD20Roll[]>;
+  rollAbilityCheck(
+    config: { ability: AbilityKey },
+    dialog?: RollDialogConfig,
+    message?: RollMessageConfig
+  ): Promise<FoundryD20Roll[]>;
+  rollSavingThrow(
+    config: { ability: AbilityKey },
     dialog?: RollDialogConfig,
     message?: RollMessageConfig
   ): Promise<FoundryD20Roll[]>;

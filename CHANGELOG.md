@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.7.0] - 2026-06-24
+
+### Added
+
+- **System-namespaced commands for the remaining 6 dnd5e roll/item actions** — `dnd5e/roll-ability`, `dnd5e/roll-save`, `dnd5e/roll-attack`, `dnd5e/roll-damage`, `dnd5e/use-item`, and `dnd5e/activate-item`. Completes the `<system>/<command>` scheme started with `dnd5e/roll-skill` in v8.6.0. Every legacy name is retained as a **deprecated alias** routing to the same handler, so existing clients are unaffected.
+
+### Changed
+
+- **The 6 handlers refactored into DDD bounded contexts under `src/systems/dnd5e/`**, making the dnd5e coupling explicit and laying the groundwork for other game systems (e.g. Pathfinder 2e). Three contexts: `rolls/` (skill/ability/save — actor d20 checks; adds an `AbilityKey` value object and a shared `rollD20` gateway helper), `item-rolls/` (attack/damage — item-activity rolls behind a shared `attackActivityResolver`), and `item-actions/` (use/activate — item usage; activate-item's targeting and Midi-QOL workflow are modelled as separate injected ports, with the AoE template monkeypatch quarantined in infrastructure). Behaviour is unchanged — identical Foundry calls, result JSON, and error messages.
+- New shared domain errors: `ItemNotFoundError`, `ActivityResolutionError`, `TargetTokenNotFoundError`.
+
+### Fixed
+
+- **Midi-QOL workflow timeout timer is now cleared once the workflow resolves** — previously the 30s `setTimeout` armed by `activate-item` lingered after a fast Midi-QOL completion (later resolving an abandoned promise). It is now cleared on completion and on cancellation.
+
+### Technical
+
+- 2400 tests passing (was 2347 in v8.6.0; +53 across the new bounded-context layers)
+- No breaking wire-API changes — every new `dnd5e/*` command ships alongside its deprecated legacy alias in `CommandType`, `CommandParamsMap`, `CommandResultMap`, and `main.ts`
+- All existing handler tests pass unchanged (behaviour-preserving refactor)
+
 ## [8.6.0] - 2026-06-24
 
 ### Added

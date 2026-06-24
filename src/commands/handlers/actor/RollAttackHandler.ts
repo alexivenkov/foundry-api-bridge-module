@@ -1,121 +1,48 @@
 import type { RollAttackParams, RollResult } from '@/commands/types';
-import { extractDiceResults } from './actorTypes';
-import type { FoundryD20Roll, RollDialogConfig, RollMessageConfig } from './actorTypes';
+import { formatZodError } from '@/systems/shared/validation';
+import type { RollOutcome } from '@/systems/shared/domain';
+import {
+  createDnd5eItemRollService,
+  Dnd5eItemRollGateway,
+  rollAttackRequestSchema,
+  RequestToCommandMapper,
+  type FoundryItemRollGame
+} from '@/systems/dnd5e/item-rolls';
 
-interface AttackRollConfig {
-  advantage?: boolean;
-  disadvantage?: boolean;
-}
+declare const game: FoundryItemRollGame;
 
-interface FoundryActivity {
-  _id: string;
-  type: string;
-  rollAttack(
-    config?: AttackRollConfig,
-    dialog?: RollDialogConfig,
-    message?: RollMessageConfig
-  ): Promise<FoundryD20Roll[] | null>;
-}
-
-interface FoundryActivitiesCollection {
-  find(predicate: (activity: FoundryActivity) => boolean): FoundryActivity | undefined;
-}
-
-interface FoundryItemSystem {
-  activities?: FoundryActivitiesCollection;
-}
-
-interface FoundryItem {
-  id: string;
-  name: string;
-  type: string;
-  system: FoundryItemSystem;
-}
-
-interface FoundryItemsCollection {
-  get(id: string): FoundryItem | undefined;
-}
-
-interface FoundryActor {
-  id: string;
-  name: string;
-  items: FoundryItemsCollection;
-}
-
-interface ActorsCollection {
-  get(id: string): FoundryActor | undefined;
-}
-
-interface FoundryGame {
-  actors: ActorsCollection;
-}
-
-declare const game: FoundryGame;
-
-export async function rollAttackHandler(params: RollAttackParams): Promise<RollResult> {
-  const actor = game.actors.get(params.actorId);
-
-  if (!actor) {
-    throw new Error(`Actor not found: ${params.actorId}`);
-  }
-
-  const item = actor.items.get(params.itemId);
-
-  if (!item) {
-    throw new Error(`Item not found: ${params.itemId}`);
-  }
-
-  if (!item.system.activities) {
-    throw new Error(`Item has no activities: ${item.name}`);
-  }
-
-  const attackActivity = item.system.activities.find(a => a.type === 'attack');
-
-  if (!attackActivity) {
-    throw new Error(`Item has no attack activity: ${item.name}`);
-  }
-
-  const rollConfig: AttackRollConfig = {};
-
-  if (params.advantage) {
-    rollConfig.advantage = true;
-  }
-
-  if (params.disadvantage) {
-    rollConfig.disadvantage = true;
-  }
-
-  const rolls = await attackActivity.rollAttack(
-    rollConfig,
-    { configure: false },
-    { create: params.showInChat ?? false }
-  );
-
-  if (!rolls || rolls.length === 0) {
-    throw new Error('Attack roll returned no results');
-  }
-
-  const roll = rolls[0];
-
-  if (!roll) {
-    throw new Error('Attack roll returned no results');
-  }
-
-  const dice = extractDiceResults(roll.terms);
-
+function toRollResult(outcome: RollOutcome): RollResult {
   const result: RollResult = {
-    total: roll.total,
-    formula: roll.formula,
-    dice
+    total: outcome.total,
+    formula: outcome.formula,
+    dice: outcome.dice.map((d) => ({
+      type: d.type,
+      count: d.count,
+      results: [...d.results]
+    }))
   };
 
-  if (roll.isCritical) {
+  if (outcome.isCritical) {
     result.isCritical = true;
   }
-
-  if (roll.isFumble) {
+  if (outcome.isFumble) {
     result.isFumble = true;
   }
 
   return result;
+}
+
+export async function rollAttackHandler(params: RollAttackParams): Promise<RollResult> {
+  const parsed = rollAttackRequestSchema.safeParse(params);
+  if (!parsed.success) {
+    throw new Error(formatZodError(parsed.error));
+  }
+
+  const command = RequestToCommandMapper.toRollAttackCommand(parsed.data);
+
+  const gateway = new Dnd5eItemRollGateway(game);
+  const service = createDnd5eItemRollService({ itemRoll: gateway });
+
+  const outcome = await service.rollAttack(command);
+  return toRollResult(outcome);
 }

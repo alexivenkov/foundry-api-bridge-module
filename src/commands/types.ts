@@ -15,12 +15,16 @@ export interface CommandResponse<T = unknown> {
 
 export type CommandType =
   | 'roll-dice'
-  | 'roll-ability'
+  | 'dnd5e/roll-ability'
+  | 'roll-ability' // @deprecated alias of 'dnd5e/roll-ability'
   | 'dnd5e/roll-skill'
   | 'roll-skill' // @deprecated alias of 'dnd5e/roll-skill'
-  | 'roll-save'
-  | 'roll-attack'
-  | 'roll-damage'
+  | 'dnd5e/roll-save'
+  | 'roll-save' // @deprecated alias of 'dnd5e/roll-save'
+  | 'dnd5e/roll-attack'
+  | 'roll-attack' // @deprecated alias of 'dnd5e/roll-attack'
+  | 'dnd5e/roll-damage'
+  | 'roll-damage' // @deprecated alias of 'dnd5e/roll-damage'
   | 'get-world-info'
   | 'get-actors'
   | 'filter-actors'
@@ -69,7 +73,8 @@ export type CommandType =
   | 'clear-targets'
   | 'get-tokens-in-range'
   | 'get-actor-items'
-  | 'use-item'
+  | 'dnd5e/use-item'
+  | 'use-item' // @deprecated alias of 'dnd5e/use-item'
   | 'add-item-to-actor'
   | 'add-item-from-compendium'
   | 'update-actor-item'
@@ -86,7 +91,8 @@ export type CommandType =
   | 'get-scene'
   | 'get-scenes-list'
   | 'activate-scene'
-  | 'activate-item'
+  | 'dnd5e/activate-item'
+  | 'activate-item' // @deprecated alias of 'dnd5e/activate-item'
   | 'get-journals'
   | 'get-journal'
   | 'get-items'
@@ -2098,12 +2104,16 @@ export type CommandHandler<TParams = unknown, TResult = unknown> = (
 
 export interface CommandParamsMap {
   'roll-dice': RollDiceParams;
-  'roll-ability': RollAbilityParams;
+  'dnd5e/roll-ability': RollAbilityParams;
+  'roll-ability': RollAbilityParams; // @deprecated alias of 'dnd5e/roll-ability'
   'dnd5e/roll-skill': RollSkillParams;
   'roll-skill': RollSkillParams; // @deprecated alias of 'dnd5e/roll-skill'
-  'roll-save': RollSaveParams;
-  'roll-attack': RollAttackParams;
-  'roll-damage': RollDamageParams;
+  'dnd5e/roll-save': RollSaveParams;
+  'roll-save': RollSaveParams; // @deprecated alias of 'dnd5e/roll-save'
+  'dnd5e/roll-attack': RollAttackParams;
+  'roll-attack': RollAttackParams; // @deprecated alias of 'dnd5e/roll-attack'
+  'dnd5e/roll-damage': RollDamageParams;
+  'roll-damage': RollDamageParams; // @deprecated alias of 'dnd5e/roll-damage'
   'get-world-info': GetWorldInfoParams;
   'get-actors': Record<string, never>;
   'filter-actors': FilterActorsParams;
@@ -2147,7 +2157,8 @@ export interface CommandParamsMap {
   'clear-targets': ClearTargetsParams;
   'get-tokens-in-range': GetTokensInRangeParams;
   'get-actor-items': GetActorItemsParams;
-  'use-item': UseItemParams;
+  'dnd5e/use-item': UseItemParams;
+  'use-item': UseItemParams; // @deprecated alias of 'dnd5e/use-item'
   'add-item-to-actor': AddItemToActorParams;
   'add-item-from-compendium': AddItemFromCompendiumParams;
   'update-actor-item': UpdateActorItemParams;
@@ -2169,7 +2180,8 @@ export interface CommandParamsMap {
   'delete-scene': DeleteSceneParams;
   'clone-scene': CloneSceneParams;
   'view-scene': ViewSceneParams;
-  'activate-item': ActivateItemParams;
+  'dnd5e/activate-item': ActivateItemParams;
+  'activate-item': ActivateItemParams; // @deprecated alias of 'dnd5e/activate-item'
   'get-journals': GetJournalsParams;
   'get-journal': GetJournalParams;
   'get-items': GetItemsParams;
@@ -2236,12 +2248,16 @@ export interface CommandParamsMap {
 
 export interface CommandResultMap {
   'roll-dice': RollResult;
-  'roll-ability': RollResult;
+  'dnd5e/roll-ability': RollResult;
+  'roll-ability': RollResult; // @deprecated alias of 'dnd5e/roll-ability'
   'dnd5e/roll-skill': RollResult;
   'roll-skill': RollResult; // @deprecated alias of 'dnd5e/roll-skill'
-  'roll-save': RollResult;
-  'roll-attack': RollResult;
-  'roll-damage': RollResult;
+  'dnd5e/roll-save': RollResult;
+  'roll-save': RollResult; // @deprecated alias of 'dnd5e/roll-save'
+  'dnd5e/roll-attack': RollResult;
+  'roll-attack': RollResult; // @deprecated alias of 'dnd5e/roll-attack'
+  'dnd5e/roll-damage': RollResult;
+  'roll-damage': RollResult; // @deprecated alias of 'dnd5e/roll-damage'
   'get-world-info': WorldInfoResult;
   'get-actors': ActorSummary[];
   'filter-actors': FilterActorsResult;
@@ -2285,7 +2301,8 @@ export interface CommandResultMap {
   'clear-targets': ClearTargetsResult;
   'get-tokens-in-range': GetTokensInRangeResult;
   'get-actor-items': ActorItemsResult;
-  'use-item': UseItemResult;
+  'dnd5e/use-item': UseItemResult;
+  'use-item': UseItemResult; // @deprecated alias of 'dnd5e/use-item'
   'add-item-to-actor': ItemResult;
   'add-item-from-compendium': ItemResult;
   'update-actor-item': ItemResult;
@@ -2307,7 +2324,8 @@ export interface CommandResultMap {
   'delete-scene': DeleteSceneResult;
   'clone-scene': CloneSceneResult;
   'view-scene': ViewSceneResult;
-  'activate-item': ActivateItemResult;
+  'dnd5e/activate-item': ActivateItemResult;
+  'activate-item': ActivateItemResult; // @deprecated alias of 'dnd5e/activate-item'
   'get-journals': JournalData[];
   'get-journal': JournalData;
   'get-items': ItemData[];

@@ -255,10 +255,14 @@ function initializeWebSocket(
   commandRouter.register('export-chat', exportChatHandler);
   commandRouter.register('dnd5e/roll-skill', rollSkillHandler);
   commandRouter.register('roll-skill', rollSkillHandler); // @deprecated alias of 'dnd5e/roll-skill'
-  commandRouter.register('roll-save', rollSaveHandler);
-  commandRouter.register('roll-ability', rollAbilityHandler);
-  commandRouter.register('roll-attack', rollAttackHandler);
-  commandRouter.register('roll-damage', rollDamageHandler);
+  commandRouter.register('dnd5e/roll-save', rollSaveHandler);
+  commandRouter.register('roll-save', rollSaveHandler); // @deprecated alias of 'dnd5e/roll-save'
+  commandRouter.register('dnd5e/roll-ability', rollAbilityHandler);
+  commandRouter.register('roll-ability', rollAbilityHandler); // @deprecated alias of 'dnd5e/roll-ability'
+  commandRouter.register('dnd5e/roll-attack', rollAttackHandler);
+  commandRouter.register('roll-attack', rollAttackHandler); // @deprecated alias of 'dnd5e/roll-attack'
+  commandRouter.register('dnd5e/roll-damage', rollDamageHandler);
+  commandRouter.register('roll-damage', rollDamageHandler); // @deprecated alias of 'dnd5e/roll-damage'
 
   // Actor CRUD
   commandRouter.register('create-actor', createActorHandler);
@@ -304,8 +308,10 @@ function initializeWebSocket(
   commandRouter.register('get-tokens-in-range', getTokensInRangeHandler);
 
   // Items
-  commandRouter.register('use-item', useItemHandler);
-  commandRouter.register('activate-item', activateItemHandler);
+  commandRouter.register('dnd5e/use-item', useItemHandler);
+  commandRouter.register('use-item', useItemHandler); // @deprecated alias of 'dnd5e/use-item'
+  commandRouter.register('dnd5e/activate-item', activateItemHandler);
+  commandRouter.register('activate-item', activateItemHandler); // @deprecated alias of 'dnd5e/activate-item'
   commandRouter.register('add-item-to-actor', addItemToActorHandler);
   commandRouter.register('add-item-from-compendium', addItemFromCompendiumHandler);
   commandRouter.register('update-actor-item', updateActorItemHandler);

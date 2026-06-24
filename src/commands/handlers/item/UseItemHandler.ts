@@ -1,114 +1,71 @@
 import type { UseItemParams, UseItemResult, RollResult } from '@/commands/types';
+import { formatZodError } from '@/systems/shared/validation';
+import type { RollOutcome } from '@/systems/shared/domain';
 import {
-  extractDiceResults,
-  getGame,
-  type FoundryActivity,
-  type FoundryRoll,
-  type ActivityUsageConfig
-} from './itemTypes';
+  createDnd5eItemUseService,
+  Dnd5eItemUseGateway,
+  useItemRequestSchema,
+  RequestToCommandMapper,
+  type FoundryItemActionGame,
+  type UseItemOutcome
+} from '@/systems/dnd5e/item-actions';
 
-function extractRollResults(rolls: FoundryRoll[] | undefined): RollResult[] {
-  if (!rolls || rolls.length === 0) {
-    return [];
+declare const game: FoundryItemActionGame;
+
+function toRollResult(outcome: RollOutcome): RollResult {
+  const result: RollResult = {
+    total: outcome.total,
+    formula: outcome.formula,
+    dice: outcome.dice.map((d) => ({
+      type: d.type,
+      count: d.count,
+      results: [...d.results]
+    }))
+  };
+
+  if (outcome.isCritical) {
+    result.isCritical = true;
+  }
+  if (outcome.isFumble) {
+    result.isFumble = true;
   }
 
-  return rolls.map(roll => {
-    const result: RollResult = {
-      total: roll.total,
-      formula: roll.formula,
-      dice: extractDiceResults(roll.terms)
+  return result;
+}
+
+function toUseItemResult(outcome: UseItemOutcome): UseItemResult {
+  const result: UseItemResult = {
+    itemId: outcome.itemId,
+    itemName: outcome.itemName,
+    itemType: outcome.itemType,
+    rolls: outcome.rolls.map(toRollResult)
+  };
+
+  if (outcome.activityUsed) {
+    result.activityUsed = {
+      id: outcome.activityUsed.id,
+      name: outcome.activityUsed.name,
+      type: outcome.activityUsed.type
     };
+  }
+  if (outcome.chatMessageId !== undefined) {
+    result.chatMessageId = outcome.chatMessageId;
+  }
 
-    if (roll.isCritical) {
-      result.isCritical = true;
-    }
-
-    if (roll.isFumble) {
-      result.isFumble = true;
-    }
-
-    return result;
-  });
+  return result;
 }
 
 export async function useItemHandler(params: UseItemParams): Promise<UseItemResult> {
-  const actor = getGame().actors.get(params.actorId);
-
-  if (!actor) {
-    throw new Error(`Actor not found: ${params.actorId}`);
+  const parsed = useItemRequestSchema.safeParse(params);
+  if (!parsed.success) {
+    throw new Error(formatZodError(parsed.error));
   }
 
-  const item = actor.items.get(params.itemId);
+  const command = RequestToCommandMapper.toUseItemCommand(parsed.data);
 
-  if (!item) {
-    throw new Error(`Item not found: ${params.itemId}`);
-  }
+  const gateway = new Dnd5eItemUseGateway(game);
+  const service = createDnd5eItemUseService({ itemUse: gateway });
 
-  const activities = item.system.activities?.contents ?? [];
-
-  let targetActivity: FoundryActivity | undefined;
-
-  if (params.activityId) {
-    targetActivity = item.system.activities?.get(params.activityId);
-    if (!targetActivity) {
-      throw new Error(`Activity not found: ${params.activityId}`);
-    }
-  } else if (params.activityType) {
-    targetActivity = item.system.activities?.find(a => a.type === params.activityType);
-    if (!targetActivity) {
-      throw new Error(`No activity of type '${params.activityType}' found on item: ${item.name}`);
-    }
-  } else if (activities.length > 0) {
-    targetActivity = activities[0];
-  }
-
-  const usageConfig: ActivityUsageConfig = {
-    consume: params.consume === false
-      ? false
-      : { resources: true, spellSlot: true },
-    scaling: params.scaling ?? false,
-    concentration: { begin: false },
-    create: { measuredTemplate: false },
-    event: { shiftKey: true }
-  };
-
-  const dialogConfig = { configure: false };
-  const messageConfig = { create: params.showInChat ?? false };
-
-  if (targetActivity) {
-    const result = await targetActivity.use(usageConfig, dialogConfig, messageConfig);
-
-    const useResult: UseItemResult = {
-      itemId: item.id,
-      itemName: item.name,
-      itemType: item.type,
-      activityUsed: {
-        id: targetActivity._id,
-        name: targetActivity.name,
-        type: targetActivity.type
-      },
-      rolls: extractRollResults(result?.rolls)
-    };
-
-    if (result?.message) {
-      useResult.chatMessageId = result.message.id;
-    }
-
-    return useResult;
-  }
-
-  const cardResult = await item.displayCard(messageConfig);
-
-  const displayResult: UseItemResult = {
-    itemId: item.id,
-    itemName: item.name,
-    itemType: item.type,
-    rolls: []
-  };
-
-  if (cardResult?.id) {
-    displayResult.chatMessageId = cardResult.id;
-  }
-
-  return displayResult;
+  const outcome = await service.useItem(command);
+  return toUseItemResult(outcome);
 }

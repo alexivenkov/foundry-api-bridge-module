@@ -86,4 +86,58 @@ describe('Dnd5eActorRollGateway', () => {
       gateway.rollSkill('a1', 'ste', { showInChat: false })
     ).rejects.toThrow('Skill roll returned no results');
   });
+
+  it('rolls an ability check and maps the Foundry roll to a RollOutcome', async () => {
+    const rollAbilityCheck = jest.fn().mockResolvedValue([mockRoll]);
+    const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollAbilityCheck }));
+
+    const outcome = await gateway.rollAbility('a1', 'str', { showInChat: false });
+
+    expect(rollAbilityCheck).toHaveBeenCalledWith(
+      { ability: 'str' },
+      { configure: false },
+      { create: false }
+    );
+    expect(outcome).toEqual({
+      total: 15,
+      formula: '1d20 + 5',
+      dice: [{ type: 'd20', count: 1, results: [10] }]
+    });
+  });
+
+  it('throws RollResolutionError when an ability check returns no roll', async () => {
+    const rollAbilityCheck = jest.fn().mockResolvedValue([]);
+    const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollAbilityCheck }));
+
+    await expect(
+      gateway.rollAbility('a1', 'str', { showInChat: false })
+    ).rejects.toThrow('Ability check roll returned no results');
+  });
+
+  it('rolls a saving throw and maps the Foundry roll to a RollOutcome', async () => {
+    const rollSavingThrow = jest.fn().mockResolvedValue([mockRoll]);
+    const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollSavingThrow }));
+
+    const outcome = await gateway.rollSave('a1', 'dex', { showInChat: false });
+
+    expect(rollSavingThrow).toHaveBeenCalledWith(
+      { ability: 'dex' },
+      { configure: false },
+      { create: false }
+    );
+    expect(outcome).toEqual({
+      total: 15,
+      formula: '1d20 + 5',
+      dice: [{ type: 'd20', count: 1, results: [10] }]
+    });
+  });
+
+  it('throws RollResolutionError when a saving throw returns no roll', async () => {
+    const rollSavingThrow = jest.fn().mockResolvedValue([]);
+    const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollSavingThrow }));
+
+    await expect(
+      gateway.rollSave('a1', 'dex', { showInChat: false })
+    ).rejects.toThrow('Saving throw roll returned no results');
+  });
 });

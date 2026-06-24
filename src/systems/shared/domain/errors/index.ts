@@ -2,3 +2,6 @@ export { DomainError } from './DomainError';
 export { ValidationError } from './ValidationError';
 export { ActorNotFoundError } from './ActorNotFoundError';
 export { RollResolutionError } from './RollResolutionError';
+export { ItemNotFoundError } from './ItemNotFoundError';
+export { ActivityResolutionError } from './ActivityResolutionError';
+export { TargetTokenNotFoundError } from './TargetTokenNotFoundError';

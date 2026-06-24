@@ -1,70 +1,48 @@
-import { ABILITY_KEYS } from '@/commands/types';
-import type { RollSaveParams, RollResult, AbilityKey } from '@/commands/types';
-import { extractDiceResults } from './actorTypes';
-import type { FoundryD20Roll, RollDialogConfig, RollMessageConfig } from './actorTypes';
+import type { RollSaveParams, RollResult } from '@/commands/types';
+import { formatZodError } from '@/systems/shared/validation';
+import type { RollOutcome } from '@/systems/shared/domain';
+import {
+  createDnd5eRollService,
+  Dnd5eActorRollGateway,
+  rollSaveRequestSchema,
+  RequestToCommandMapper,
+  type FoundryRollGame
+} from '@/systems/dnd5e/rolls';
 
-interface FoundryActor {
-  id: string;
-  name: string;
-  rollSavingThrow(
-    config: { ability: AbilityKey },
-    dialog?: RollDialogConfig,
-    message?: RollMessageConfig
-  ): Promise<FoundryD20Roll[]>;
-}
+declare const game: FoundryRollGame;
 
-interface ActorsCollection {
-  get(id: string): FoundryActor | undefined;
-}
-
-interface FoundryGame {
-  actors: ActorsCollection;
-}
-
-declare const game: FoundryGame;
-
-function isValidAbilityKey(ability: string): ability is AbilityKey {
-  return ABILITY_KEYS.includes(ability as AbilityKey);
-}
-
-export async function rollSaveHandler(params: RollSaveParams): Promise<RollResult> {
-  const actor = game.actors.get(params.actorId);
-
-  if (!actor) {
-    throw new Error(`Actor not found: ${params.actorId}`);
-  }
-
-  if (!isValidAbilityKey(params.ability)) {
-    throw new Error(`Invalid ability key: ${String(params.ability)}. Valid keys: ${ABILITY_KEYS.join(', ')}`);
-  }
-
-  const rolls = await actor.rollSavingThrow(
-    { ability: params.ability },
-    { configure: false },
-    { create: params.showInChat ?? false }
-  );
-
-  const roll = rolls[0];
-
-  if (!roll) {
-    throw new Error('Saving throw roll returned no results');
-  }
-
-  const dice = extractDiceResults(roll.terms);
-
+function toRollResult(outcome: RollOutcome): RollResult {
   const result: RollResult = {
-    total: roll.total,
-    formula: roll.formula,
-    dice
+    total: outcome.total,
+    formula: outcome.formula,
+    dice: outcome.dice.map((d) => ({
+      type: d.type,
+      count: d.count,
+      results: [...d.results]
+    }))
   };
 
-  if (roll.isCritical) {
+  if (outcome.isCritical) {
     result.isCritical = true;
   }
-
-  if (roll.isFumble) {
+  if (outcome.isFumble) {
     result.isFumble = true;
   }
 
   return result;
+}
+
+export async function rollSaveHandler(params: RollSaveParams): Promise<RollResult> {
+  const parsed = rollSaveRequestSchema.safeParse(params);
+  if (!parsed.success) {
+    throw new Error(formatZodError(parsed.error));
+  }
+
+  const command = RequestToCommandMapper.toRollSaveCommand(parsed.data);
+
+  const gateway = new Dnd5eActorRollGateway(game);
+  const service = createDnd5eRollService({ actorRoll: gateway });
+
+  const outcome = await service.rollSave(command);
+  return toRollResult(outcome);
 }
