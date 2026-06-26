@@ -1,6 +1,7 @@
 import type { RollAttackParams, RollResult } from '@/commands/types';
 import { formatZodError } from '@/systems/shared/validation';
 import type { RollOutcome } from '@/systems/shared/domain';
+import { requireSystem } from '@/systems';
 import {
   createDnd5eItemRollService,
   Dnd5eItemRollGateway,
@@ -33,6 +34,8 @@ function toRollResult(outcome: RollOutcome): RollResult {
 }
 
 export async function rollAttackHandler(params: RollAttackParams): Promise<RollResult> {
+  requireSystem('dnd5e', 'dnd5e/roll-attack');
+
   const parsed = rollAttackRequestSchema.safeParse(params);
   if (!parsed.success) {
     throw new Error(formatZodError(parsed.error));

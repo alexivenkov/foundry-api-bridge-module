@@ -49,3 +49,7 @@ export interface FoundryRollActorsCollection {
 export interface FoundryRollGame {
   actors: FoundryRollActorsCollection;
 }
+
+export function getDnd5eRollGame(): FoundryRollGame {
+  return (globalThis as unknown as { game: FoundryRollGame }).game;
+}

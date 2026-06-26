@@ -5,9 +5,13 @@ import {
   CommandRouter,
   rollDiceHandler,
   sendChatMessageHandler,
-  rollSkillHandler,
-  rollSaveHandler,
-  rollAbilityHandler,
+  dnd5eRollSkillHandler,
+  dnd5eRollSaveHandler,
+  dnd5eRollAbilityHandler,
+  dnd5eRollPerceptionHandler,
+  pf2eRollSkillHandler,
+  pf2eRollSaveHandler,
+  pf2eRollPerceptionHandler,
   rollAttackHandler,
   rollDamageHandler,
   createActorHandler,
@@ -136,7 +140,18 @@ import {
   getPauseStateHandler,
   notifyHandler,
   panCanvasHandler,
-  pingLocationHandler
+  pingLocationHandler,
+  pf2eSetConditionHandler,
+  pf2eRemoveConditionHandler,
+  pf2eIncreaseConditionHandler,
+  pf2eDecreaseConditionHandler,
+  pf2eGetConditionsHandler,
+  pf2eListStrikesHandler,
+  pf2eRollStrikeHandler,
+  pf2eRollStrikeDamageHandler,
+  pf2eUseConsumableHandler,
+  pf2eCastSpellHandler,
+  pf2ePostItemHandler
 } from '@/commands';
 
 const MODULE_VERSION = '8.2.0';
@@ -253,12 +268,28 @@ function initializeWebSocket(
   commandRouter.register('update-chat-message', updateChatMessageHandler);
   commandRouter.register('clear-chat', clearChatHandler);
   commandRouter.register('export-chat', exportChatHandler);
-  commandRouter.register('dnd5e/roll-skill', rollSkillHandler);
-  commandRouter.register('roll-skill', rollSkillHandler); // @deprecated alias of 'dnd5e/roll-skill'
-  commandRouter.register('dnd5e/roll-save', rollSaveHandler);
-  commandRouter.register('roll-save', rollSaveHandler); // @deprecated alias of 'dnd5e/roll-save'
-  commandRouter.register('dnd5e/roll-ability', rollAbilityHandler);
-  commandRouter.register('roll-ability', rollAbilityHandler); // @deprecated alias of 'dnd5e/roll-ability'
+  commandRouter.register('dnd5e/roll-skill', dnd5eRollSkillHandler);
+  commandRouter.register('roll-skill', dnd5eRollSkillHandler); // @deprecated alias of 'dnd5e/roll-skill'
+  commandRouter.register('dnd5e/roll-save', dnd5eRollSaveHandler);
+  commandRouter.register('roll-save', dnd5eRollSaveHandler); // @deprecated alias of 'dnd5e/roll-save'
+  commandRouter.register('dnd5e/roll-ability', dnd5eRollAbilityHandler);
+  commandRouter.register('roll-ability', dnd5eRollAbilityHandler); // @deprecated alias of 'dnd5e/roll-ability'
+  commandRouter.register('dnd5e/roll-perception', dnd5eRollPerceptionHandler);
+  commandRouter.register('roll-perception', dnd5eRollPerceptionHandler); // @deprecated alias of 'dnd5e/roll-perception'
+  commandRouter.register('pf2e/roll-skill', pf2eRollSkillHandler);
+  commandRouter.register('pf2e/roll-save', pf2eRollSaveHandler);
+  commandRouter.register('pf2e/roll-perception', pf2eRollPerceptionHandler);
+  commandRouter.register('pf2e/set-condition', pf2eSetConditionHandler);
+  commandRouter.register('pf2e/remove-condition', pf2eRemoveConditionHandler);
+  commandRouter.register('pf2e/get-conditions', pf2eGetConditionsHandler);
+  commandRouter.register('pf2e/increase-condition', pf2eIncreaseConditionHandler);
+  commandRouter.register('pf2e/decrease-condition', pf2eDecreaseConditionHandler);
+  commandRouter.register('pf2e/list-strikes', pf2eListStrikesHandler);
+  commandRouter.register('pf2e/roll-strike', pf2eRollStrikeHandler);
+  commandRouter.register('pf2e/roll-strike-damage', pf2eRollStrikeDamageHandler);
+  commandRouter.register('pf2e/use-consumable', pf2eUseConsumableHandler);
+  commandRouter.register('pf2e/cast-spell', pf2eCastSpellHandler);
+  commandRouter.register('pf2e/post-item', pf2ePostItemHandler);
   commandRouter.register('dnd5e/roll-attack', rollAttackHandler);
   commandRouter.register('roll-attack', rollAttackHandler); // @deprecated alias of 'dnd5e/roll-attack'
   commandRouter.register('dnd5e/roll-damage', rollDamageHandler);

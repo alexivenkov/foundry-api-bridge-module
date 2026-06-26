@@ -1,4 +1,4 @@
-import { rollSkillHandler } from '../RollSkillHandler';
+import { dnd5eRollSkillHandler as rollSkillHandler } from '../Dnd5eRollSkillHandler';
 
 interface MockD20Roll {
   total: number;
@@ -29,7 +29,8 @@ const mockActor = {
 const mockGame = {
   actors: {
     get: jest.fn()
-  }
+  },
+  system: { id: 'dnd5e' }
 };
 
 (global as Record<string, unknown>)['game'] = mockGame;

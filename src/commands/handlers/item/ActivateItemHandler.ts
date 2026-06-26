@@ -6,6 +6,7 @@ import type {
 } from '@/commands/types';
 import { formatZodError } from '@/systems/shared/validation';
 import type { RollOutcome } from '@/systems/shared/domain';
+import { requireSystem } from '@/systems';
 import {
   createDnd5eItemActivationService,
   Dnd5eItemActivationGateway,
@@ -78,6 +79,8 @@ function toActivateItemResult(outcome: ItemActivationOutcome): ActivateItemResul
 }
 
 export async function activateItemHandler(params: ActivateItemParams): Promise<ActivateItemResult> {
+  requireSystem('dnd5e', 'dnd5e/activate-item');
+
   const parsed = activateItemRequestSchema.safeParse(params);
   if (!parsed.success) {
     throw new Error(formatZodError(parsed.error));

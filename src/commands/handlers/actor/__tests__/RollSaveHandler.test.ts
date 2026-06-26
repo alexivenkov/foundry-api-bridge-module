@@ -1,4 +1,4 @@
-import { rollSaveHandler } from '../RollSaveHandler';
+import { dnd5eRollSaveHandler as rollSaveHandler } from '../Dnd5eRollSaveHandler';
 import { ABILITY_KEYS } from '@/commands/types';
 import type { AbilityKey } from '@/commands/types';
 
@@ -31,7 +31,8 @@ const mockActor = {
 const mockGame = {
   actors: {
     get: jest.fn()
-  }
+  },
+  system: { id: 'dnd5e' }
 };
 
 (global as Record<string, unknown>)['game'] = mockGame;

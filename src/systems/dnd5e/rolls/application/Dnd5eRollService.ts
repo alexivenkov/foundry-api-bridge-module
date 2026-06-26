@@ -1,6 +1,11 @@
 import type { RollOutcome } from '@/systems/shared/domain';
 import type { ActorRollPort } from '@/systems/dnd5e/rolls/domain';
-import type { RollSkillCommand, RollAbilityCommand, RollSaveCommand } from './RollCommands';
+import type {
+  RollSkillCommand,
+  RollAbilityCommand,
+  RollSaveCommand,
+  RollPerceptionCommand
+} from './RollCommands';
 
 export class Dnd5eRollService {
   constructor(private readonly actorRoll: ActorRollPort) {}
@@ -19,6 +24,12 @@ export class Dnd5eRollService {
 
   async rollSave(command: RollSaveCommand): Promise<RollOutcome> {
     return this.actorRoll.rollSave(command.actorId, command.ability, {
+      showInChat: command.showInChat
+    });
+  }
+
+  async rollPerception(command: RollPerceptionCommand): Promise<RollOutcome> {
+    return this.actorRoll.rollPerception(command.actorId, {
       showInChat: command.showInChat
     });
   }

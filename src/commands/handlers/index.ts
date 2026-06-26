@@ -3,9 +3,13 @@ export { sendChatMessageHandler } from '@/commands/handlers/SendChatMessageHandl
 
 // Actor handlers
 export {
-  rollSkillHandler,
-  rollSaveHandler,
-  rollAbilityHandler,
+  dnd5eRollSkillHandler,
+  dnd5eRollSaveHandler,
+  dnd5eRollAbilityHandler,
+  dnd5eRollPerceptionHandler,
+  pf2eRollSkillHandler,
+  pf2eRollSaveHandler,
+  pf2eRollPerceptionHandler,
   rollAttackHandler,
   rollDamageHandler,
   createActorHandler,
@@ -202,3 +206,25 @@ export {
   panCanvasHandler,
   pingLocationHandler
 } from '@/commands/handlers/system';
+// PF2e condition handlers
+export {
+  pf2eSetConditionHandler,
+  pf2eRemoveConditionHandler,
+  pf2eIncreaseConditionHandler,
+  pf2eDecreaseConditionHandler,
+  pf2eGetConditionsHandler
+} from '@/commands/handlers/condition';
+
+// PF2e strike handlers
+export {
+  pf2eListStrikesHandler,
+  pf2eRollStrikeHandler,
+  pf2eRollStrikeDamageHandler
+} from '@/commands/handlers/strike';
+
+// PF2e item-use handlers
+export {
+  pf2eUseConsumableHandler,
+  pf2eCastSpellHandler,
+  pf2ePostItemHandler
+} from '@/commands/handlers/item-use';

@@ -1,19 +1,22 @@
-import type { SkillKey, AbilityKey } from '@/systems/dnd5e/rolls/domain';
-
 export interface RollSkillCommand {
   readonly actorId: string;
-  readonly skill: SkillKey;
+  readonly skill: string;
   readonly showInChat: boolean;
 }
 
 export interface RollAbilityCommand {
   readonly actorId: string;
-  readonly ability: AbilityKey;
+  readonly ability: string;
   readonly showInChat: boolean;
 }
 
 export interface RollSaveCommand {
   readonly actorId: string;
-  readonly ability: AbilityKey;
+  readonly ability: string;
+  readonly showInChat: boolean;
+}
+
+export interface RollPerceptionCommand {
+  readonly actorId: string;
   readonly showInChat: boolean;
 }

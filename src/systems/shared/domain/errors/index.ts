@@ -5,3 +5,5 @@ export { RollResolutionError } from './RollResolutionError';
 export { ItemNotFoundError } from './ItemNotFoundError';
 export { ActivityResolutionError } from './ActivityResolutionError';
 export { TargetTokenNotFoundError } from './TargetTokenNotFoundError';
+export { UnsupportedSystemError } from './UnsupportedSystemError';
+export { UnsupportedOperationError } from './UnsupportedOperationError';

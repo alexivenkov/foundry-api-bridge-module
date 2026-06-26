@@ -1,15 +1,14 @@
 import type { RollSaveParams, RollResult } from '@/commands/types';
 import { formatZodError } from '@/systems/shared/validation';
 import type { RollOutcome } from '@/systems/shared/domain';
+import { requireSystem } from '@/systems';
 import {
   createDnd5eRollService,
   Dnd5eActorRollGateway,
+  getDnd5eRollGame,
   rollSaveRequestSchema,
-  RequestToCommandMapper,
-  type FoundryRollGame
+  RequestToCommandMapper
 } from '@/systems/dnd5e/rolls';
-
-declare const game: FoundryRollGame;
 
 function toRollResult(outcome: RollOutcome): RollResult {
   const result: RollResult = {
@@ -32,7 +31,9 @@ function toRollResult(outcome: RollOutcome): RollResult {
   return result;
 }
 
-export async function rollSaveHandler(params: RollSaveParams): Promise<RollResult> {
+export async function dnd5eRollSaveHandler(params: RollSaveParams): Promise<RollResult> {
+  requireSystem('dnd5e', 'dnd5e/roll-save');
+
   const parsed = rollSaveRequestSchema.safeParse(params);
   if (!parsed.success) {
     throw new Error(formatZodError(parsed.error));
@@ -40,7 +41,7 @@ export async function rollSaveHandler(params: RollSaveParams): Promise<RollResul
 
   const command = RequestToCommandMapper.toRollSaveCommand(parsed.data);
 
-  const gateway = new Dnd5eActorRollGateway(game);
+  const gateway = new Dnd5eActorRollGateway(getDnd5eRollGame());
   const service = createDnd5eRollService({ actorRoll: gateway });
 
   const outcome = await service.rollSave(command);

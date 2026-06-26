@@ -1,16 +1,17 @@
 import type { RollOutcome } from '@/systems/shared/domain';
-import type { SkillKey, AbilityKey } from '@/systems/dnd5e/rolls/domain/value-objects';
 
-export interface RollSkillOptions {
+export interface RollOptions {
   readonly showInChat: boolean;
 }
 
 /**
- * Outbound port for actor rolls. Implemented per game system by an
- * infrastructure gateway (anti-corruption layer over the Foundry API).
+ * Outbound port for D&D 5e actor rolls. Implemented by the dnd5e infrastructure
+ * gateway. Identifiers arrive as plain strings and are validated into dnd5e
+ * value-objects inside the gateway.
  */
 export interface ActorRollPort {
-  rollSkill(actorId: string, skill: SkillKey, options: RollSkillOptions): Promise<RollOutcome>;
-  rollAbility(actorId: string, ability: AbilityKey, options: RollSkillOptions): Promise<RollOutcome>;
-  rollSave(actorId: string, ability: AbilityKey, options: RollSkillOptions): Promise<RollOutcome>;
+  rollSkill(actorId: string, skill: string, options: RollOptions): Promise<RollOutcome>;
+  rollSave(actorId: string, ability: string, options: RollOptions): Promise<RollOutcome>;
+  rollAbility(actorId: string, ability: string, options: RollOptions): Promise<RollOutcome>;
+  rollPerception(actorId: string, options: RollOptions): Promise<RollOutcome>;
 }

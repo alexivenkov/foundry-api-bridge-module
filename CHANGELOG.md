@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.8.0] - 2026-06-26
+
+### Added
+
+- **Pathfinder 2e (PF2e) support — 14 new `pf2e/*` commands.** First non-dnd5e game system. Each command is a fully independent PF2e implementation (its own DDD slice under `src/systems/pf2e/`), verified against the installed pf2e 7.12.2 API:
+  - **Rolls** — `pf2e/roll-skill`, `pf2e/roll-save` (fortitude/reflex/will), `pf2e/roll-perception` via the PF2e Statistic API (`actor.skills[slug].check.roll`, `actor.saves`, `actor.perception`). Degree of success maps to the neutral critical/fumble flags. PF2e has no bare ability checks, so there is no `pf2e/roll-ability`.
+  - **Conditions** — `pf2e/set-condition` (valued conditions set to an exact value), `pf2e/remove-condition`, `pf2e/get-conditions`, `pf2e/increase-condition`, `pf2e/decrease-condition` via `actor.increaseCondition`/`decreaseCondition`. 43 supported slugs (excludes `persistent-damage` and `malevolence`); the 12 valued conditions are tracked.
+  - **Strikes** — `pf2e/list-strikes`, `pf2e/roll-strike` (multiple-attack-penalty step via `mapIncrease` 0/1/2 → 0/−5/−10), `pf2e/roll-strike-damage` (normal or `critical`) via `actor.system.actions[].variants[].roll` / `damage()` / `critical()`.
+  - **Item use** — `pf2e/use-consumable` (`consume()`), `pf2e/cast-spell` (cast via the spell's spellcasting entry, optional heightened `rank`), `pf2e/post-item` (`toMessage()`). PF2e has no generic `item.use()`, so the entry points are per item type.
+- **`dnd5e/roll-perception`** (and neutral `roll-perception`) — perception check, implemented as the `prc` skill.
+
+### Changed
+
+- **System-mismatch guard on all system-aware commands** — every `<system>/<command>` (and the legacy bare aliases) now calls `requireSystem(...)`. Invoking a command in a world running a different game system returns a clear `Operation '<command>' is not supported by game system '<world>'` error instead of running mismatched logic against incompatible actor data.
+- **Full per-system separation** — the neutral roll seam introduced earlier (`getGameSystem` + `src/systems/contracts/`) was removed in favour of independent per-system slices: dnd5e and PF2e each own their handlers, gateways, services, and validation. Adding a system never touches another system's code. dnd5e roll behaviour in a dnd5e world is unchanged.
+
+### Technical
+
+- 2478 tests passing (was 2400 in v8.7.0; +78 across the new PF2e bounded contexts and the separation refactor)
+- 14 `pf2e/*` commands plus `dnd5e/roll-perception` / `roll-perception` added to `CommandType`, `CommandParamsMap`, `CommandResultMap`, and registered in `main.ts`
+- No breaking wire-API changes — existing commands' params and results are unchanged; all additions are additive
+- PF2e API verified against the locally installed pf2e 7.12.2 (the system's internal JS API drifts between releases)
+
 ## [8.7.0] - 2026-06-24
 
 ### Added

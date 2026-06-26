@@ -1,0 +1,49 @@
+import type { RollPerceptionParams, RollResult } from '@/commands/types';
+import { formatZodError } from '@/systems/shared/validation';
+import type { RollOutcome } from '@/systems/shared/domain';
+import { requireSystem } from '@/systems';
+import {
+  createDnd5eRollService,
+  Dnd5eActorRollGateway,
+  getDnd5eRollGame,
+  rollPerceptionRequestSchema,
+  RequestToCommandMapper
+} from '@/systems/dnd5e/rolls';
+
+function toRollResult(outcome: RollOutcome): RollResult {
+  const result: RollResult = {
+    total: outcome.total,
+    formula: outcome.formula,
+    dice: outcome.dice.map((d) => ({
+      type: d.type,
+      count: d.count,
+      results: [...d.results]
+    }))
+  };
+
+  if (outcome.isCritical) {
+    result.isCritical = true;
+  }
+  if (outcome.isFumble) {
+    result.isFumble = true;
+  }
+
+  return result;
+}
+
+export async function dnd5eRollPerceptionHandler(params: RollPerceptionParams): Promise<RollResult> {
+  requireSystem('dnd5e', 'dnd5e/roll-perception');
+
+  const parsed = rollPerceptionRequestSchema.safeParse(params);
+  if (!parsed.success) {
+    throw new Error(formatZodError(parsed.error));
+  }
+
+  const command = RequestToCommandMapper.toRollPerceptionCommand(parsed.data);
+
+  const gateway = new Dnd5eActorRollGateway(getDnd5eRollGame());
+  const service = createDnd5eRollService({ actorRoll: gateway });
+
+  const outcome = await service.rollPerception(command);
+  return toRollResult(outcome);
+}

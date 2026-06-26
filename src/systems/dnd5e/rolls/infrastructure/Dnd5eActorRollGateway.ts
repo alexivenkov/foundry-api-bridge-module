@@ -1,37 +1,51 @@
 import { ActorNotFoundError, RollResolutionError } from '@/systems/shared/domain/errors';
 import type { RollOutcome } from '@/systems/shared/domain';
-import type { ActorRollPort, RollSkillOptions, SkillKey, AbilityKey } from '@/systems/dnd5e/rolls/domain';
+import type { ActorRollPort, RollOptions } from '@/systems/dnd5e/rolls/domain';
+import { parseSkillKey, parseAbilityKey } from '@/systems/dnd5e/rolls/domain';
 import type { FoundryD20Roll, FoundryRollActor, FoundryRollGame } from './foundryRollTypes';
 import { toRollOutcome } from './rollOutcomeMapper';
 
 /**
- * Anti-corruption layer between the domain ActorRollPort and the Foundry
- * dnd5e API. All dnd5e roll-API knowledge stays quarantined here.
+ * Anti-corruption layer between the neutral ActorRollPort and the Foundry
+ * dnd5e API. All dnd5e roll-API knowledge — including validation of the neutral
+ * string identifiers into dnd5e value-objects — stays quarantined here.
  */
 export class Dnd5eActorRollGateway implements ActorRollPort {
   constructor(private readonly game: FoundryRollGame) {}
 
-  rollSkill(actorId: string, skill: SkillKey, options: RollSkillOptions): Promise<RollOutcome> {
+  rollSkill(actorId: string, skill: string, options: RollOptions): Promise<RollOutcome> {
     return this.rollD20(
       actorId,
-      (actor) => actor.rollSkill({ skill }, { configure: false }, { create: options.showInChat }),
+      (actor) =>
+        actor.rollSkill({ skill: parseSkillKey(skill) }, { configure: false }, { create: options.showInChat }),
       'Skill roll returned no results'
     );
   }
 
-  rollAbility(actorId: string, ability: AbilityKey, options: RollSkillOptions): Promise<RollOutcome> {
+  rollSave(actorId: string, save: string, options: RollOptions): Promise<RollOutcome> {
     return this.rollD20(
       actorId,
-      (actor) => actor.rollAbilityCheck({ ability }, { configure: false }, { create: options.showInChat }),
+      (actor) =>
+        actor.rollSavingThrow({ ability: parseAbilityKey(save) }, { configure: false }, { create: options.showInChat }),
+      'Saving throw roll returned no results'
+    );
+  }
+
+  rollAbility(actorId: string, ability: string, options: RollOptions): Promise<RollOutcome> {
+    return this.rollD20(
+      actorId,
+      (actor) =>
+        actor.rollAbilityCheck({ ability: parseAbilityKey(ability) }, { configure: false }, { create: options.showInChat }),
       'Ability check roll returned no results'
     );
   }
 
-  rollSave(actorId: string, ability: AbilityKey, options: RollSkillOptions): Promise<RollOutcome> {
+  rollPerception(actorId: string, options: RollOptions): Promise<RollOutcome> {
     return this.rollD20(
       actorId,
-      (actor) => actor.rollSavingThrow({ ability }, { configure: false }, { create: options.showInChat }),
-      'Saving throw roll returned no results'
+      (actor) =>
+        actor.rollSkill({ skill: parseSkillKey('prc') }, { configure: false }, { create: options.showInChat }),
+      'Perception roll returned no results'
     );
   }
 

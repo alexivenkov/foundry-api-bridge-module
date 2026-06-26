@@ -1,6 +1,7 @@
 import type { UseItemParams, UseItemResult, RollResult } from '@/commands/types';
 import { formatZodError } from '@/systems/shared/validation';
 import type { RollOutcome } from '@/systems/shared/domain';
+import { requireSystem } from '@/systems';
 import {
   createDnd5eItemUseService,
   Dnd5eItemUseGateway,
@@ -56,6 +57,8 @@ function toUseItemResult(outcome: UseItemOutcome): UseItemResult {
 }
 
 export async function useItemHandler(params: UseItemParams): Promise<UseItemResult> {
+  requireSystem('dnd5e', 'dnd5e/use-item');
+
   const parsed = useItemRequestSchema.safeParse(params);
   if (!parsed.success) {
     throw new Error(formatZodError(parsed.error));

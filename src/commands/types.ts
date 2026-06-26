@@ -25,6 +25,22 @@ export type CommandType =
   | 'roll-attack' // @deprecated alias of 'dnd5e/roll-attack'
   | 'dnd5e/roll-damage'
   | 'roll-damage' // @deprecated alias of 'dnd5e/roll-damage'
+  | 'dnd5e/roll-perception'
+  | 'roll-perception'
+  | 'pf2e/roll-skill'
+  | 'pf2e/roll-save'
+  | 'pf2e/roll-perception'
+  | 'pf2e/set-condition'
+  | 'pf2e/remove-condition'
+  | 'pf2e/get-conditions'
+  | 'pf2e/increase-condition'
+  | 'pf2e/decrease-condition'
+  | 'pf2e/list-strikes'
+  | 'pf2e/roll-strike'
+  | 'pf2e/roll-strike-damage'
+  | 'pf2e/use-consumable'
+  | 'pf2e/cast-spell'
+  | 'pf2e/post-item'
   | 'get-world-info'
   | 'get-actors'
   | 'filter-actors'
@@ -193,6 +209,134 @@ export interface RollDamageParams {
   itemId: string;
   critical?: boolean;
   showInChat?: boolean;
+}
+
+export interface RollPerceptionParams {
+  actorId: string;
+  showInChat?: boolean;
+}
+
+export type Pf2eSaveSlug = 'fortitude' | 'reflex' | 'will';
+
+export interface Pf2eRollSaveParams {
+  actorId: string;
+  save: Pf2eSaveSlug;
+  showInChat?: boolean;
+}
+
+// PF2e Condition Commands
+export interface SetConditionParams {
+  actorId: string;
+  slug: string;
+  value?: number;
+}
+
+export interface ConditionSlugParams {
+  actorId: string;
+  slug: string;
+}
+
+export interface GetConditionsParams {
+  actorId: string;
+}
+
+export interface ConditionStateWire {
+  slug: string;
+  name: string;
+  value: number | null;
+  active: boolean;
+}
+
+export interface ConditionMutationResult {
+  actorId: string;
+  condition: ConditionStateWire | null;
+}
+
+export interface ConditionRemovalResult {
+  actorId: string;
+  slug: string;
+  removed: boolean;
+}
+
+export interface ConditionListResult {
+  actorId: string;
+  actorName: string;
+  conditions: ConditionStateWire[];
+}
+
+// PF2e Strike Commands
+export interface ListStrikesParams {
+  actorId: string;
+}
+
+export interface RollStrikeParams {
+  actorId: string;
+  slug: string;
+  mapIncrease?: number;
+  showInChat?: boolean;
+}
+
+export interface RollStrikeDamageParams {
+  actorId: string;
+  slug: string;
+  critical?: boolean;
+  showInChat?: boolean;
+}
+
+export interface StrikeSummaryWire {
+  slug: string;
+  label: string;
+  ready: boolean;
+  variants: string[];
+}
+
+export interface StrikeListResult {
+  actorId: string;
+  actorName: string;
+  strikes: StrikeSummaryWire[];
+}
+
+// PF2e Item Use Commands
+export interface UseConsumableParams {
+  actorId: string;
+  itemId: string;
+  quantity?: number;
+}
+
+export interface CastSpellParams {
+  actorId: string;
+  spellId: string;
+  rank?: number;
+  showInChat?: boolean;
+}
+
+export interface PostItemParams {
+  actorId: string;
+  itemId: string;
+  showInChat?: boolean;
+}
+
+export interface UseConsumableResult {
+  itemId: string;
+  itemName: string;
+  consumed: true;
+  remainingUses: number | null;
+  remainingQuantity: number | null;
+}
+
+export interface CastSpellResult {
+  spellId: string;
+  spellName: string;
+  rank: number;
+  cast: true;
+}
+
+export interface PostItemResult {
+  itemId: string;
+  itemName: string;
+  itemType: string;
+  posted: true;
+  chatMessageId: string | null;
 }
 
 export interface GetActorParams {
@@ -2114,6 +2258,22 @@ export interface CommandParamsMap {
   'roll-attack': RollAttackParams; // @deprecated alias of 'dnd5e/roll-attack'
   'dnd5e/roll-damage': RollDamageParams;
   'roll-damage': RollDamageParams; // @deprecated alias of 'dnd5e/roll-damage'
+  'dnd5e/roll-perception': RollPerceptionParams;
+  'roll-perception': RollPerceptionParams;
+  'pf2e/roll-skill': RollSkillParams;
+  'pf2e/roll-save': Pf2eRollSaveParams;
+  'pf2e/roll-perception': RollPerceptionParams;
+  'pf2e/set-condition': SetConditionParams;
+  'pf2e/remove-condition': ConditionSlugParams;
+  'pf2e/get-conditions': GetConditionsParams;
+  'pf2e/increase-condition': ConditionSlugParams;
+  'pf2e/decrease-condition': ConditionSlugParams;
+  'pf2e/list-strikes': ListStrikesParams;
+  'pf2e/roll-strike': RollStrikeParams;
+  'pf2e/roll-strike-damage': RollStrikeDamageParams;
+  'pf2e/use-consumable': UseConsumableParams;
+  'pf2e/cast-spell': CastSpellParams;
+  'pf2e/post-item': PostItemParams;
   'get-world-info': GetWorldInfoParams;
   'get-actors': Record<string, never>;
   'filter-actors': FilterActorsParams;
@@ -2258,6 +2418,22 @@ export interface CommandResultMap {
   'roll-attack': RollResult; // @deprecated alias of 'dnd5e/roll-attack'
   'dnd5e/roll-damage': RollResult;
   'roll-damage': RollResult; // @deprecated alias of 'dnd5e/roll-damage'
+  'dnd5e/roll-perception': RollResult;
+  'roll-perception': RollResult;
+  'pf2e/roll-skill': RollResult;
+  'pf2e/roll-save': RollResult;
+  'pf2e/roll-perception': RollResult;
+  'pf2e/set-condition': ConditionMutationResult;
+  'pf2e/remove-condition': ConditionRemovalResult;
+  'pf2e/get-conditions': ConditionListResult;
+  'pf2e/increase-condition': ConditionMutationResult;
+  'pf2e/decrease-condition': ConditionMutationResult;
+  'pf2e/list-strikes': StrikeListResult;
+  'pf2e/roll-strike': RollResult;
+  'pf2e/roll-strike-damage': RollResult;
+  'pf2e/use-consumable': UseConsumableResult;
+  'pf2e/cast-spell': CastSpellResult;
+  'pf2e/post-item': PostItemResult;
   'get-world-info': WorldInfoResult;
   'get-actors': ActorSummary[];
   'filter-actors': FilterActorsResult;

@@ -68,7 +68,8 @@ const mockActor = {
 const mockGame = {
   actors: {
     get: jest.fn()
-  }
+  },
+  system: { id: 'dnd5e' }
 };
 
 (globalThis as Record<string, unknown>)['game'] = mockGame;

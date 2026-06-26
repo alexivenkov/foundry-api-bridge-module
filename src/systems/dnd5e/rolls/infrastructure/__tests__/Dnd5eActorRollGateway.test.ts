@@ -1,6 +1,6 @@
 import { Dnd5eActorRollGateway } from '../Dnd5eActorRollGateway';
 import type { FoundryRollGame } from '../foundryRollTypes';
-import { ActorNotFoundError, RollResolutionError } from '@/systems/shared/domain/errors';
+import { ActorNotFoundError, RollResolutionError, ValidationError } from '@/systems/shared/domain/errors';
 
 const mockRoll = {
   total: 15,
@@ -139,5 +139,27 @@ describe('Dnd5eActorRollGateway', () => {
     await expect(
       gateway.rollSave('a1', 'dex', { showInChat: false })
     ).rejects.toThrow('Saving throw roll returned no results');
+  });
+
+  it('rolls perception via the perception skill (prc)', async () => {
+    const rollSkill = jest.fn().mockResolvedValue([mockRoll]);
+    const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollSkill }));
+
+    await gateway.rollPerception('a1', { showInChat: true });
+
+    expect(rollSkill).toHaveBeenCalledWith(
+      { skill: 'prc' },
+      { configure: false },
+      { create: true }
+    );
+  });
+
+  it('throws ValidationError for an unknown skill slug', async () => {
+    const rollSkill = jest.fn().mockResolvedValue([mockRoll]);
+    const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollSkill }));
+
+    await expect(
+      gateway.rollSkill('a1', 'acrobatics', { showInChat: false })
+    ).rejects.toThrow(ValidationError);
   });
 });
