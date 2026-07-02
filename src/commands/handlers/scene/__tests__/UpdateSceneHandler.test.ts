@@ -220,7 +220,7 @@ describe('updateSceneHandler', () => {
 
       expect(mockUpdate).toHaveBeenCalledWith({
         environment: { darknessLevel: 0.4 },
-        fog: { exploration: false }
+        fog: { mode: 0 }               // FOG_EXPLORATION_MODES.DISABLED
       });
     });
   });

@@ -1,6 +1,6 @@
 import type { CreateSceneParams, CreateSceneResult } from '@/commands/types';
 import { isV14Plus } from '@/compat/foundryVersion';
-import { getSceneClass, gridTypeStringToNumber, mapSceneToCrudSummary } from './sceneTypes';
+import { getSceneClass, gridTypeStringToNumber, mapSceneToCrudSummary, fogExplorationToMode } from './sceneTypes';
 
 export async function createSceneHandler(params: CreateSceneParams): Promise<CreateSceneResult> {
   const data: Record<string, unknown> = { name: params.name };
@@ -58,7 +58,7 @@ export async function createSceneHandler(params: CreateSceneParams): Promise<Cre
 
   if (params.fogExploration !== undefined) {
     if (isV14Plus()) {
-      data['fog'] = { exploration: params.fogExploration };
+      data['fog'] = { mode: fogExplorationToMode(params.fogExploration) };
     } else {
       data['fogExploration'] = params.fogExploration;
     }

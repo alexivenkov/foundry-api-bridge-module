@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.10.1] - 2026-07-02
+
+### Fixed
+
+- **Scene fog exploration was silently ignored on Foundry v14.** `create-scene` / `update-scene` wrote the `fogExploration` flag to `fog.exploration`, but v14 removed that field (it is now a deprecated getter) — the real field is the numeric `fog.mode` (`CONST.FOG_EXPLORATION_MODES`: `DISABLED=0`, `INDIVIDUAL=1`, `SHARED=2`). The boolean `fogExploration` param is now mapped to `fog.mode` on v14 (`true` → `INDIVIDUAL`, `false` → `DISABLED`) while v11–v13 keep writing the flat `fogExploration` field. The wire contract is unchanged — clients still send `fogExploration: boolean`. Verified against Foundry v14.364. (Scene `darkness` → `environment.darknessLevel` from v8.9.0 was re-confirmed correct on the same build.)
+
+### Technical
+
+- 2501 tests passing; the two scene v14-branch tests now assert `fog: { mode }` instead of `fog: { exploration }`
+- No wire-API changes; the boolean→mode mapping lives in `fogExplorationToMode()` in `sceneTypes.ts`
+- Live v14 verification also cleared the remaining v14 risk items with no code change needed: Foundry v14.364 still ships PIXI 7 (canvas capture / grid overlay unaffected) and `MeasuredTemplate` embedding still works (dnd5e AoE templates unaffected)
+
 ## [8.10.0] - 2026-07-02
 
 ### Added

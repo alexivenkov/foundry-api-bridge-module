@@ -1,6 +1,6 @@
 import type { UpdateSceneParams, UpdateSceneResult } from '@/commands/types';
 import { isV14Plus } from '@/compat/foundryVersion';
-import { getGameCrud, gridTypeStringToNumber, mapSceneToCrudSummary } from './sceneTypes';
+import { getGameCrud, gridTypeStringToNumber, mapSceneToCrudSummary, fogExplorationToMode } from './sceneTypes';
 
 export async function updateSceneHandler(params: UpdateSceneParams): Promise<UpdateSceneResult> {
   const scene = getGameCrud().scenes.get(params.sceneId);
@@ -67,7 +67,7 @@ export async function updateSceneHandler(params: UpdateSceneParams): Promise<Upd
 
   if (params.fogExploration !== undefined) {
     if (isV14Plus()) {
-      updateData['fog'] = { exploration: params.fogExploration };
+      updateData['fog'] = { mode: fogExplorationToMode(params.fogExploration) };
     } else {
       updateData['fogExploration'] = params.fogExploration;
     }

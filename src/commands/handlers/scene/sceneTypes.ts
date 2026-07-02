@@ -362,6 +362,17 @@ export function gridTypeNumberToString(num: number): SceneGridType {
   return GRID_TYPE_FROM_NUMBER[num] ?? 'square';
 }
 
+// Foundry v14 replaced the boolean Scene#fogExploration with the numeric
+// Scene#fog.mode (CONST.FOG_EXPLORATION_MODES: DISABLED=0, INDIVIDUAL=1,
+// SHARED=2). The wire contract stays a boolean, so map it to the closest mode:
+// enabled → INDIVIDUAL (the schema default), disabled → DISABLED.
+const FOG_MODE_DISABLED = 0;
+const FOG_MODE_INDIVIDUAL = 1;
+
+export function fogExplorationToMode(enabled: boolean): number {
+  return enabled ? FOG_MODE_INDIVIDUAL : FOG_MODE_DISABLED;
+}
+
 function extractBackgroundSrc(bg: { src?: string } | string | null | undefined): string | null {
   if (bg === null || bg === undefined) return null;
   if (typeof bg === 'string') return bg.length > 0 ? bg : null;

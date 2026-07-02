@@ -264,7 +264,7 @@ describe('createSceneHandler', () => {
 
       expect(mockCreate).toHaveBeenCalledWith({
         name: 'V14',
-        fog: { exploration: true },
+        fog: { mode: 1 },              // FOG_EXPLORATION_MODES.INDIVIDUAL (enabled)
         environment: { darknessLevel: 0.6 }
       });
     });
