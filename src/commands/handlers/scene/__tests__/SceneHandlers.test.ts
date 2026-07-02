@@ -81,6 +81,7 @@ interface MockScene {
   height: number;
   grid: { size: number; type: number; units: string; distance: number };
   darkness: number;
+  environment?: { darknessLevel?: number };
   notes: { contents: MockNote[] };
   walls: { contents: MockWall[] };
   lights: { contents: MockLight[] };
@@ -456,6 +457,15 @@ describe('Scene Handlers', () => {
       const result = await getSceneHandler({});
 
       expect(result.darkness).toBe(0);
+    });
+
+    it('reads darkness from v14 environment.darknessLevel, taking precedence over flat darkness', async () => {
+      const mockScene = createMockScene({ darkness: 0.3, environment: { darknessLevel: 0.8 } });
+      mockGame.scenes.active = mockScene;
+
+      const result = await getSceneHandler({});
+
+      expect(result.darkness).toBe(0.8);
     });
 
     it('handles wall with door type', async () => {

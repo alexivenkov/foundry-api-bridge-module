@@ -1,4 +1,5 @@
 import type { MoveTokenParams, TokenResult } from '@/commands/types';
+import { isV14Plus } from '@/compat/foundryVersion';
 import {
   getActiveScene,
   getToken,
@@ -155,7 +156,11 @@ async function moveAlongPathWithDoors(
     }
 
     if (hasDoor) {
-      await current.update(updateData, { animate, teleport: true });
+      // `teleport` is a v11–v13 update option that skips collision/animation for
+      // the single door-crossing step. It was removed in v14's movement model;
+      // there we fall back to a normal animated step (safe degradation).
+      const doorStepOptions = isV14Plus() ? { animate } : { animate, teleport: true };
+      await current.update(updateData, doorStepOptions);
     } else {
       await current.update(updateData, { animate });
     }

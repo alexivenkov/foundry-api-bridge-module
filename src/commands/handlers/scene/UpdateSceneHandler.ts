@@ -1,4 +1,5 @@
 import type { UpdateSceneParams, UpdateSceneResult } from '@/commands/types';
+import { isV14Plus } from '@/compat/foundryVersion';
 import { getGameCrud, gridTypeStringToNumber, mapSceneToCrudSummary } from './sceneTypes';
 
 export async function updateSceneHandler(params: UpdateSceneParams): Promise<UpdateSceneResult> {
@@ -65,11 +66,19 @@ export async function updateSceneHandler(params: UpdateSceneParams): Promise<Upd
   }
 
   if (params.fogExploration !== undefined) {
-    updateData['fogExploration'] = params.fogExploration;
+    if (isV14Plus()) {
+      updateData['fog'] = { exploration: params.fogExploration };
+    } else {
+      updateData['fogExploration'] = params.fogExploration;
+    }
   }
 
   if (params.darkness !== undefined) {
-    updateData['darkness'] = params.darkness;
+    if (isV14Plus()) {
+      updateData['environment'] = { darknessLevel: params.darkness };
+    } else {
+      updateData['darkness'] = params.darkness;
+    }
   }
 
   if (params.folder !== undefined) {

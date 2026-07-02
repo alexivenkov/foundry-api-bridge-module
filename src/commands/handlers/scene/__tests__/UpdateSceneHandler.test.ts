@@ -206,4 +206,22 @@ describe('updateSceneHandler', () => {
     const call = mockUpdate.mock.calls[0]?.[0] as Record<string, unknown>;
     expect(call['grid']).toEqual({ distance: 10, units: 'm' });
   });
+
+  describe('v14 scene schema (environment/fog paths)', () => {
+    it('writes darkness/fog as nested environment/fog objects on v14', async () => {
+      (globalThis as Record<string, unknown>)['game'] = {
+        scenes: { get: mockGet },
+        release: { generation: 14 }
+      };
+      mockGet.mockReturnValue(makeScene());
+      mockUpdate.mockResolvedValue(makeScene());
+
+      await updateSceneHandler({ sceneId: 'scene-1', darkness: 0.4, fogExploration: false });
+
+      expect(mockUpdate).toHaveBeenCalledWith({
+        environment: { darknessLevel: 0.4 },
+        fog: { exploration: false }
+      });
+    });
+  });
 });

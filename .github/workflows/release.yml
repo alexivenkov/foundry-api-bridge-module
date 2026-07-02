@@ -83,8 +83,7 @@ jobs:
                 \"notes\": \"https://github.com/alexivenkov/foundry-api-bridge-module/releases/tag/v${RELEASE_VERSION}\",
                 \"compatibility\": {
                   \"minimum\": \"11\",
-                  \"verified\": \"13\",
-                  \"maximum\": \"13\"
+                  \"verified\": \"14\"
                 }
               }
             }"

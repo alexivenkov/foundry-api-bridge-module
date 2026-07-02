@@ -1,4 +1,5 @@
 import type { CreateSceneParams, CreateSceneResult } from '@/commands/types';
+import { isV14Plus } from '@/compat/foundryVersion';
 import { getSceneClass, gridTypeStringToNumber, mapSceneToCrudSummary } from './sceneTypes';
 
 export async function createSceneHandler(params: CreateSceneParams): Promise<CreateSceneResult> {
@@ -56,11 +57,19 @@ export async function createSceneHandler(params: CreateSceneParams): Promise<Cre
   }
 
   if (params.fogExploration !== undefined) {
-    data['fogExploration'] = params.fogExploration;
+    if (isV14Plus()) {
+      data['fog'] = { exploration: params.fogExploration };
+    } else {
+      data['fogExploration'] = params.fogExploration;
+    }
   }
 
   if (params.darkness !== undefined) {
-    data['darkness'] = params.darkness;
+    if (isV14Plus()) {
+      data['environment'] = { darknessLevel: params.darkness };
+    } else {
+      data['darkness'] = params.darkness;
+    }
   }
 
   if (params.folder !== undefined) {

@@ -112,6 +112,7 @@ export interface FoundryScene {
   height: number | undefined;
   grid: FoundryGrid | undefined;
   darkness: number | undefined;
+  environment?: { darknessLevel?: number } | undefined;
   notes: { contents: FoundryNote[] } | undefined;
   walls: { contents: FoundryWall[] } | undefined;
   lights: { contents: FoundryLight[] } | undefined;
@@ -273,7 +274,7 @@ export function mapSceneToDetail(scene: FoundryScene): SceneDetailResult {
       units: scene.grid?.units ?? 'ft',
       distance: scene.grid?.distance ?? 5
     },
-    darkness: scene.darkness ?? 0,
+    darkness: scene.environment?.darknessLevel ?? scene.darkness ?? 0,
     notes: (scene.notes?.contents ?? []).map(mapNoteToResult),
     walls: (scene.walls?.contents ?? []).map(mapWallToResult),
     lights: (scene.lights?.contents ?? []).map(mapLightToResult),

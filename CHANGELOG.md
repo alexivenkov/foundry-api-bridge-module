@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.9.0] - 2026-07-02
+
+### Added
+
+- **Foundry VTT v14 compatibility.** The manifest now declares `compatibility.verified: "14"` and no longer caps at a `maximum`, so the module loads on Foundry v14 while continuing to support v11–v13 from a single build. A runtime version detector (`src/compat/foundryVersion.ts` — `foundryGeneration()` / `isV14Plus()`, reading `game.release.generation` with a `game.version` fallback) gates the few places where the v14 data model diverges.
+
+### Changed
+
+- **Scene lighting/fog writes adapt to the v14 schema.** `create-scene` and `update-scene` still accept the same `darkness` and `fogExploration` params, but on v14 they are written to the restructured schema (`environment: { darknessLevel }`, `fog: { exploration }`) and on v11–v13 to the legacy flat fields. `get-scene` reads darkness from `environment.darknessLevel` with a fallback to the flat field. The wire protocol is unchanged — clients send and receive the same fields on every Foundry version.
+- **Token door-crossing movement drops the removed `teleport` update option on v14.** The `move-token` door-opening step used the v11–v13 `{ teleport: true }` update flag, which no longer exists in v14's movement model; on v14 the step falls back to a normal animated move. Purely internal — not a `move-token` param.
+
+### Technical
+
+- 2492 tests passing (was 2478 in v8.8.0; +14 across the version detector and the v13/v14-branching scene and token tests)
+- No breaking wire-API changes — no commands added or removed, and every command's params and results are identical across Foundry v11–v14; all v14 differences are absorbed inside the module
+- `compatibility.maximum` was also removed from the release workflow's Foundry-package publish payload (`.github/workflows/release.yml`) to match the manifest
+- v14 schema paths (`environment.darknessLevel`, `fog.exploration`) and the token movement change remain to be confirmed against a live v14 build
+
 ## [8.8.0] - 2026-06-26
 
 ### Added

@@ -797,6 +797,45 @@ describe('Token Handlers', () => {
           expect(call[1]?.animate).toBe(true);
         }
       });
+
+      it('uses teleport on the door-crossing step for v11-v13', async () => {
+        const collision = {
+          testCollision: jest.fn((origin: { x: number }, dest: { x: number }) => {
+            if ((origin.x < 200 && dest.x >= 200) || (origin.x >= 200 && dest.x < 200)) return true;
+            return false;
+          })
+        };
+
+        const { mockToken } = setupDoorScene(collision);
+
+        await moveTokenHandler({ tokenId: 'token-123', x: 300, y: 0, canOpenDoors: true });
+
+        const teleportCalls = mockToken.update.mock.calls.filter(c => c[1]?.teleport === true);
+        expect(teleportCalls.length).toBeGreaterThan(0);
+      });
+
+      it('omits teleport on every step on v14 (movement model changed)', async () => {
+        (mockGame as Record<string, unknown>)['release'] = { generation: 14 };
+        try {
+          const collision = {
+            testCollision: jest.fn((origin: { x: number }, dest: { x: number }) => {
+              if ((origin.x < 200 && dest.x >= 200) || (origin.x >= 200 && dest.x < 200)) return true;
+              return false;
+            })
+          };
+
+          const { mockToken } = setupDoorScene(collision);
+
+          await moveTokenHandler({ tokenId: 'token-123', x: 300, y: 0, canOpenDoors: true });
+
+          for (const call of mockToken.update.mock.calls) {
+            expect(call[1]).not.toHaveProperty('teleport');
+            expect(call[1]?.animate).toBe(true);
+          }
+        } finally {
+          delete (mockGame as Record<string, unknown>)['release'];
+        }
+      });
     });
   });
 

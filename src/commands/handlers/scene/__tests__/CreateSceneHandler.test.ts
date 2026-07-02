@@ -237,4 +237,36 @@ describe('createSceneHandler', () => {
 
     expect(result.background).toBeNull();
   });
+
+  describe('v14 scene schema (environment/fog paths)', () => {
+    afterEach(() => {
+      delete (globalThis as Record<string, unknown>)['game'];
+    });
+
+    it('writes darkness/fog to the flat v13 paths when generation < 14', async () => {
+      (globalThis as Record<string, unknown>)['game'] = { release: { generation: 13 } };
+      mockCreate.mockResolvedValue(makeReturnedScene());
+
+      await createSceneHandler({ name: 'V13', fogExploration: true, darkness: 0.6 });
+
+      expect(mockCreate).toHaveBeenCalledWith({
+        name: 'V13',
+        fogExploration: true,
+        darkness: 0.6
+      });
+    });
+
+    it('writes darkness/fog as nested environment/fog objects on v14', async () => {
+      (globalThis as Record<string, unknown>)['game'] = { release: { generation: 14 } };
+      mockCreate.mockResolvedValue(makeReturnedScene());
+
+      await createSceneHandler({ name: 'V14', fogExploration: true, darkness: 0.6 });
+
+      expect(mockCreate).toHaveBeenCalledWith({
+        name: 'V14',
+        fog: { exploration: true },
+        environment: { darknessLevel: 0.6 }
+      });
+    });
+  });
 });
