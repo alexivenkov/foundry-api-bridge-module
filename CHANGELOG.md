@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.10.0] - 2026-07-02
+
+### Added
+
+- **`search-compendiums` — cross-pack compendium name search.** Searches the index of every compendium pack for documents whose name contains a query substring (case-insensitive) and returns lightweight matches — `{ packId, packLabel, packType, system, id, name, documentType? }`. Optional `type` (pack document type, e.g. `Actor`/`Item`), `system` (e.g. `dnd5e`), and `limit` (default 100, capped inside the module) filters. Reads only `pack.getIndex()`, never full documents, so it stays fast across large packs. An empty result is `[]`, not an error.
+
+### Fixed
+
+- **MCP `compendium-search` always returned "No documents found".** The gateway's `get-compendiums` route intentionally returns metadata only with empty `documents: []` per pack (to avoid loading every pack's full documents), so the server-side tool that iterated those empty arrays never matched anything. The correct approach is to search `pack.index` inside Foundry and return only matches — enabled by the new `search-compendiums` command. (The gateway/MCP side is wired to this command separately in foundry-mcp.)
+
+### Technical
+
+- 2501 tests passing (was 2492 in v8.9.0; +9 covering multi-pack matching, type/system filters, limit capping across packs, empty-query and no-packs guards, optional `documentType`, and id fallback)
+- New command added to `CommandType`, `CommandParamsMap`, `CommandResultMap`, the handler barrels, and registered in `main.ts`; no changes to any existing command's params or results
+- `packLabel` is sourced from `pack.metadata.label` (consistent with `get-compendiums` / `get-compendium-index`)
+
 ## [8.9.0] - 2026-07-02
 
 ### Added

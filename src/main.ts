@@ -31,6 +31,7 @@ import {
   getCompendiumHandler,
   getCompendiumIndexHandler,
   searchCompendiumHandler,
+  searchCompendiumsHandler,
   getCompendiumDocumentHandler,
   importFromCompendiumHandler,
   createJournalHandler,
@@ -250,6 +251,7 @@ function initializeWebSocket(
   commandRouter.register('get-compendium', getCompendiumHandler);
   commandRouter.register('get-compendium-index', getCompendiumIndexHandler);
   commandRouter.register('search-compendium', searchCompendiumHandler);
+  commandRouter.register('search-compendiums', searchCompendiumsHandler);
   commandRouter.register('get-compendium-document', getCompendiumDocumentHandler);
   commandRouter.register('import-from-compendium', importFromCompendiumHandler);
   commandRouter.register('get-scene', getSceneHandler);

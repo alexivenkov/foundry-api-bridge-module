@@ -109,6 +109,7 @@ export {
   getCompendiumHandler,
   getCompendiumIndexHandler,
   searchCompendiumHandler,
+  searchCompendiumsHandler,
   getCompendiumDocumentHandler,
   importFromCompendiumHandler
 } from '@/commands/handlers/world';

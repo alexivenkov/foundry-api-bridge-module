@@ -117,6 +117,7 @@ export type CommandType =
   | 'get-compendium'
   | 'get-compendium-index'
   | 'search-compendium'
+  | 'search-compendiums'
   | 'get-compendium-document'
   | 'import-from-compendium'
   | 'list-roll-tables'
@@ -1567,6 +1568,27 @@ export interface SearchCompendiumResult {
   hasMore: boolean;
 }
 
+// Cross-pack name search (search-compendiums) — searches pack indexes across
+// ALL compendiums and returns only lightweight matches.
+export interface SearchCompendiumsParams {
+  query: string;
+  type?: string;
+  system?: string;
+  limit?: number;
+}
+
+export interface CompendiumSearchMatch {
+  packId: string;
+  packLabel: string;
+  packType: string;
+  system: string;
+  id: string;
+  name: string;
+  documentType?: string;
+}
+
+export type SearchCompendiumsResult = CompendiumSearchMatch[];
+
 export interface GetCompendiumDocumentParams {
   packId: string;
   documentId: string;
@@ -2350,6 +2372,7 @@ export interface CommandParamsMap {
   'get-compendium': GetCompendiumParams;
   'get-compendium-index': GetCompendiumIndexParams;
   'search-compendium': SearchCompendiumParams;
+  'search-compendiums': SearchCompendiumsParams;
   'get-compendium-document': GetCompendiumDocumentParams;
   'import-from-compendium': ImportFromCompendiumParams;
   'list-roll-tables': ListRollTablesParams;
@@ -2510,6 +2533,7 @@ export interface CommandResultMap {
   'get-compendium': CompendiumData;
   'get-compendium-index': GetCompendiumIndexResult;
   'search-compendium': SearchCompendiumResult;
+  'search-compendiums': SearchCompendiumsResult;
   'get-compendium-document': CompendiumDocumentResult;
   'import-from-compendium': ImportFromCompendiumResult;
   'list-roll-tables': RollTableSummary[];
