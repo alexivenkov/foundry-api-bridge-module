@@ -54,8 +54,8 @@ export class FoundryActorMapper {
 
     if (typeof typeField === 'string') {
       creatureTypeStr = typeField;
-    } else if (typeField !== undefined && typeof typeField === 'object') {
-      creatureTypeStr = typeField.value;
+    } else if (typeField !== null && typeof typeField === 'object') {
+      creatureTypeStr = typeField.value ?? undefined;
     }
 
     if (creatureTypeStr === undefined || creatureTypeStr === '') {
@@ -71,7 +71,7 @@ export class FoundryActorMapper {
 
   private extractSize(raw: FoundryActor): Size | null {
     const sizeStr = raw.system.traits?.size;
-    if (sizeStr === undefined || sizeStr === '') {
+    if (sizeStr === null || sizeStr === undefined || sizeStr === '') {
       return null;
     }
     try {
@@ -102,7 +102,7 @@ export class FoundryActorMapper {
 
   private extractCr(raw: FoundryActor): number | null {
     const crField: FoundryCrField = raw.system.details?.cr;
-    if (crField === undefined) {
+    if (crField === null || crField === undefined) {
       return null;
     }
 
@@ -138,7 +138,7 @@ export class FoundryActorMapper {
 
   private extractHp(raw: FoundryActor): ActorHitPoints | null {
     const hp = raw.system.attributes?.hp;
-    if (hp === undefined) {
+    if (hp === null || hp === undefined) {
       return null;
     }
     const current = hp.value;
@@ -164,7 +164,7 @@ export class FoundryActorMapper {
   // This matches ActorSnapshot's contract: `abilities: Record<AbilityKey, number> | null`.
   private extractAbilities(raw: FoundryActor): Record<AbilityKey, number> | null {
     const abilities = raw.system.abilities;
-    if (abilities === undefined) {
+    if (abilities === null || abilities === undefined) {
       return null;
     }
 
@@ -172,6 +172,7 @@ export class FoundryActorMapper {
     for (const key of ABILITY_KEYS) {
       const ability = abilities[key];
       if (
+        ability === null ||
         ability === undefined ||
         typeof ability.value !== 'number' ||
         !Number.isFinite(ability.value)

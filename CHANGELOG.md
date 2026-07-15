@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.11.1] - 2026-07-15
+
+### Fixed
+
+- **Filter mappers crashed on explicit `null` fields in raw compendium data (dnd5e SRD packs).** `dnd5e/filter-compendium-actors` failed every request against `dnd5e.monsters` / `dnd5e.actors24` with `Cannot use 'in' operator to search for 'value' in null` — raw compendium source data (document source without the system's data preparation) keeps unset fields as explicit `null` (e.g. `system.details.cr: null` on SRD NPCs), and the mappers guarded only against `undefined`, so one such document threw in `FoundryActorMapper.extractCr` and killed the whole query regardless of the filter set. All null-unsafe extraction sites of the same pattern are fixed — actor mapper: `cr`, `details.type`, `hp`, `abilities`; item mapper: `attunement`, `activities` (latent, never triggered) — and the Foundry-facing types now declare `null` so the compiler catches this class of bug. A document with an explicit-null field behaves exactly like one lacking the field: silently excluded by filters on that field, still matched by the rest. The pf2e compendium-search mappers were audited and are already null-safe (tolerant path readers). Wire protocol unchanged; no server update required.
+
+### Technical
+
+- 2811 tests passing (272 suites): explicit-null fixtures for both mappers plus a contract test locking that a `cr: null` snapshot is excluded by a cr filter and still passes a name filter
+
 ## [8.11.0] - 2026-07-15
 
 ### Added

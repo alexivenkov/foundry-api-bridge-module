@@ -3,47 +3,53 @@ import type {
   FoundryFoldersCollection
 } from '@/kernel/infrastructure';
 
+// Raw compendium source data (document source without the system's data
+// preparation) keeps unset fields as explicit `null` — world actors rarely
+// carry them, SRD packs do. Every field read from `system` must tolerate
+// null in addition to undefined.
+
 // Possible CR formats in D&D 5e:
 //   - number  (legacy dnd5e versions)
 //   - { value: number }  (dnd5e v3+)
-export type FoundryCrField = number | { value: number } | undefined;
+//   - null  (raw compendium source data)
+export type FoundryCrField = number | { value: number } | null | undefined;
 
 export interface FoundryActorAbility {
-  value: number;
+  value: number | null;
 }
 
 export interface FoundryActorAbilities {
-  str?: FoundryActorAbility;
-  dex?: FoundryActorAbility;
-  con?: FoundryActorAbility;
-  int?: FoundryActorAbility;
-  wis?: FoundryActorAbility;
-  cha?: FoundryActorAbility;
+  str?: FoundryActorAbility | null;
+  dex?: FoundryActorAbility | null;
+  con?: FoundryActorAbility | null;
+  int?: FoundryActorAbility | null;
+  wis?: FoundryActorAbility | null;
+  cha?: FoundryActorAbility | null;
 }
 
 export interface FoundryActorAttributes {
-  hp?: { value?: number; max?: number };
-  ac?: { value?: number };
+  hp?: { value?: number | null; max?: number | null } | null;
+  ac?: { value?: number | null } | null;
   // dnd5e legacy may store level here as a fallback
-  level?: number;
+  level?: number | null;
 }
 
 export interface FoundryActorDetails {
   cr?: FoundryCrField;
-  level?: number;
+  level?: number | null;
   // creatureType may be `{ value: 'humanoid' }` (dnd5e v3+) or plain string (legacy)
-  type?: { value?: string } | string;
+  type?: { value?: string | null } | string | null;
 }
 
 export interface FoundryActorTraits {
-  size?: string;
+  size?: string | null;
 }
 
 export interface FoundryActorSystem {
-  details?: FoundryActorDetails;
-  traits?: FoundryActorTraits;
-  attributes?: FoundryActorAttributes;
-  abilities?: FoundryActorAbilities;
+  details?: FoundryActorDetails | null;
+  traits?: FoundryActorTraits | null;
+  attributes?: FoundryActorAttributes | null;
+  abilities?: FoundryActorAbilities | null;
 }
 
 export interface FoundryPrototypeToken {

@@ -308,6 +308,13 @@ describe('FoundryItemMapper', () => {
       const raw = createMockItem({ system: sys });
       expect(mapper.toSnapshot(raw).requiresAttunement).toBeNull();
     });
+
+    it('explicit null (raw compendium data) → null', () => {
+      const raw = createMockItem({
+        system: { ...fullSystem(), attunement: null }
+      });
+      expect(mapper.toSnapshot(raw).requiresAttunement).toBeNull();
+    });
   });
 
   describe('weight extraction', () => {
@@ -556,6 +563,13 @@ describe('FoundryItemMapper', () => {
       const sys = { ...fullSystem() };
       delete sys.activities;
       const raw = createMockItem({ system: sys });
+      expect(mapper.toSnapshot(raw).hasActivities).toBe(false);
+    });
+
+    it('explicit null (raw compendium data) → false', () => {
+      const raw = createMockItem({
+        system: { ...fullSystem(), activities: null }
+      });
       expect(mapper.toSnapshot(raw).hasActivities).toBe(false);
     });
 

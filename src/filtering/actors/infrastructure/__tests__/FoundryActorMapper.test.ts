@@ -1,3 +1,4 @@
+import { Range, SubstringQuery } from '@/kernel/domain/value-objects';
 import {
   ABILITY_KEYS,
   ActorType,
@@ -5,6 +6,10 @@ import {
   Disposition,
   Size
 } from '@/filtering/actors/domain/value-objects';
+import {
+  ChallengeRatingRangeSpecification,
+  NameContainsSpecification
+} from '@/filtering/actors/domain/specifications';
 
 import { FoundryActorMapper } from '../FoundryActorMapper';
 import {
@@ -200,6 +205,23 @@ describe('FoundryActorMapper', () => {
       expect(mapper.toSnapshot(raw).creatureType).toBeNull();
     });
 
+    it('returns null when details.type is explicit null (raw compendium data)', () => {
+      const raw = createMockFoundryActor({
+        system: { ...fullSystem(), details: { ...fullSystem().details, type: null } }
+      });
+      expect(mapper.toSnapshot(raw).creatureType).toBeNull();
+    });
+
+    it('returns null when details.type.value is explicit null', () => {
+      const raw = createMockFoundryActor({
+        system: {
+          ...fullSystem(),
+          details: { ...fullSystem().details, type: { value: null } }
+        }
+      });
+      expect(mapper.toSnapshot(raw).creatureType).toBeNull();
+    });
+
     it('returns null for unknown creature type (silent fallback)', () => {
       const raw = createMockFoundryActor({
         system: { ...fullSystem(), details: { ...fullSystem().details, type: 'demon' } }
@@ -308,6 +330,13 @@ describe('FoundryActorMapper', () => {
       expect(mapper.toSnapshot(raw).cr).toBeNull();
     });
 
+    it('returns null when cr is explicit null (raw compendium data)', () => {
+      const raw = createMockFoundryActor({
+        system: { ...fullSystem(), details: { ...fullSystem().details, cr: null } }
+      });
+      expect(mapper.toSnapshot(raw).cr).toBeNull();
+    });
+
     it('returns null when cr.value is non-finite (NaN)', () => {
       const raw = createMockFoundryActor({
         system: { ...fullSystem(), details: { ...fullSystem().details, cr: { value: NaN } } }
@@ -408,6 +437,13 @@ describe('FoundryActorMapper', () => {
       expect(mapper.toSnapshot(raw).hp).toBeNull();
     });
 
+    it('returns null when hp is explicit null (raw compendium data)', () => {
+      const raw = createMockFoundryActor({
+        system: { ...fullSystem(), attributes: { ...fullSystem().attributes, hp: null } }
+      });
+      expect(mapper.toSnapshot(raw).hp).toBeNull();
+    });
+
     it('returns null when hp.max is missing', () => {
       const raw = createMockFoundryActor({
         system: { ...fullSystem(), attributes: { hp: { value: 10 } } }
@@ -494,6 +530,23 @@ describe('FoundryActorMapper', () => {
       expect(mapper.toSnapshot(raw).abilities).toBeNull();
     });
 
+    it('returns null when abilities is explicit null (raw compendium data)', () => {
+      const raw = createMockFoundryActor({
+        system: { ...fullSystem(), abilities: null }
+      });
+      expect(mapper.toSnapshot(raw).abilities).toBeNull();
+    });
+
+    it('returns null when a single ability is explicit null (all-or-nothing)', () => {
+      const raw = createMockFoundryActor({
+        system: {
+          ...fullSystem(),
+          abilities: { ...fullSystem().abilities, str: null }
+        }
+      });
+      expect(mapper.toSnapshot(raw).abilities).toBeNull();
+    });
+
     it('returns null when only some abilities are present (all-or-nothing)', () => {
       const raw = createMockFoundryActor({
         system: {
@@ -550,6 +603,49 @@ describe('FoundryActorMapper', () => {
       for (const key of ABILITY_KEYS) {
         expect(snapshot.abilities).toHaveProperty(key);
       }
+    });
+  });
+
+  describe('raw compendium source data (explicit nulls)', () => {
+    // SRD packs (dnd5e.monsters, dnd5e.actors24) store unset fields as
+    // explicit null — the 8.11.0 crash: "Cannot use 'in' operator to search
+    // for 'value' in null".
+    function createNullFieldActor(): FoundryActor {
+      return {
+        id: 'srd-zombie',
+        name: 'Zombie',
+        type: 'npc',
+        hasPlayerOwner: false,
+        folder: null,
+        system: {
+          details: { cr: null, type: null, level: null },
+          attributes: { hp: null, ac: null },
+          abilities: null,
+          traits: null
+        }
+      };
+    }
+
+    it('maps a document with explicit null fields without throwing', () => {
+      const snapshot = mapper.toSnapshot(createNullFieldActor());
+
+      expect(snapshot.cr).toBeNull();
+      expect(snapshot.creatureType).toBeNull();
+      expect(snapshot.hp).toBeNull();
+      expect(snapshot.ac).toBeNull();
+      expect(snapshot.abilities).toBeNull();
+      expect(snapshot.size).toBeNull();
+      expect(snapshot.level).toBeNull();
+    });
+
+    it('cr:null snapshot is excluded by a cr filter but passes a name filter', () => {
+      const snapshot = mapper.toSnapshot(createNullFieldActor());
+
+      const crSpec = new ChallengeRatingRangeSpecification(new Range(0, 30));
+      const nameSpec = new NameContainsSpecification(new SubstringQuery('zombie'));
+
+      expect(crSpec.isSatisfiedBy(snapshot)).toBe(false);
+      expect(nameSpec.isSatisfiedBy(snapshot)).toBe(true);
     });
   });
 

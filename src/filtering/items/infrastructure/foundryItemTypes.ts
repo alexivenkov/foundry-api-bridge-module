@@ -20,11 +20,21 @@ export interface FoundryWeightObject {
 //   - older: string ('none' | 'required' | 'attuned')
 //   - mid:   number (0 | 1 | 2)
 //   - newer: object ({ required: boolean, value?: number })
-export type FoundryAttunementField = string | number | boolean | { required?: unknown };
+// Raw compendium source data keeps unset fields as explicit null.
+export type FoundryAttunementField =
+  | string
+  | number
+  | boolean
+  | { required?: unknown }
+  | null;
 
 // Activities are stored either as a Map<string, Activity> (newest dnd5e) or
-// a plain record/object keyed by activity id.
-export type FoundryActivitiesField = Record<string, unknown> | Map<string, unknown>;
+// a plain record/object keyed by activity id; raw compendium source data
+// keeps unset fields as explicit null.
+export type FoundryActivitiesField =
+  | Record<string, unknown>
+  | Map<string, unknown>
+  | null;
 
 export interface FoundryItemSystem {
   rarity?: unknown;

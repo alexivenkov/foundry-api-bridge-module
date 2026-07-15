@@ -96,7 +96,7 @@ export class FoundryItemMapper {
   // Returns null when none of the recognized shapes apply.
   private extractRequiresAttunement(raw: FoundryItem): boolean | null {
     const attunement: FoundryAttunementField | undefined = raw.system.attunement;
-    if (attunement === undefined) {
+    if (attunement === null || attunement === undefined) {
       return null;
     }
     if (typeof attunement === 'boolean') {
@@ -168,7 +168,7 @@ export class FoundryItemMapper {
   // shapes (older). Empty in either form means "no activities".
   private extractHasActivities(raw: FoundryItem): boolean {
     const activities: FoundryActivitiesField | undefined = raw.system.activities;
-    if (activities === undefined) {
+    if (activities === null || activities === undefined) {
       return false;
     }
     if (activities instanceof Map) {
