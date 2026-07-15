@@ -1,5 +1,5 @@
 import type { ActorSnapshot } from '@/filtering/actors/domain/snapshot';
-import type { FilterableRepository } from '@/filtering/shared/domain/repository';
+import type { FilterableRepository } from '@/kernel/domain/repository';
 
 import type { FoundryActorMapper } from './FoundryActorMapper';
 import type { FoundryGameProvider } from './foundryGameProvider';

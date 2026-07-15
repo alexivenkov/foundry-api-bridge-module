@@ -19,7 +19,11 @@ export {
   getActorsHandler,
   getActorHandler,
   filterActorsHandler,
-  createFilterActorsHandler
+  createFilterActorsHandler,
+  dnd5eFilterCompendiumActorsHandler,
+  createDnd5eFilterCompendiumActorsHandler,
+  pf2eFilterCompendiumActorsHandler,
+  createPf2eFilterCompendiumActorsHandler
 } from '@/commands/handlers/actor';
 
 // Journal handlers
@@ -86,7 +90,11 @@ export {
   updateItemHandler,
   deleteItemHandler,
   filterItemsHandler,
-  createFilterItemsHandler
+  createFilterItemsHandler,
+  dnd5eFilterCompendiumItemsHandler,
+  createDnd5eFilterCompendiumItemsHandler,
+  pf2eFilterCompendiumItemsHandler,
+  createPf2eFilterCompendiumItemsHandler
 } from '@/commands/handlers/item';
 
 // Scene handlers
@@ -111,7 +119,9 @@ export {
   searchCompendiumHandler,
   searchCompendiumsHandler,
   getCompendiumDocumentHandler,
-  importFromCompendiumHandler
+  importFromCompendiumHandler,
+  resolveUuidHandler,
+  searchCompendiumPagesHandler
 } from '@/commands/handlers/world';
 
 // Table handlers

@@ -1,4 +1,4 @@
-import { SubstringQuery } from '@/filtering/shared/domain/value-objects';
+import { SubstringQuery } from '@/kernel/domain/value-objects';
 import {
   ANCIENT_RED_DRAGON,
   FRODO,

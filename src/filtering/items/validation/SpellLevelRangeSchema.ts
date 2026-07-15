@@ -1,4 +1,4 @@
-import { makeRangeSchema } from '@/filtering/shared/validation';
+import { makeRangeSchema } from '@/kernel/validation';
 import { SpellLevel } from '@/filtering/items/domain/value-objects';
 
 // Spell level is an integer in [SpellLevel.MIN, SpellLevel.MAX] = [0, 9].

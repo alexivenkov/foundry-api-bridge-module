@@ -1,4 +1,4 @@
-import type { FilterableRepository, FolderResolver } from '@/filtering/shared/domain/repository';
+import type { FilterableRepository, FolderResolver } from '@/kernel/domain/repository';
 import type { ItemSnapshot } from '@/filtering/items/domain/snapshot';
 
 import { ItemSpecificationBuilder } from './ItemSpecificationBuilder';

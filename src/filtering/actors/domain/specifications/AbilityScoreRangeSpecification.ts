@@ -1,6 +1,6 @@
-import { CompositeSpecification } from '@/filtering/shared/domain/specification';
-import { ValidationError } from '@/filtering/shared/domain/errors';
-import type { Range } from '@/filtering/shared/domain/value-objects';
+import { CompositeSpecification } from '@/kernel/domain/specification';
+import { ValidationError } from '@/kernel/domain/errors';
+import type { Range } from '@/kernel/domain/value-objects';
 import type { ActorSnapshot } from '@/filtering/actors/domain/snapshot';
 import { ABILITY_KEYS, type AbilityKey } from '@/filtering/actors/domain/value-objects';
 

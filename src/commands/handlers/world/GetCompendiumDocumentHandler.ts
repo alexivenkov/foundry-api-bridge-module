@@ -1,29 +1,40 @@
-import type { GetCompendiumDocumentParams, CompendiumDocumentResult } from '@/commands/types';
-import { getCompendiumGame } from './compendiumPackTypes';
+import type { CompendiumDocumentResult, GetCompendiumDocumentParams } from '@/commands/types';
+import {
+  createFoundryCompendiumQueryService,
+  getCompendiumDocumentRequestSchema,
+  toGetPackDocumentQuery,
+  type CompendiumGameProvider
+} from '@/compendiums';
+import { formatZodError } from '@/kernel';
 
-export async function getCompendiumDocumentHandler(
-  params: GetCompendiumDocumentParams
-): Promise<CompendiumDocumentResult> {
-  const game = getCompendiumGame();
-  const pack = game.packs?.get(params.packId);
+export interface GetCompendiumDocumentHandlerDependencies {
+  gameProvider?: CompendiumGameProvider;
+}
 
-  if (!pack) {
-    throw new Error(`Pack not found: ${params.packId}`);
-  }
+export function createGetCompendiumDocumentHandler(
+  deps: GetCompendiumDocumentHandlerDependencies = {}
+): (params: GetCompendiumDocumentParams) => Promise<CompendiumDocumentResult> {
+  const service = createFoundryCompendiumQueryService(deps.gameProvider);
 
-  const doc = await pack.getDocument(params.documentId);
+  return async function getCompendiumDocumentHandler(
+    params: GetCompendiumDocumentParams
+  ): Promise<CompendiumDocumentResult> {
+    const parsed = getCompendiumDocumentRequestSchema.safeParse(params);
+    if (!parsed.success) {
+      throw new Error(formatZodError(parsed.error));
+    }
 
-  if (!doc) {
-    throw new Error(`Document not found in pack ${params.packId}: ${params.documentId}`);
-  }
-
-  return {
-    id: doc.id,
-    uuid: doc.uuid,
-    name: doc.name,
-    type: doc.type ?? '',
-    img: doc.img !== undefined && doc.img !== null ? doc.img : null,
-    documentType: pack.metadata.type,
-    data: doc.toObject()
+    const result = await service.getDocument(toGetPackDocumentQuery(parsed.data));
+    return {
+      id: result.record.id,
+      uuid: result.record.uuid,
+      name: result.record.name,
+      type: result.record.type,
+      img: result.record.img,
+      documentType: result.documentType,
+      data: result.record.data
+    };
   };
 }
+
+export const getCompendiumDocumentHandler = createGetCompendiumDocumentHandler();

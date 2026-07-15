@@ -1,5 +1,5 @@
-import { CompositeSpecification } from '@/filtering/shared/domain/specification';
-import type { Range } from '@/filtering/shared/domain/value-objects';
+import { CompositeSpecification } from '@/kernel/domain/specification';
+import type { Range } from '@/kernel/domain/value-objects';
 import type { ActorSnapshot } from '@/filtering/actors/domain/snapshot';
 
 export class LevelRangeSpecification extends CompositeSpecification<ActorSnapshot> {

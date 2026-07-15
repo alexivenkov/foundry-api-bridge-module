@@ -22,3 +22,15 @@ export {
   defaultFoundryGameProvider,
   type FoundryGameProvider
 } from './foundryGameProvider';
+export { CompendiumActorRepository } from './CompendiumActorRepository';
+export { CompendiumPackNotFoundError, CompendiumPackTypeError } from './compendiumErrors';
+export {
+  defaultCompendiumFilteringGameProvider
+} from './foundryCompendiumPackTypes';
+export type {
+  CompendiumFilteringGameGlobals,
+  CompendiumFilteringGameProvider,
+  FoundryActorCompendiumPack,
+  FoundryActorPacksCollection,
+  FoundryCompendiumActorDocument
+} from './foundryCompendiumPackTypes';

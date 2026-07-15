@@ -1,4 +1,4 @@
-import { ValidationError } from '@/filtering/shared/domain/errors';
+import { ValidationError } from '@/kernel/domain/errors';
 
 export enum CreatureType {
   Aberration = 'aberration',

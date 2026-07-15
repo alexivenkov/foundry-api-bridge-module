@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { makeRangeSchema, folderReferenceSchema } from '@/filtering/shared/validation';
+import { makeRangeSchema, folderReferenceSchema } from '@/kernel/validation';
 import { actorTypeArraySchema } from './ActorTypeSchema';
 import { creatureTypeArraySchema } from './CreatureTypeSchema';
 import { sizeArraySchema } from './SizeSchema';

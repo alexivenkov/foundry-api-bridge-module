@@ -1,5 +1,5 @@
-import { CompositeSpecification } from '@/filtering/shared/domain/specification';
-import type { EnumSet } from '@/filtering/shared/domain/value-objects';
+import { CompositeSpecification } from '@/kernel/domain/specification';
+import type { EnumSet } from '@/kernel/domain/value-objects';
 import type { ActorSnapshot } from '@/filtering/actors/domain/snapshot';
 import type { ActorType } from '@/filtering/actors/domain/value-objects';
 

@@ -1,4 +1,4 @@
-import { ValidationError } from '@/filtering/shared/domain/errors';
+import { ValidationError } from '@/kernel/domain/errors';
 import { ItemRarity, parseItemRarity } from '../ItemRarity';
 
 describe('ItemRarity', () => {

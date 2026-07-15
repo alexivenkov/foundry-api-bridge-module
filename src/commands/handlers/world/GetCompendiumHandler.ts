@@ -1,86 +1,90 @@
-import type { CompendiumData, CompendiumDocument } from '@/types/foundry';
+import type { CompendiumData, CompendiumDocument, ItemData, JournalPageData } from '@/types/foundry';
 import type { GetCompendiumParams } from '@/commands/types';
-import type { FoundryPacksCollectionFull } from './worldTypes';
+import {
+  PackNotFoundError,
+  createFoundryCompendiumQueryService,
+  getCompendiumRequestSchema,
+  toGetPackContentsQuery,
+  type CompendiumGameProvider,
+  type PackDocumentView
+} from '@/compendiums';
+import { formatZodError } from '@/kernel';
 
-interface CompendiumGame {
-  packs: FoundryPacksCollectionFull | undefined;
+export interface GetCompendiumHandlerDependencies {
+  gameProvider?: CompendiumGameProvider;
 }
 
-function getGame(): CompendiumGame {
-  return (globalThis as unknown as { game: CompendiumGame }).game;
-}
+export function createGetCompendiumHandler(
+  deps: GetCompendiumHandlerDependencies = {}
+): (params: GetCompendiumParams) => Promise<CompendiumData> {
+  const service = createFoundryCompendiumQueryService(deps.gameProvider);
 
-function mapDocument(doc: Record<string, unknown>): CompendiumDocument {
-  const result: CompendiumDocument = {
-    id: doc['id'] as string,
-    uuid: doc['uuid'] as string,
-    name: doc['name'] as string,
-    type: doc['type'] as string,
-    img: (doc['img'] as string | undefined) ?? ''
-  };
+  return async function getCompendiumHandler(
+    params: GetCompendiumParams
+  ): Promise<CompendiumData> {
+    const parsed = getCompendiumRequestSchema.safeParse(params);
+    if (!parsed.success) {
+      throw new Error(formatZodError(parsed.error));
+    }
 
-  if (doc['system'] !== undefined) {
-    result.system = doc['system'] as Record<string, unknown>;
-  }
-
-  const items = doc['items'] as Map<string, Record<string, unknown>> | undefined;
-  if (items !== undefined && items.size > 0) {
-    result.items = [];
-    items.forEach(item => {
-      result.items?.push({
-        id: item['id'] as string,
-        name: item['name'] as string,
-        type: item['type'] as string,
-        img: (item['img'] as string | undefined) ?? '',
-        system: item['system'] as Record<string, unknown>
-      });
-    });
-  }
-
-  const pages = doc['pages'] as Map<string, Record<string, unknown>> | undefined;
-  if (pages !== undefined && pages.size > 0) {
-    result.pages = [];
-    pages.forEach(page => {
-      const text = page['text'] as { content?: string; markdown?: string } | undefined;
-      result.pages?.push({
-        id: page['id'] as string,
-        name: page['name'] as string,
-        type: page['type'] as string,
-        text: text?.content ?? null,
-        markdown: text?.markdown ?? null,
-        enrichedText: null,
-        src: (page['src'] as string | undefined) ?? null
-      });
-    });
-  }
-
-  return result;
-}
-
-export async function getCompendiumHandler(params: GetCompendiumParams): Promise<CompendiumData> {
-  const game = getGame();
-
-  if (!game.packs) {
-    return Promise.reject(new Error(`Compendium not found: ${params.packId}`));
-  }
-
-  const pack = game.packs.get(params.packId);
-
-  if (!pack) {
-    return Promise.reject(new Error(`Compendium not found: ${params.packId}`));
-  }
-
-  const rawDocuments = await pack.getDocuments();
-  const documents: CompendiumDocument[] = rawDocuments.map(doc => {
-    return mapDocument(doc as unknown as Record<string, unknown>);
-  });
-
-  return {
-    id: pack.collection,
-    label: pack.metadata.label,
-    type: pack.metadata.type,
-    system: pack.metadata.system ?? '',
-    documentCount: documents.length,
-    documents
+    try {
+      const result = await service.getPackContents(toGetPackContentsQuery(parsed.data));
+      return {
+        id: result.pack.id,
+        label: result.pack.label,
+        type: result.pack.type,
+        system: result.pack.system,
+        documentCount: result.documentCount,
+        documents: result.documents.map(toWireDocument)
+      };
+    } catch (error) {
+      // Legacy wire flavor of this command differs from the domain wording.
+      if (error instanceof PackNotFoundError) {
+        throw new Error(`Compendium not found: ${error.packId}`);
+      }
+      throw error;
+    }
   };
 }
+
+function toWireDocument(view: PackDocumentView): CompendiumDocument {
+  const document: CompendiumDocument = {
+    id: view.id,
+    uuid: view.uuid,
+    name: view.name,
+    type: view.type,
+    img: view.img
+  };
+
+  if (view.system !== undefined) {
+    document.system = view.system;
+  }
+  if (view.items !== undefined) {
+    document.items = view.items.map(
+      (item): ItemData => ({
+        id: item.id,
+        name: item.name,
+        type: item.type,
+        img: item.img,
+        system: item.system
+      })
+    );
+  }
+  if (view.pages !== undefined) {
+    document.pages = view.pages.map(
+      (page): JournalPageData => ({
+        id: page.id,
+        name: page.name,
+        type: page.type,
+        text: page.text,
+        markdown: page.markdown,
+        enrichedText: page.enrichedText,
+        src: page.src
+      })
+    );
+  }
+
+  return document;
+}
+
+export const getCompendiumHandler = createGetCompendiumHandler();

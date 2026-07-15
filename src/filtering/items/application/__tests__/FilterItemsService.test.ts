@@ -3,15 +3,15 @@ import {
   AlwaysTrueSpecification,
   CompositeSpecification,
   type ISpecification
-} from '@/filtering/shared/domain/specification';
+} from '@/kernel/domain/specification';
 import {
   EnumSet,
   PaginationParams
-} from '@/filtering/shared/domain/value-objects';
+} from '@/kernel/domain/value-objects';
 import type {
   FilterableRepository,
   FolderResolver
-} from '@/filtering/shared/domain/repository';
+} from '@/kernel/domain/repository';
 import { ItemType } from '@/filtering/items/domain/value-objects';
 import type { ItemSnapshot } from '@/filtering/items/domain/snapshot';
 import {

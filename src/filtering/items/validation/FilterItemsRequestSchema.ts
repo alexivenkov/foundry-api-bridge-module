@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { folderReferenceSchema } from '@/filtering/shared/validation';
+import { folderReferenceSchema } from '@/kernel/validation';
 import { itemTypeArraySchema } from './ItemTypeSchema';
 import { itemRarityArraySchema } from './ItemRaritySchema';
 import { spellSchoolArraySchema } from './SpellSchoolSchema';

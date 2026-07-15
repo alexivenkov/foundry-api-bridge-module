@@ -1,5 +1,5 @@
-import { executeFilterQuery } from '@/filtering/shared/application';
-import type { FilterableRepository } from '@/filtering/shared/domain/repository';
+import { executeFilterQuery } from '@/kernel/application';
+import type { FilterableRepository } from '@/kernel/domain/repository';
 import type { ActorSnapshot } from '@/filtering/actors/domain/snapshot';
 
 import { ActorSpecificationBuilder } from './ActorSpecificationBuilder';

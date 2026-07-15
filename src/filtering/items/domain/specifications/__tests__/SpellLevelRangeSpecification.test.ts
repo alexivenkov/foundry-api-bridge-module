@@ -1,4 +1,4 @@
-import { Range } from '@/filtering/shared/domain/value-objects';
+import { Range } from '@/kernel/domain/value-objects';
 import {
   CANTRIP_LIGHT,
   CASK,

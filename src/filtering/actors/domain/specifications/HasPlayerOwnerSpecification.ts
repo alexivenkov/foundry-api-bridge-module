@@ -1,4 +1,4 @@
-import { CompositeSpecification } from '@/filtering/shared/domain/specification';
+import { CompositeSpecification } from '@/kernel/domain/specification';
 import type { ActorSnapshot } from '@/filtering/actors/domain/snapshot';
 
 export class HasPlayerOwnerSpecification extends CompositeSpecification<ActorSnapshot> {

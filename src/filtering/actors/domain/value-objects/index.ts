@@ -6,4 +6,4 @@ export { ChallengeRating } from './ChallengeRating';
 export { AbilityKey, ABILITY_KEYS } from './AbilityScore';
 // FolderReference now lives in the shared kernel; re-exported here for
 // backwards compatibility with existing actor-context consumers.
-export { FolderReference } from '@/filtering/shared/domain/value-objects';
+export { FolderReference } from '@/kernel/domain/value-objects';

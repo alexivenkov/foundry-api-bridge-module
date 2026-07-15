@@ -1,10 +1,10 @@
-import { ValidationError } from '@/filtering/shared/domain/errors';
+import { ValidationError } from '@/kernel/domain/errors';
 import {
   EnumSet,
   PaginationParams,
   Range,
   SubstringQuery
-} from '@/filtering/shared/domain/value-objects';
+} from '@/kernel/domain/value-objects';
 import {
   ActorType,
   CreatureType,

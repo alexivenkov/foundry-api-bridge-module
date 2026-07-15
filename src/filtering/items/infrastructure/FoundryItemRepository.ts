@@ -1,5 +1,5 @@
 import type { ItemSnapshot } from '@/filtering/items/domain/snapshot';
-import type { FilterableRepository } from '@/filtering/shared/domain/repository';
+import type { FilterableRepository } from '@/kernel/domain/repository';
 
 import type { FoundryItemMapper } from './FoundryItemMapper';
 import type { FoundryItemGameProvider } from './foundryGameProvider';

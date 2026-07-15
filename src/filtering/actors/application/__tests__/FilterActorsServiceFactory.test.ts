@@ -1,5 +1,5 @@
-import { PaginationParams } from '@/filtering/shared/domain/value-objects';
-import type { FilterableRepository } from '@/filtering/shared/domain/repository';
+import { PaginationParams } from '@/kernel/domain/value-objects';
+import type { FilterableRepository } from '@/kernel/domain/repository';
 import { FolderReference } from '@/filtering/actors/domain/value-objects';
 import type { ActorSnapshot } from '@/filtering/actors/domain/snapshot';
 import {

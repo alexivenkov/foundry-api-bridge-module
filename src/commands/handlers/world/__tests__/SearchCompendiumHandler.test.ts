@@ -92,7 +92,9 @@ describe('searchCompendiumHandler', () => {
     expect(result.results[0]?.name).toBe('Fireball');
   });
 
-  it('passes filters with default EQUALS operator and negate=false', async () => {
+  // Foundry's SearchFilter matches on the lowercase OPERATORS *values*
+  // ('equals', 'gt', ...) — wire operators must be translated, not passed raw.
+  it('passes filters with the default operator translated to foundry "equals"', async () => {
     const all: MockIndexEntry[] = [{ _id: 'a', name: 'Fireball', type: 'spell', img: 'a.webp' }];
     const pack = createMockPack(all, all);
     setGame(new Map([['p1', pack]]));
@@ -103,11 +105,11 @@ describe('searchCompendiumHandler', () => {
     });
 
     expect(pack.search).toHaveBeenCalledWith({
-      filters: [{ field: 'system.level', operator: 'EQUALS', value: 3, negate: false }]
+      filters: [{ field: 'system.level', operator: 'equals', value: 3, negate: false }]
     });
   });
 
-  it('passes through custom operator and negate', async () => {
+  it('translates custom operators to foundry values and passes negate through', async () => {
     const all: MockIndexEntry[] = [{ _id: 'a', name: 'Fireball', type: 'spell', img: 'a.webp' }];
     const pack = createMockPack(all, all);
     setGame(new Map([['p1', pack]]));
@@ -118,7 +120,7 @@ describe('searchCompendiumHandler', () => {
     });
 
     expect(pack.search).toHaveBeenCalledWith({
-      filters: [{ field: 'system.level', operator: 'GREATER_THAN', value: 2, negate: true }]
+      filters: [{ field: 'system.level', operator: 'gt', value: 2, negate: true }]
     });
   });
 
@@ -135,7 +137,7 @@ describe('searchCompendiumHandler', () => {
 
     expect(pack.search).toHaveBeenCalledWith({
       query: 'fire',
-      filters: [{ field: 'system.level', operator: 'EQUALS', value: 3, negate: false }]
+      filters: [{ field: 'system.level', operator: 'equals', value: 3, negate: false }]
     });
   });
 

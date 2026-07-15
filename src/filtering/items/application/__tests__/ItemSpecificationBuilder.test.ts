@@ -4,8 +4,8 @@ import {
   PaginationParams,
   Range,
   SubstringQuery
-} from '@/filtering/shared/domain/value-objects';
-import type { FolderResolver } from '@/filtering/shared/domain/repository';
+} from '@/kernel/domain/value-objects';
+import type { FolderResolver } from '@/kernel/domain/repository';
 import {
   ItemRarity,
   ItemType,

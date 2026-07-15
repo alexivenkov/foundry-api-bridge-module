@@ -42,6 +42,49 @@ function clearGame(): void {
 describe('getCompendiumHandler', () => {
   afterEach(clearGame);
 
+  it('passes types/ids as a server-side query on v13+ and reports filtered count', async () => {
+    const docs = [{ id: 's1', uuid: 'Item.s1', name: 'Fireball', type: 'spell', img: 'f.webp' }];
+    const pack = createMockPack({
+      metadata: { label: 'Items', type: 'Item', system: 'dnd5e', packageName: 'dnd5e' },
+      getDocuments: jest.fn().mockResolvedValue(docs)
+    });
+    (globalThis as Record<string, unknown>)['game'] = {
+      release: { generation: 13 },
+      packs: { get: jest.fn(() => pack) }
+    };
+
+    const result = await getCompendiumHandler({
+      packId: 'dnd5e.items',
+      types: ['spell'],
+      ids: ['s1']
+    });
+
+    expect(pack.getDocuments).toHaveBeenCalledWith({
+      type__in: ['spell'],
+      _id__in: ['s1']
+    });
+    expect(result.documentCount).toBe(1);
+    expect(result.documents[0]?.id).toBe('s1');
+  });
+
+  it('filters client-side on pre-v13 cores with the same wire result', async () => {
+    const docs = [
+      { id: 's1', uuid: 'Item.s1', name: 'Fireball', type: 'spell', img: 'f.webp' },
+      { id: 'w1', uuid: 'Item.w1', name: 'Sword', type: 'weapon', img: 's.webp' }
+    ];
+    const pack = createMockPack({ getDocuments: jest.fn().mockResolvedValue(docs) });
+    (globalThis as Record<string, unknown>)['game'] = {
+      release: { generation: 12 },
+      packs: { get: jest.fn(() => pack) }
+    };
+
+    const result = await getCompendiumHandler({ packId: 'dnd5e.items', types: ['spell'] });
+
+    expect(pack.getDocuments).toHaveBeenCalledWith();
+    expect(result.documentCount).toBe(1);
+    expect(result.documents[0]?.id).toBe('s1');
+  });
+
   it('should return compendium with simple documents', async () => {
     const docs = [
       { id: 'd1', uuid: 'Actor.d1', name: 'Goblin', type: 'npc', img: 'monsters/goblin.webp' },

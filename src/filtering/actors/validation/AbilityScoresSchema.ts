@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { makeRangeSchema } from '@/filtering/shared/validation';
+import { makeRangeSchema } from '@/kernel/validation';
 
 const abilityRangeSchema = makeRangeSchema({ integerOnly: true, minBound: 0 });
 

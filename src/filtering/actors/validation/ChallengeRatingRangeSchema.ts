@@ -1,4 +1,4 @@
-import { makeRangeSchema } from '@/filtering/shared/validation';
+import { makeRangeSchema } from '@/kernel/validation';
 import { ChallengeRating } from '@/filtering/actors/domain/value-objects';
 
 export const challengeRatingRangeSchema = makeRangeSchema({

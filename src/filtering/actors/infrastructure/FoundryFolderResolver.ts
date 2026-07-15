@@ -1,5 +1,5 @@
-import { FoundryFolderResolver as SharedFoundryFolderResolver } from '@/filtering/shared/infrastructure';
-import type { FoundryFolderGameProvider } from '@/filtering/shared/infrastructure';
+import { FoundryFolderResolver as SharedFoundryFolderResolver } from '@/kernel/infrastructure';
+import type { FoundryFolderGameProvider } from '@/kernel/infrastructure';
 
 const ACTOR_FOLDER_TYPE = 'Actor';
 

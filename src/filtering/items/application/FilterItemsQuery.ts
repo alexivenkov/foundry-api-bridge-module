@@ -4,7 +4,7 @@ import type {
   PaginationParams,
   Range,
   SubstringQuery
-} from '@/filtering/shared/domain/value-objects';
+} from '@/kernel/domain/value-objects';
 import type {
   ItemRarity,
   ItemType,

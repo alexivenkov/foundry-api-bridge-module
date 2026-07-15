@@ -1,81 +1,52 @@
 import type { CreateItemFromCompendiumParams, WorldItemResult } from '@/commands/types';
+import {
+  PackDocumentNotFoundError,
+  PackNotFoundError,
+  createFoundryCompendiumImportService,
+  createItemFromCompendiumRequestSchema,
+  toImportItemCommand,
+  type CompendiumGameProvider
+} from '@/compendiums';
+import { formatZodError } from '@/kernel';
 
-interface FoundryItem {
-  id: string;
-  uuid: string;
-  name: string;
-  type: string;
-  img: string;
-  folder: { name: string } | null;
-  toObject(source?: boolean): Record<string, unknown>;
+export interface CreateItemFromCompendiumHandlerDependencies {
+  gameProvider?: CompendiumGameProvider;
 }
 
-interface ItemDocumentClass {
-  create(data: Record<string, unknown>): Promise<FoundryItem>;
-}
+export function createCreateItemFromCompendiumHandler(
+  deps: CreateItemFromCompendiumHandlerDependencies = {}
+): (params: CreateItemFromCompendiumParams) => Promise<WorldItemResult> {
+  const service = createFoundryCompendiumImportService(deps.gameProvider);
 
-interface ItemsCollection {
-  documentClass: ItemDocumentClass;
-}
+  return async function createItemFromCompendiumHandler(
+    params: CreateItemFromCompendiumParams
+  ): Promise<WorldItemResult> {
+    const parsed = createItemFromCompendiumRequestSchema.safeParse(params);
+    if (!parsed.success) {
+      throw new Error(formatZodError(parsed.error));
+    }
 
-interface FoundryPack {
-  collection: string;
-  metadata: {
-    type: string;
-  };
-  getDocument(id: string): Promise<FoundryItem | null>;
-}
-
-interface PacksCollection {
-  get(id: string): FoundryPack | undefined;
-}
-
-interface FoundryGame {
-  items: ItemsCollection;
-  packs: PacksCollection;
-}
-
-declare const game: FoundryGame;
-
-export async function createItemFromCompendiumHandler(
-  params: CreateItemFromCompendiumParams
-): Promise<WorldItemResult> {
-  const pack = game.packs.get(params.packId);
-
-  if (!pack) {
-    throw new Error(`Compendium pack not found: ${params.packId}`);
-  }
-
-  if (pack.metadata.type !== 'Item') {
-    throw new Error(`Compendium pack is not an Item pack: ${params.packId}`);
-  }
-
-  const compendiumItem = await pack.getDocument(params.itemId);
-
-  if (!compendiumItem) {
-    throw new Error(`Item not found in compendium: ${params.itemId}`);
-  }
-
-  const itemData = compendiumItem.toObject();
-
-  delete itemData['_id'];
-
-  if (params.name !== undefined) {
-    itemData['name'] = params.name;
-  }
-
-  if (params.folder !== undefined) {
-    itemData['folder'] = params.folder;
-  }
-
-  const item = await game.items.documentClass.create(itemData);
-
-  return {
-    id: item.id,
-    uuid: item.uuid,
-    name: item.name,
-    type: item.type,
-    img: item.img,
-    folder: item.folder?.name ?? null
+    try {
+      const item = await service.importItem(toImportItemCommand(parsed.data));
+      return {
+        id: item.id,
+        uuid: item.uuid,
+        name: item.name,
+        type: item.type,
+        img: item.img,
+        folder: item.folderName
+      };
+    } catch (error) {
+      // Legacy wire flavor of this command differs from the domain wording.
+      if (error instanceof PackNotFoundError) {
+        throw new Error(`Compendium pack not found: ${error.packId}`);
+      }
+      if (error instanceof PackDocumentNotFoundError) {
+        throw new Error(`Item not found in compendium: ${error.documentId}`);
+      }
+      throw error;
+    }
   };
 }
+
+export const createItemFromCompendiumHandler = createCreateItemFromCompendiumHandler();

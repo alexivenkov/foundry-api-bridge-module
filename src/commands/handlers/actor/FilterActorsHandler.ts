@@ -10,7 +10,7 @@ import {
   FoundryFolderResolver,
   type FoundryGameProvider
 } from '@/filtering/actors/infrastructure';
-import { formatZodError } from '@/filtering/shared/validation';
+import { formatZodError } from '@/kernel/validation';
 import {
   filterActorsRequestSchema,
   RequestToQueryMapper

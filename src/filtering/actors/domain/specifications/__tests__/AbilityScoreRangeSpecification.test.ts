@@ -1,5 +1,5 @@
-import { Range } from '@/filtering/shared/domain/value-objects';
-import { ValidationError } from '@/filtering/shared/domain/errors';
+import { Range } from '@/kernel/domain/value-objects';
+import { ValidationError } from '@/kernel/domain/errors';
 import { AbilityKey } from '@/filtering/actors/domain/value-objects';
 import {
   ANCIENT_RED_DRAGON,

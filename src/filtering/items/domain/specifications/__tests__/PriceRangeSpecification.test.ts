@@ -1,4 +1,4 @@
-import { Range } from '@/filtering/shared/domain/value-objects';
+import { Range } from '@/kernel/domain/value-objects';
 import {
   ARTIFACT_OF_DEAD,
   CANTRIP_LIGHT,

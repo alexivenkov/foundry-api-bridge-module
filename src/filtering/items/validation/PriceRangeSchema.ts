@@ -1,4 +1,4 @@
-import { makeRangeSchema } from '@/filtering/shared/validation';
+import { makeRangeSchema } from '@/kernel/validation';
 
 // Price is denominated in gp by the time it reaches the snapshot/spec stack;
 // caller-side bounds therefore are non-negative real numbers.

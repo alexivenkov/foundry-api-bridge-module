@@ -1,4 +1,4 @@
-import { EnumSet, Range } from '@/filtering/shared/domain/value-objects';
+import { EnumSet, Range } from '@/kernel/domain/value-objects';
 import {
   ItemRarity,
   SpellSchool

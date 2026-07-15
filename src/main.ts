@@ -22,6 +22,10 @@ import {
   getActorHandler,
   filterActorsHandler,
   filterItemsHandler,
+  dnd5eFilterCompendiumActorsHandler,
+  dnd5eFilterCompendiumItemsHandler,
+  pf2eFilterCompendiumActorsHandler,
+  pf2eFilterCompendiumItemsHandler,
   getWorldInfoHandler,
   getJournalsHandler,
   getJournalHandler,
@@ -34,6 +38,8 @@ import {
   searchCompendiumsHandler,
   getCompendiumDocumentHandler,
   importFromCompendiumHandler,
+  resolveUuidHandler,
+  searchCompendiumPagesHandler,
   createJournalHandler,
   updateJournalHandler,
   deleteJournalHandler,
@@ -254,6 +260,8 @@ function initializeWebSocket(
   commandRouter.register('search-compendiums', searchCompendiumsHandler);
   commandRouter.register('get-compendium-document', getCompendiumDocumentHandler);
   commandRouter.register('import-from-compendium', importFromCompendiumHandler);
+  commandRouter.register('resolve-uuid', resolveUuidHandler);
+  commandRouter.register('search-compendium-pages', searchCompendiumPagesHandler);
   commandRouter.register('get-scene', getSceneHandler);
   commandRouter.register('get-scenes-list', getScenesListHandler);
   commandRouter.register('get-scene-tokens', getSceneTokensHandler);
@@ -278,6 +286,10 @@ function initializeWebSocket(
   commandRouter.register('roll-ability', dnd5eRollAbilityHandler); // @deprecated alias of 'dnd5e/roll-ability'
   commandRouter.register('dnd5e/roll-perception', dnd5eRollPerceptionHandler);
   commandRouter.register('roll-perception', dnd5eRollPerceptionHandler); // @deprecated alias of 'dnd5e/roll-perception'
+  commandRouter.register('dnd5e/filter-compendium-actors', dnd5eFilterCompendiumActorsHandler);
+  commandRouter.register('dnd5e/filter-compendium-items', dnd5eFilterCompendiumItemsHandler);
+  commandRouter.register('pf2e/filter-compendium-actors', pf2eFilterCompendiumActorsHandler);
+  commandRouter.register('pf2e/filter-compendium-items', pf2eFilterCompendiumItemsHandler);
   commandRouter.register('pf2e/roll-skill', pf2eRollSkillHandler);
   commandRouter.register('pf2e/roll-save', pf2eRollSaveHandler);
   commandRouter.register('pf2e/roll-perception', pf2eRollPerceptionHandler);

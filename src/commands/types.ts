@@ -27,6 +27,8 @@ export type CommandType =
   | 'roll-damage' // @deprecated alias of 'dnd5e/roll-damage'
   | 'dnd5e/roll-perception'
   | 'roll-perception'
+  | 'dnd5e/filter-compendium-actors'
+  | 'dnd5e/filter-compendium-items'
   | 'pf2e/roll-skill'
   | 'pf2e/roll-save'
   | 'pf2e/roll-perception'
@@ -41,6 +43,8 @@ export type CommandType =
   | 'pf2e/use-consumable'
   | 'pf2e/cast-spell'
   | 'pf2e/post-item'
+  | 'pf2e/filter-compendium-actors'
+  | 'pf2e/filter-compendium-items'
   | 'get-world-info'
   | 'get-actors'
   | 'filter-actors'
@@ -120,6 +124,8 @@ export type CommandType =
   | 'search-compendiums'
   | 'get-compendium-document'
   | 'import-from-compendium'
+  | 'resolve-uuid'
+  | 'search-compendium-pages'
   | 'list-roll-tables'
   | 'get-roll-table'
   | 'roll-on-table'
@@ -432,6 +438,38 @@ export interface FilterActorsResult {
   hasMore: boolean;
 }
 
+// Filter Compendium Actors (dnd5e/filter-compendium-actors) — same filters as
+// filter-actors over compendium packs; world-only filters (folder,
+// hasPlayerOwner, currentHp) intentionally absent.
+export interface FilterCompendiumActorsParams {
+  packIds?: string[];
+  name?: string;
+  type?: string[];
+  creatureType?: string[];
+  size?: string[];
+  disposition?: string[];
+  cr?: FilterActorsRange;
+  level?: FilterActorsRange;
+  maxHp?: FilterActorsRange;
+  ac?: FilterActorsRange;
+  abilities?: FilterActorsAbilities;
+  limit?: number;
+  offset?: number;
+}
+
+export interface FilterCompendiumActorsResultEntry {
+  id: string;
+  name: string;
+  packId: string;
+  uuid: string;
+}
+
+export interface FilterCompendiumActorsResult {
+  results: FilterCompendiumActorsResultEntry[];
+  total: number;
+  hasMore: boolean;
+}
+
 // Filter Items Commands
 export type ItemTypeWire =
   | 'weapon'
@@ -501,6 +539,84 @@ export interface FilterItemsResultEntry {
 
 export interface FilterItemsResult {
   results: FilterItemsResultEntry[];
+  total: number;
+  hasMore: boolean;
+}
+
+// Pathfinder 2e compendium search (pf2e/filter-compendium-actors|items) —
+// pf2e-native filter surface (level, traits, rarity, ...); entries carry
+// `level` in addition to the cross-pack address (packId + uuid).
+export interface Pf2eCompendiumSearchResultEntry {
+  id: string;
+  name: string;
+  level: number | null;
+  packId: string;
+  uuid: string;
+}
+
+export interface Pf2eCompendiumSearchResult {
+  results: Pf2eCompendiumSearchResultEntry[];
+  total: number;
+  hasMore: boolean;
+}
+
+export interface Pf2eFilterCompendiumActorsParams {
+  packIds?: string[];
+  name?: string;
+  type?: string[];
+  level?: FilterActorsRange;
+  traits?: string[];
+  rarity?: string[];
+  size?: string[];
+  maxHp?: FilterActorsRange;
+  ac?: FilterActorsRange;
+  limit?: number;
+  offset?: number;
+}
+
+export interface Pf2eFilterCompendiumItemsParams {
+  packIds?: string[];
+  name?: string;
+  type?: string[];
+  level?: FilterActorsRange;
+  traits?: string[];
+  rarity?: string[];
+  category?: string[];
+  traditions?: string[];
+  priceGold?: FilterActorsRange;
+  limit?: number;
+  offset?: number;
+}
+
+// Filter Compendium Items (dnd5e/filter-compendium-items) — same filters as
+// filter-items over compendium packs; the world-only folder filter is
+// intentionally absent.
+export interface FilterCompendiumItemsParams {
+  packIds?: string[];
+  name?: string;
+  type?: ItemTypeWire[];
+  rarity?: ItemRarityWire[];
+  spellSchool?: SpellSchoolWire[];
+  requiresAttunement?: boolean;
+  identified?: boolean;
+  hasActivities?: boolean;
+  isContainer?: boolean;
+  weight?: FilterItemsRange;
+  price?: FilterItemsRange;
+  spellLevel?: FilterItemsRange;
+  limit?: number;
+  offset?: number;
+}
+
+export interface FilterCompendiumItemsResultEntry {
+  id: string;
+  name: string;
+  packId: string;
+  uuid: string;
+}
+
+export interface FilterCompendiumItemsResult {
+  results: FilterCompendiumItemsResultEntry[];
   total: number;
   hasMore: boolean;
 }
@@ -1508,6 +1624,11 @@ export type GetCompendiumsParams = Record<string, never>;
 
 export interface GetCompendiumParams {
   packId: string;
+  // Optional server-side selection: only documents of these subtypes / with
+  // these ids are loaded (Foundry `type__in` / `_id__in` queries on v13+,
+  // client-side filtering on older cores). Omitted → full pack as before.
+  types?: string[];
+  ids?: string[];
 }
 
 // Compendium efficient access
@@ -1617,6 +1738,50 @@ export interface ImportFromCompendiumResult {
   uuid: string;
   name: string;
   documentType: string;
+}
+
+// Journal page search — substring search over page names and page text
+// content across JournalEntry compendium packs (rules text and spell lists
+// live in pages, which pack-index name search cannot see).
+export interface SearchCompendiumPagesParams {
+  query: string;
+  packIds?: string[];
+  pageTypes?: string[];
+  searchContent?: boolean;
+  limit?: number;
+}
+
+export interface CompendiumPageMatch {
+  packId: string;
+  packLabel: string;
+  journalId: string;
+  journalName: string;
+  pageId: string;
+  pageName: string;
+  pageType: string;
+  uuid: string;
+  matchedIn: 'name' | 'content';
+  snippet: string | null;
+}
+
+export type SearchCompendiumPagesResult = CompendiumPageMatch[];
+
+// UUID resolution — resolves any absolute Foundry UUID (world, compendium,
+// or embedded document) to the full document data.
+export interface ResolveUuidParams {
+  uuid: string;
+}
+
+export interface ResolveUuidResult {
+  uuid: string;
+  documentName: string;
+  id: string;
+  name: string | null;
+  type: string | null;
+  img: string | null;
+  pack: string | null;
+  parentUuid: string | null;
+  data: Record<string, unknown>;
 }
 
 // Roll Table types
@@ -2282,6 +2447,8 @@ export interface CommandParamsMap {
   'roll-damage': RollDamageParams; // @deprecated alias of 'dnd5e/roll-damage'
   'dnd5e/roll-perception': RollPerceptionParams;
   'roll-perception': RollPerceptionParams;
+  'dnd5e/filter-compendium-actors': FilterCompendiumActorsParams;
+  'dnd5e/filter-compendium-items': FilterCompendiumItemsParams;
   'pf2e/roll-skill': RollSkillParams;
   'pf2e/roll-save': Pf2eRollSaveParams;
   'pf2e/roll-perception': RollPerceptionParams;
@@ -2296,6 +2463,8 @@ export interface CommandParamsMap {
   'pf2e/use-consumable': UseConsumableParams;
   'pf2e/cast-spell': CastSpellParams;
   'pf2e/post-item': PostItemParams;
+  'pf2e/filter-compendium-actors': Pf2eFilterCompendiumActorsParams;
+  'pf2e/filter-compendium-items': Pf2eFilterCompendiumItemsParams;
   'get-world-info': GetWorldInfoParams;
   'get-actors': Record<string, never>;
   'filter-actors': FilterActorsParams;
@@ -2375,6 +2544,8 @@ export interface CommandParamsMap {
   'search-compendiums': SearchCompendiumsParams;
   'get-compendium-document': GetCompendiumDocumentParams;
   'import-from-compendium': ImportFromCompendiumParams;
+  'resolve-uuid': ResolveUuidParams;
+  'search-compendium-pages': SearchCompendiumPagesParams;
   'list-roll-tables': ListRollTablesParams;
   'get-roll-table': GetRollTableParams;
   'roll-on-table': RollOnTableParams;
@@ -2443,6 +2614,8 @@ export interface CommandResultMap {
   'roll-damage': RollResult; // @deprecated alias of 'dnd5e/roll-damage'
   'dnd5e/roll-perception': RollResult;
   'roll-perception': RollResult;
+  'dnd5e/filter-compendium-actors': FilterCompendiumActorsResult;
+  'dnd5e/filter-compendium-items': FilterCompendiumItemsResult;
   'pf2e/roll-skill': RollResult;
   'pf2e/roll-save': RollResult;
   'pf2e/roll-perception': RollResult;
@@ -2457,6 +2630,8 @@ export interface CommandResultMap {
   'pf2e/use-consumable': UseConsumableResult;
   'pf2e/cast-spell': CastSpellResult;
   'pf2e/post-item': PostItemResult;
+  'pf2e/filter-compendium-actors': Pf2eCompendiumSearchResult;
+  'pf2e/filter-compendium-items': Pf2eCompendiumSearchResult;
   'get-world-info': WorldInfoResult;
   'get-actors': ActorSummary[];
   'filter-actors': FilterActorsResult;
@@ -2536,6 +2711,8 @@ export interface CommandResultMap {
   'search-compendiums': SearchCompendiumsResult;
   'get-compendium-document': CompendiumDocumentResult;
   'import-from-compendium': ImportFromCompendiumResult;
+  'resolve-uuid': ResolveUuidResult;
+  'search-compendium-pages': SearchCompendiumPagesResult;
   'list-roll-tables': RollTableSummary[];
   'get-roll-table': RollTableResult;
   'roll-on-table': RollOnTableResult;

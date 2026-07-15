@@ -1,7 +1,7 @@
 import type {
   FoundryFolderDocument,
   FoundryFoldersCollection
-} from '@/filtering/shared/infrastructure';
+} from '@/kernel/infrastructure';
 
 // Possible CR formats in D&D 5e:
 //   - number  (legacy dnd5e versions)

@@ -1,4 +1,4 @@
-import { EnumSet } from '@/filtering/shared/domain/value-objects';
+import { EnumSet } from '@/kernel/domain/value-objects';
 import { ItemType } from '@/filtering/items/domain/value-objects';
 import {
   CANTRIP_LIGHT,

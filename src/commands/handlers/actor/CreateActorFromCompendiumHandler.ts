@@ -1,81 +1,52 @@
-import type { CreateActorFromCompendiumParams, ActorResult } from '@/commands/types';
+import type { ActorResult, CreateActorFromCompendiumParams } from '@/commands/types';
+import {
+  PackDocumentNotFoundError,
+  PackNotFoundError,
+  createActorFromCompendiumRequestSchema,
+  createFoundryCompendiumImportService,
+  toImportActorCommand,
+  type CompendiumGameProvider
+} from '@/compendiums';
+import { formatZodError } from '@/kernel';
 
-interface FoundryActor {
-  id: string;
-  uuid: string;
-  name: string;
-  type: string;
-  img: string;
-  folder: { name: string } | null;
-  toObject(source?: boolean): Record<string, unknown>;
+export interface CreateActorFromCompendiumHandlerDependencies {
+  gameProvider?: CompendiumGameProvider;
 }
 
-interface ActorDocumentClass {
-  create(data: Record<string, unknown>): Promise<FoundryActor>;
-}
+export function createCreateActorFromCompendiumHandler(
+  deps: CreateActorFromCompendiumHandlerDependencies = {}
+): (params: CreateActorFromCompendiumParams) => Promise<ActorResult> {
+  const service = createFoundryCompendiumImportService(deps.gameProvider);
 
-interface ActorsCollection {
-  documentClass: ActorDocumentClass;
-}
+  return async function createActorFromCompendiumHandler(
+    params: CreateActorFromCompendiumParams
+  ): Promise<ActorResult> {
+    const parsed = createActorFromCompendiumRequestSchema.safeParse(params);
+    if (!parsed.success) {
+      throw new Error(formatZodError(parsed.error));
+    }
 
-interface FoundryPack {
-  collection: string;
-  metadata: {
-    type: string;
-  };
-  getDocument(id: string): Promise<FoundryActor | null>;
-}
-
-interface PacksCollection {
-  get(id: string): FoundryPack | undefined;
-}
-
-interface FoundryGame {
-  actors: ActorsCollection;
-  packs: PacksCollection;
-}
-
-declare const game: FoundryGame;
-
-export async function createActorFromCompendiumHandler(
-  params: CreateActorFromCompendiumParams
-): Promise<ActorResult> {
-  const pack = game.packs.get(params.packId);
-
-  if (!pack) {
-    throw new Error(`Compendium pack not found: ${params.packId}`);
-  }
-
-  if (pack.metadata.type !== 'Actor') {
-    throw new Error(`Compendium pack is not an Actor pack: ${params.packId}`);
-  }
-
-  const compendiumActor = await pack.getDocument(params.actorId);
-
-  if (!compendiumActor) {
-    throw new Error(`Actor not found in compendium: ${params.actorId}`);
-  }
-
-  const actorData = compendiumActor.toObject();
-
-  if (params.name !== undefined) {
-    actorData['name'] = params.name;
-  }
-
-  if (params.folder !== undefined) {
-    actorData['folder'] = params.folder;
-  }
-
-  delete actorData['_id'];
-
-  const actor = await game.actors.documentClass.create(actorData);
-
-  return {
-    id: actor.id,
-    uuid: actor.uuid,
-    name: actor.name,
-    type: actor.type,
-    img: actor.img,
-    folder: actor.folder?.name ?? null
+    try {
+      const actor = await service.importActor(toImportActorCommand(parsed.data));
+      return {
+        id: actor.id,
+        uuid: actor.uuid,
+        name: actor.name,
+        type: actor.type,
+        img: actor.img,
+        folder: actor.folderName
+      };
+    } catch (error) {
+      // Legacy wire flavor of this command differs from the domain wording.
+      if (error instanceof PackNotFoundError) {
+        throw new Error(`Compendium pack not found: ${error.packId}`);
+      }
+      if (error instanceof PackDocumentNotFoundError) {
+        throw new Error(`Actor not found in compendium: ${error.documentId}`);
+      }
+      throw error;
+    }
   };
 }
+
+export const createActorFromCompendiumHandler = createCreateActorFromCompendiumHandler();

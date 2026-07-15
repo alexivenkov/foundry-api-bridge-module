@@ -3,7 +3,7 @@ import type {
   FoundryItem,
   FoundryItemGameGlobals
 } from '@/filtering/items/infrastructure';
-import type { FoundryFolderDocument } from '@/filtering/shared/infrastructure';
+import type { FoundryFolderDocument } from '@/kernel/infrastructure';
 
 import { createFilterItemsHandler } from '../FilterItemsHandler';
 

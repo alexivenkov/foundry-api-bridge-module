@@ -1,9 +1,9 @@
-import { PaginationParams } from '@/filtering/shared/domain/value-objects';
-import { FolderReference } from '@/filtering/shared/domain/value-objects';
+import { PaginationParams } from '@/kernel/domain/value-objects';
+import { FolderReference } from '@/kernel/domain/value-objects';
 import type {
   FilterableRepository,
   FolderResolver
-} from '@/filtering/shared/domain/repository';
+} from '@/kernel/domain/repository';
 import type { ItemSnapshot } from '@/filtering/items/domain/snapshot';
 import {
   ALL_FIXTURES,

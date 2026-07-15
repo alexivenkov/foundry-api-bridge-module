@@ -1,4 +1,4 @@
-import { EnumSet } from '@/filtering/shared/domain/value-objects';
+import { EnumSet } from '@/kernel/domain/value-objects';
 import { Disposition } from '@/filtering/actors/domain/value-objects';
 import {
   ANCIENT_RED_DRAGON,

@@ -1,4 +1,4 @@
-import { EnumSet } from '@/filtering/shared/domain/value-objects';
+import { EnumSet } from '@/kernel/domain/value-objects';
 import { ItemRarity } from '@/filtering/items/domain/value-objects';
 import {
   ARTIFACT_OF_DEAD,

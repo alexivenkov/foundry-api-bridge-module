@@ -1,9 +1,9 @@
 import {
   SpecificationBuilder,
   type SpecificationFactory
-} from '@/filtering/shared/application';
-import type { ISpecification } from '@/filtering/shared/domain/specification';
-import type { FolderResolver } from '@/filtering/shared/domain/repository';
+} from '@/kernel/application';
+import type { ISpecification } from '@/kernel/domain/specification';
+import type { FolderResolver } from '@/kernel/domain/repository';
 import type { ItemSnapshot } from '@/filtering/items/domain/snapshot';
 import {
   FolderSpecification,

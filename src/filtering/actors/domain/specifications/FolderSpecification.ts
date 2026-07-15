@@ -1,4 +1,4 @@
-import { FolderSpecification as SharedFolderSpecification } from '@/filtering/shared/domain/specification';
+import { FolderSpecification as SharedFolderSpecification } from '@/kernel/domain/specification';
 import type { ActorSnapshot } from '@/filtering/actors/domain/snapshot';
 
 export class FolderSpecification extends SharedFolderSpecification<ActorSnapshot> {

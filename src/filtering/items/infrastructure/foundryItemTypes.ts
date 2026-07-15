@@ -1,7 +1,7 @@
 import type {
   FoundryFolderDocument,
   FoundryFoldersCollection
-} from '@/filtering/shared/infrastructure';
+} from '@/kernel/infrastructure';
 
 // D&D 5e price field — the modern shape carries an explicit denomination, but
 // older versions sometimes store a plain number (treated as gp).

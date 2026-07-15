@@ -17,3 +17,15 @@ export {
   defaultFoundryItemGameProvider,
   type FoundryItemGameProvider
 } from './foundryGameProvider';
+export { CompendiumItemRepository } from './CompendiumItemRepository';
+export { CompendiumPackNotFoundError, CompendiumPackTypeError } from './compendiumErrors';
+export {
+  defaultCompendiumItemFilteringGameProvider
+} from './foundryCompendiumPackTypes';
+export type {
+  CompendiumItemFilteringGameGlobals,
+  CompendiumItemFilteringGameProvider,
+  FoundryCompendiumItemDocument,
+  FoundryItemCompendiumPack,
+  FoundryItemPacksCollection
+} from './foundryCompendiumPackTypes';

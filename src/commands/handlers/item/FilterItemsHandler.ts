@@ -9,8 +9,8 @@ import {
   FoundryItemRepository,
   type FoundryItemGameProvider
 } from '@/filtering/items/infrastructure';
-import { FoundryFolderResolver } from '@/filtering/shared/infrastructure';
-import { formatZodError } from '@/filtering/shared/validation';
+import { FoundryFolderResolver } from '@/kernel/infrastructure';
+import { formatZodError } from '@/kernel/validation';
 import {
   filterItemsRequestSchema,
   RequestToQueryMapper
