@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.11.2] - 2026-08-25
+
+### Fixed
+
+- **Intermittent `Cannot read properties of undefined (reading 'id')` on update and create commands.** Foundry's `Document#update()` resolves to `undefined` when the submitted values are identical to the current ones (a frequent case with an AI DM: "set HP to 20" when HP is already 20), and `Document.create()` resolves to `undefined` when a third-party module vetoes the creation from a `preCreate*` hook — handlers read result fields directly from these return values and crashed. All 16 update handlers (actor, item, journal, journal page, note, token ×2 in move, wall, scene, folder, macro, roll table, effect, combatant ×3) now discard the `update()` return value and read the result from the source document, which Foundry mutates in place — correct on both real updates and no-ops. All 11 create handlers (actor, item, journal, chat message, combat, roll table, folder, macro, scene) now guard the `create()` result and reject with a clear `<Type> creation was cancelled by Foundry (a module hook may have vetoed it)` error instead of crashing. The compendium import path (`create-actor-from-compendium`, `create-item-from-compendium`) gets the same guard through the `WorldImporter` port: a vetoed create now surfaces as `Failed to import document: <id>`. This also root-causes the long-standing pf2e `create-roll-table` crash of the same signature.
+
+### Technical
+
+- 2838 tests passing (272 suites): a no-op-update case per update handler (update resolves `undefined` without mutating — handler returns current document state) and a hook-veto case per create handler (create resolves `undefined` — handler rejects with the explicit message); update mocks now mutate the document in place and resolve `undefined`, matching real Foundry semantics
+
 ## [8.11.1] - 2026-07-15
 
 ### Fixed
