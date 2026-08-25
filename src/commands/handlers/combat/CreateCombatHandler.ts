@@ -20,6 +20,10 @@ export async function createCombatHandler(params: CreateCombatParams): Promise<C
 
   const combat = await Combat.create(createData);
 
+  if (!combat) {
+    throw new Error('Combat creation was cancelled by Foundry (a module hook may have vetoed it)');
+  }
+
   if (params.activate) {
     await combat.activate();
   }

@@ -10,7 +10,7 @@ export interface FoundryMacroDoc {
   scope: MacroScope;
   folder: { id: string; name: string } | null | undefined;
   author: { id: string; name: string } | null | undefined;
-  update(data: Record<string, unknown>): Promise<FoundryMacroDoc>;
+  update(data: Record<string, unknown>): Promise<unknown>;
   delete(): Promise<FoundryMacroDoc>;
   execute(scope?: { actor?: object; token?: object }): Promise<unknown>;
 }
@@ -34,7 +34,7 @@ export interface FoundryGame {
 }
 
 export interface FoundryMacroConstructor {
-  create(data: Record<string, unknown>): Promise<FoundryMacroDoc>;
+  create(data: Record<string, unknown>): Promise<FoundryMacroDoc | undefined>;
 }
 
 export interface FoundryTokenRef {

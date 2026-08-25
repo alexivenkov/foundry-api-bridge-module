@@ -85,6 +85,6 @@ export async function updateSceneHandler(params: UpdateSceneParams): Promise<Upd
     updateData['folder'] = params.folder;
   }
 
-  const updated = await scene.update(updateData);
-  return mapSceneToCrudSummary(updated);
+  await scene.update(updateData);
+  return mapSceneToCrudSummary(scene);
 }

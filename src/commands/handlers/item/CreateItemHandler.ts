@@ -10,7 +10,7 @@ interface FoundryItem {
 }
 
 interface ItemDocumentClass {
-  create(data: Record<string, unknown>): Promise<FoundryItem>;
+  create(data: Record<string, unknown>): Promise<FoundryItem | undefined>;
 }
 
 interface ItemsCollection {
@@ -42,6 +42,10 @@ export async function createItemHandler(params: CreateItemParams): Promise<World
   }
 
   const item = await game.items.documentClass.create(itemData);
+
+  if (!item) {
+    throw new Error('Item creation was cancelled by Foundry (a module hook may have vetoed it)');
+  }
 
   return {
     id: item.id,

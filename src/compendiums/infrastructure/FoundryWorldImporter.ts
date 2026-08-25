@@ -29,14 +29,14 @@ export class FoundryWorldImporter implements WorldImporter {
     return { id: created.id, uuid: created.uuid, name: created.name };
   }
 
-  async createActor(data: Record<string, unknown>): Promise<CreatedActorView> {
+  async createActor(data: Record<string, unknown>): Promise<CreatedActorView | null> {
     const actor = await this.gameProvider.getGame().actors.documentClass.create(data);
-    return toCreatedView(actor);
+    return actor ? toCreatedView(actor) : null;
   }
 
-  async createItem(data: Record<string, unknown>): Promise<CreatedItemView> {
+  async createItem(data: Record<string, unknown>): Promise<CreatedItemView | null> {
     const item = await this.gameProvider.getGame().items.documentClass.create(data);
-    return toCreatedView(item);
+    return item ? toCreatedView(item) : null;
   }
 }
 

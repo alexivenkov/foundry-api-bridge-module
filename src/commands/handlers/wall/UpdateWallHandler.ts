@@ -40,6 +40,6 @@ export async function updateWallHandler(params: UpdateWallParams): Promise<Updat
     updateData['dir'] = directionToNumber(params.dir);
   }
 
-  const updated = await wall.update(updateData);
-  return mapWallToSummary(updated);
+  await wall.update(updateData);
+  return mapWallToSummary(wall);
 }

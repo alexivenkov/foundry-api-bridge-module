@@ -125,4 +125,17 @@ describe('createActorHandler', () => {
       expect(result.folder).toBe('NPCs');
     });
   });
+
+  describe('error handling', () => {
+    it('should throw a clear error when create() resolves undefined (hook veto)', async () => {
+      mockGame.actors.documentClass.create.mockResolvedValue(undefined);
+
+      await expect(
+        createActorHandler({
+          name: 'Test Character',
+          type: 'character'
+        })
+      ).rejects.toThrow('Actor creation was cancelled by Foundry (a module hook may have vetoed it)');
+    });
+  });
 });

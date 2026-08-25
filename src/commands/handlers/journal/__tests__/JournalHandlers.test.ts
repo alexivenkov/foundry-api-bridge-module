@@ -26,17 +26,24 @@ interface MockJournal {
   deleteEmbeddedDocuments: jest.Mock;
 }
 
-const createMockPage = (overrides: Partial<MockPage> = {}): MockPage => ({
-  id: 'page-123',
-  name: 'Test Page',
-  type: 'text',
-  update: jest.fn(),
-  ...overrides
-});
+const createMockPage = (overrides: Partial<MockPage> = {}): MockPage => {
+  const page: MockPage = {
+    id: 'page-123',
+    name: 'Test Page',
+    type: 'text',
+    update: jest.fn(),
+    ...overrides
+  };
+  page.update.mockImplementation(async (data: Record<string, unknown>) => {
+    Object.assign(page, data);
+    return undefined;
+  });
+  return page;
+};
 
 const createMockJournal = (overrides: Partial<MockJournal> = {}): MockJournal => {
   const mockPage = createMockPage();
-  return {
+  const journal: MockJournal = {
     id: 'journal-123',
     name: 'Test Journal',
     folder: null,
@@ -50,6 +57,11 @@ const createMockJournal = (overrides: Partial<MockJournal> = {}): MockJournal =>
     deleteEmbeddedDocuments: jest.fn(),
     ...overrides
   };
+  journal.update.mockImplementation(async (data: Record<string, unknown>) => {
+    Object.assign(journal, data);
+    return undefined;
+  });
+  return journal;
 };
 
 const mockJournalEntry = {
@@ -139,6 +151,14 @@ describe('Journal Handlers', () => {
         }]
       });
     });
+
+    it('throws a clear error when create() resolves undefined (hook veto)', async () => {
+      mockJournalEntry.create.mockResolvedValue(undefined);
+
+      await expect(
+        createJournalHandler({ name: 'Vetoed Journal' })
+      ).rejects.toThrow('Journal creation was cancelled by Foundry (a module hook may have vetoed it)');
+    });
   });
 
   describe('updateJournalHandler', () => {
@@ -152,7 +172,6 @@ describe('Journal Handlers', () => {
 
     it('updates journal name', async () => {
       const mockJournal = createMockJournal();
-      mockJournal.update.mockResolvedValue(mockJournal);
       mockGame.journal.get.mockReturnValue(mockJournal);
 
       await updateJournalHandler({
@@ -165,20 +184,23 @@ describe('Journal Handlers', () => {
 
     it('updates journal folder', async () => {
       const mockJournal = createMockJournal();
-      mockJournal.update.mockResolvedValue(mockJournal);
+      mockJournal.update.mockImplementation(async () => {
+        mockJournal.folder = { id: 'new-folder' };
+        return undefined;
+      });
       mockGame.journal.get.mockReturnValue(mockJournal);
 
-      await updateJournalHandler({
+      const result = await updateJournalHandler({
         journalId: 'journal-123',
         folder: 'new-folder'
       });
 
       expect(mockJournal.update).toHaveBeenCalledWith({ folder: 'new-folder' });
+      expect(result.folder).toBe('new-folder');
     });
 
     it('returns updated journal result', async () => {
-      const mockJournal = createMockJournal({ name: 'Updated Journal' });
-      mockJournal.update.mockResolvedValue(mockJournal);
+      const mockJournal = createMockJournal();
       mockGame.journal.get.mockReturnValue(mockJournal);
 
       const result = await updateJournalHandler({
@@ -187,6 +209,24 @@ describe('Journal Handlers', () => {
       });
 
       expect(result.name).toBe('Updated Journal');
+    });
+
+    it('no-op update — update() resolves undefined without mutating', async () => {
+      const mockJournal = createMockJournal();
+      mockJournal.update.mockResolvedValue(undefined);
+      mockGame.journal.get.mockReturnValue(mockJournal);
+
+      const result = await updateJournalHandler({
+        journalId: 'journal-123',
+        name: 'Test Journal'
+      });
+
+      expect(result).toEqual({
+        id: 'journal-123',
+        name: 'Test Journal',
+        folder: null,
+        pages: [{ id: 'page-123', name: 'Test Page', type: 'text' }]
+      });
     });
   });
 
@@ -341,7 +381,6 @@ describe('Journal Handlers', () => {
 
     it('updates page name', async () => {
       const mockPage = createMockPage();
-      mockPage.update.mockResolvedValue(mockPage);
       const mockJournal = createMockJournal();
       mockJournal.pages.get.mockReturnValue(mockPage);
       mockGame.journal.get.mockReturnValue(mockJournal);
@@ -357,7 +396,6 @@ describe('Journal Handlers', () => {
 
     it('updates page content', async () => {
       const mockPage = createMockPage();
-      mockPage.update.mockResolvedValue(mockPage);
       const mockJournal = createMockJournal();
       mockJournal.pages.get.mockReturnValue(mockPage);
       mockGame.journal.get.mockReturnValue(mockJournal);
@@ -374,8 +412,7 @@ describe('Journal Handlers', () => {
     });
 
     it('returns updated page result', async () => {
-      const mockPage = createMockPage({ name: 'Updated Page' });
-      mockPage.update.mockResolvedValue(mockPage);
+      const mockPage = createMockPage();
       const mockJournal = createMockJournal();
       mockJournal.pages.get.mockReturnValue(mockPage);
       mockGame.journal.get.mockReturnValue(mockJournal);
@@ -391,7 +428,6 @@ describe('Journal Handlers', () => {
 
     it('updates page src', async () => {
       const mockPage = createMockPage();
-      mockPage.update.mockResolvedValue(mockPage);
       const mockJournal = createMockJournal();
       mockJournal.pages.get.mockReturnValue(mockPage);
       mockGame.journal.get.mockReturnValue(mockJournal);
@@ -404,6 +440,26 @@ describe('Journal Handlers', () => {
 
       expect(mockPage.update).toHaveBeenCalledWith({
         src: 'images/new-map.png'
+      });
+    });
+
+    it('no-op update — update() resolves undefined without mutating', async () => {
+      const mockPage = createMockPage();
+      mockPage.update.mockResolvedValue(undefined);
+      const mockJournal = createMockJournal();
+      mockJournal.pages.get.mockReturnValue(mockPage);
+      mockGame.journal.get.mockReturnValue(mockJournal);
+
+      const result = await updateJournalPageHandler({
+        journalId: 'journal-123',
+        pageId: 'page-123',
+        name: 'Test Page'
+      });
+
+      expect(result).toEqual({
+        id: 'page-123',
+        name: 'Test Page',
+        type: 'text'
       });
     });
   });

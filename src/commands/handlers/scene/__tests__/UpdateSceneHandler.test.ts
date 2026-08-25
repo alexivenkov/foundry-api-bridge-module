@@ -47,7 +47,10 @@ describe('updateSceneHandler', () => {
   it('updates scene name only', async () => {
     const scene = makeScene();
     mockGet.mockReturnValue(scene);
-    mockUpdate.mockResolvedValue(makeScene({ name: 'Renamed' }));
+    mockUpdate.mockImplementation(async () => {
+      scene.name = 'Renamed';
+      return undefined;
+    });
 
     const result = await updateSceneHandler({ sceneId: 'scene-1', name: 'Renamed' });
 
@@ -58,7 +61,6 @@ describe('updateSceneHandler', () => {
 
   it('updates only the grid size in partial grid object', async () => {
     mockGet.mockReturnValue(makeScene());
-    mockUpdate.mockResolvedValue(makeScene({ grid: { type: 1, size: 50, distance: 5, units: 'ft' } }));
 
     await updateSceneHandler({ sceneId: 'scene-1', grid: { size: 50 } });
 
@@ -70,8 +72,12 @@ describe('updateSceneHandler', () => {
   });
 
   it('clears navName when set to null', async () => {
-    mockGet.mockReturnValue(makeScene({ navName: 'Old Nav' }));
-    mockUpdate.mockResolvedValue(makeScene({ navName: null }));
+    const scene = makeScene({ navName: 'Old Nav' });
+    mockGet.mockReturnValue(scene);
+    mockUpdate.mockImplementation(async () => {
+      scene.navName = null;
+      return undefined;
+    });
 
     const result = await updateSceneHandler({ sceneId: 'scene-1', navName: null });
 
@@ -80,8 +86,12 @@ describe('updateSceneHandler', () => {
   });
 
   it('moves scene to root when folder set to null', async () => {
-    mockGet.mockReturnValue(makeScene({ folder: { id: 'f1', name: 'Maps' } }));
-    mockUpdate.mockResolvedValue(makeScene({ folder: null }));
+    const scene = makeScene({ folder: { id: 'f1', name: 'Maps' } });
+    mockGet.mockReturnValue(scene);
+    mockUpdate.mockImplementation(async () => {
+      scene.folder = null;
+      return undefined;
+    });
 
     const result = await updateSceneHandler({ sceneId: 'scene-1', folder: null });
 
@@ -91,8 +101,6 @@ describe('updateSceneHandler', () => {
 
   it('updates darkness across boundary values 0 and 1', async () => {
     mockGet.mockReturnValue(makeScene());
-    mockUpdate.mockResolvedValue(makeScene());
-
     await updateSceneHandler({ sceneId: 'scene-1', darkness: 0 });
     expect(mockUpdate).toHaveBeenLastCalledWith({ darkness: 0 });
 
@@ -102,12 +110,6 @@ describe('updateSceneHandler', () => {
 
   it('partial update with multiple fields combined', async () => {
     mockGet.mockReturnValue(makeScene());
-    mockUpdate.mockResolvedValue(makeScene({
-      name: 'Renamed',
-      width: 5000,
-      navigation: true,
-      navName: 'X'
-    }));
 
     await updateSceneHandler({
       sceneId: 'scene-1',
@@ -136,7 +138,6 @@ describe('updateSceneHandler', () => {
 
   it('wraps background string in { src: ... }', async () => {
     mockGet.mockReturnValue(makeScene());
-    mockUpdate.mockResolvedValue(makeScene({ background: { src: 'maps/new.jpg' } }));
 
     await updateSceneHandler({ sceneId: 'scene-1', background: 'maps/new.jpg' });
 
@@ -145,7 +146,6 @@ describe('updateSceneHandler', () => {
 
   it('maps grid type wire string to number when updating', async () => {
     mockGet.mockReturnValue(makeScene());
-    mockUpdate.mockResolvedValue(makeScene({ grid: { type: 4, size: 100, distance: 5, units: 'ft' } }));
 
     await updateSceneHandler({ sceneId: 'scene-1', grid: { type: 'hexFlatOdd' } });
 
@@ -155,8 +155,6 @@ describe('updateSceneHandler', () => {
 
   it('omits grid object when grid provided but empty', async () => {
     mockGet.mockReturnValue(makeScene());
-    mockUpdate.mockResolvedValue(makeScene());
-
     await updateSceneHandler({ sceneId: 'scene-1', grid: {} });
 
     const call = mockUpdate.mock.calls[0]?.[0] as Record<string, unknown>;
@@ -165,8 +163,6 @@ describe('updateSceneHandler', () => {
 
   it('passes empty payload when no update fields provided', async () => {
     mockGet.mockReturnValue(makeScene());
-    mockUpdate.mockResolvedValue(makeScene());
-
     await updateSceneHandler({ sceneId: 'scene-1' });
 
     expect(mockUpdate).toHaveBeenCalledWith({});
@@ -174,8 +170,6 @@ describe('updateSceneHandler', () => {
 
   it('passes through height, foreground, padding, navOrder, fogExploration', async () => {
     mockGet.mockReturnValue(makeScene());
-    mockUpdate.mockResolvedValue(makeScene());
-
     await updateSceneHandler({
       sceneId: 'scene-1',
       height: 2500,
@@ -196,8 +190,6 @@ describe('updateSceneHandler', () => {
 
   it('passes grid distance and units when provided', async () => {
     mockGet.mockReturnValue(makeScene());
-    mockUpdate.mockResolvedValue(makeScene());
-
     await updateSceneHandler({
       sceneId: 'scene-1',
       grid: { distance: 10, units: 'm' }
@@ -207,6 +199,19 @@ describe('updateSceneHandler', () => {
     expect(call['grid']).toEqual({ distance: 10, units: 'm' });
   });
 
+  it('no-op update — update() resolves undefined without mutating', async () => {
+    const scene = makeScene();
+    mockGet.mockReturnValue(scene);
+    mockUpdate.mockResolvedValue(undefined);
+
+    const result = await updateSceneHandler({ sceneId: 'scene-1', name: 'Original' });
+
+    expect(mockUpdate).toHaveBeenCalledWith({ name: 'Original' });
+    expect(result.name).toBe('Original');
+    expect(result.id).toBe('scene-1');
+    expect(result.uuid).toBe('Scene.scene-1');
+  });
+
   describe('v14 scene schema (environment/fog paths)', () => {
     it('writes darkness/fog as nested environment/fog objects on v14', async () => {
       (globalThis as Record<string, unknown>)['game'] = {
@@ -214,7 +219,6 @@ describe('updateSceneHandler', () => {
         release: { generation: 14 }
       };
       mockGet.mockReturnValue(makeScene());
-      mockUpdate.mockResolvedValue(makeScene());
 
       await updateSceneHandler({ sceneId: 'scene-1', darkness: 0.4, fogExploration: false });
 

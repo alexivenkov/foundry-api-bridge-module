@@ -24,5 +24,10 @@ export async function createMacroHandler(params: CreateMacroParams): Promise<Cre
   }
 
   const macro = await getMacroClass().create(data);
+
+  if (!macro) {
+    throw new Error('Macro creation was cancelled by Foundry (a module hook may have vetoed it)');
+  }
+
   return mapMacroToDetail(macro);
 }

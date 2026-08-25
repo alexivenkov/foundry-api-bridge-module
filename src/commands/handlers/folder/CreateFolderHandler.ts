@@ -24,5 +24,10 @@ export async function createFolderHandler(params: CreateFolderParams): Promise<C
   }
 
   const folder = await getFolderClass().create(data);
+
+  if (!folder) {
+    throw new Error('Folder creation was cancelled by Foundry (a module hook may have vetoed it)');
+  }
+
   return mapFolderToSummary(folder);
 }

@@ -1,23 +1,28 @@
 import { updateActorHandler } from '../UpdateActorHandler';
 
-const mockUpdatedActor = {
-  id: 'actor-123',
-  uuid: 'Actor.actor-123',
-  name: 'Updated Character',
-  type: 'character',
-  img: 'icons/svg/mystery-man.svg',
-  folder: null
-};
+interface MockActorDoc {
+  id: string;
+  uuid: string;
+  name: string;
+  type: string;
+  img: string;
+  folder: { name: string } | null;
+  update: jest.Mock;
+}
 
-const mockActor = {
-  id: 'actor-123',
-  uuid: 'Actor.actor-123',
-  name: 'Original Character',
-  type: 'character',
-  img: 'icons/svg/mystery-man.svg',
-  folder: null,
-  update: jest.fn()
-};
+function createMockActor(): MockActorDoc {
+  return {
+    id: 'actor-123',
+    uuid: 'Actor.actor-123',
+    name: 'Original Character',
+    type: 'character',
+    img: 'icons/svg/mystery-man.svg',
+    folder: null,
+    update: jest.fn()
+  };
+}
+
+let mockActor: MockActorDoc;
 
 const mockGame = {
   actors: {
@@ -30,8 +35,12 @@ const mockGame = {
 describe('updateActorHandler', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockActor = createMockActor();
     mockGame.actors.get.mockReturnValue(mockActor);
-    mockActor.update.mockResolvedValue(mockUpdatedActor);
+    mockActor.update.mockImplementation(async (data: Record<string, unknown>) => {
+      Object.assign(mockActor, data);
+      return undefined;
+    });
   });
 
   describe('successful updates', () => {
@@ -123,9 +132,9 @@ describe('updateActorHandler', () => {
     });
 
     it('should return folder name when actor has folder', async () => {
-      mockActor.update.mockResolvedValue({
-        ...mockUpdatedActor,
-        folder: { name: 'Party Members' }
+      mockActor.update.mockImplementation(async () => {
+        mockActor.folder = { name: 'Party Members' };
+        return undefined;
       });
 
       const result = await updateActorHandler({
@@ -134,6 +143,27 @@ describe('updateActorHandler', () => {
       });
 
       expect(result.folder).toBe('Party Members');
+    });
+
+    it('should resolve with current values when no-op update() resolves undefined without mutating', async () => {
+      mockActor.update.mockResolvedValue(undefined);
+
+      const result = await updateActorHandler({
+        actorId: 'actor-123',
+        name: 'Original Character'
+      });
+
+      expect(mockActor.update).toHaveBeenCalledWith({
+        name: 'Original Character'
+      });
+      expect(result).toEqual({
+        id: 'actor-123',
+        uuid: 'Actor.actor-123',
+        name: 'Original Character',
+        type: 'character',
+        img: 'icons/svg/mystery-man.svg',
+        folder: null
+      });
     });
   });
 

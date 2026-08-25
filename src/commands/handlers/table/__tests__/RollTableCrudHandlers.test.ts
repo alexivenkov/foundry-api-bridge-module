@@ -168,6 +168,14 @@ describe('createRollTableHandler', () => {
     expect(call).not.toHaveProperty('folder');
     expect(call).not.toHaveProperty('results');
   });
+
+  it('should reject when create() resolves undefined (hook veto)', async () => {
+    mockCreate.mockResolvedValue(undefined);
+    setGameForCreate();
+
+    await expect(createRollTableHandler({ name: 'Vetoed' }))
+      .rejects.toThrow('Roll table creation was cancelled by Foundry (a module hook may have vetoed it)');
+  });
 });
 
 describe('updateRollTableHandler', () => {
@@ -178,7 +186,7 @@ describe('updateRollTableHandler', () => {
       id: 't1', name: 'Updated', formula: '1d100',
       update: jest.fn()
     });
-    (updated.update as jest.Mock).mockResolvedValue(updated);
+    (updated.update as jest.Mock).mockResolvedValue(undefined);
     setGameForGetById(new Map([['t1', updated]]));
 
     const result = await updateRollTableHandler({
@@ -203,7 +211,6 @@ describe('updateRollTableHandler', () => {
 
   it('should only include provided fields in update', async () => {
     const table = createMockTable([], { id: 't1' });
-    (table.update as jest.Mock).mockResolvedValue(table);
     setGameForGetById(new Map([['t1', table]]));
 
     await updateRollTableHandler({ tableId: 't1', replacement: false });
@@ -213,7 +220,6 @@ describe('updateRollTableHandler', () => {
 
   it('should handle all optional fields', async () => {
     const table = createMockTable([], { id: 't1' });
-    (table.update as jest.Mock).mockResolvedValue(table);
     setGameForGetById(new Map([['t1', table]]));
 
     await updateRollTableHandler({
@@ -238,12 +244,23 @@ describe('updateRollTableHandler', () => {
 
   it('should send empty update object when no fields provided', async () => {
     const table = createMockTable([], { id: 't1' });
-    (table.update as jest.Mock).mockResolvedValue(table);
     setGameForGetById(new Map([['t1', table]]));
 
     await updateRollTableHandler({ tableId: 't1' });
 
     expect(table.update).toHaveBeenCalledWith({});
+  });
+
+  it('no-op update — update() resolves undefined without mutating', async () => {
+    const table = createMockTable([], { id: 't1', name: 'Same Name' });
+    setGameForGetById(new Map([['t1', table]]));
+
+    const result = await updateRollTableHandler({ tableId: 't1', name: 'Same Name' });
+
+    expect(table.update).toHaveBeenCalledWith({ name: 'Same Name' });
+    expect(result.id).toBe('t1');
+    expect(result.name).toBe('Same Name');
+    expect(result.formula).toBe('1d20');
   });
 });
 

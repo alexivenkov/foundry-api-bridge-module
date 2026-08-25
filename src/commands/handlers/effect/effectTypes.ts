@@ -28,7 +28,7 @@ export interface FoundryActiveEffect {
   changes: FoundryEffectChange[];
   duration: FoundryEffectDuration;
   flags: Record<string, unknown>;
-  update(data: Record<string, unknown>): Promise<FoundryActiveEffect>;
+  update(data: Record<string, unknown>): Promise<unknown>;
   delete(): Promise<FoundryActiveEffect>;
 }
 

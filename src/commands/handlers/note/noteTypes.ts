@@ -19,7 +19,7 @@ export interface FoundryNoteDocument {
   textAnchor: number;
   textColor: string | null;
   global: boolean;
-  update(data: Record<string, unknown>): Promise<FoundryNoteDocument>;
+  update(data: Record<string, unknown>): Promise<unknown>;
   delete(): Promise<FoundryNoteDocument>;
 }
 

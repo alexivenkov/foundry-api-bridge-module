@@ -85,8 +85,24 @@ describe('FoundryWorldImporter', () => {
       const importer = new FoundryWorldImporter(providerFor(game));
 
       const view = await importer.createItem({ name: 'Created' });
-      expect(view.folderName).toBeNull();
-      expect(view.type).toBe('weapon');
+      expect(view?.folderName).toBeNull();
+      expect(view?.type).toBe('weapon');
+    });
+
+    it('returns null when actor create resolves to nothing (hook veto)', async () => {
+      const game = makeGame();
+      game.actors.documentClass.create = jest.fn(async () => undefined);
+      const importer = new FoundryWorldImporter(providerFor(game));
+
+      expect(await importer.createActor({ name: 'Vetoed' })).toBeNull();
+    });
+
+    it('returns null when item create resolves to nothing (hook veto)', async () => {
+      const game = makeGame();
+      game.items.documentClass.create = jest.fn(async () => undefined);
+      const importer = new FoundryWorldImporter(providerFor(game));
+
+      expect(await importer.createItem({ name: 'Vetoed' })).toBeNull();
     });
   });
 });

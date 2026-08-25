@@ -39,7 +39,7 @@ export interface FoundryToken {
     };
     statuses?: Set<string>;
   } | null;
-  update(data: TokenUpdateData, options?: TokenUpdateOptions): Promise<FoundryToken>;
+  update(data: TokenUpdateData, options?: TokenUpdateOptions): Promise<unknown>;
   delete(): Promise<FoundryToken>;
 }
 

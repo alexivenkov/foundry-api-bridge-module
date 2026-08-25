@@ -44,7 +44,7 @@ export async function updateTokenHandler(params: UpdateTokenParams): Promise<Tok
     return mapTokenToResult(token);
   }
 
-  const updated = await token.update(updateData);
+  await token.update(updateData);
 
-  return mapTokenToResult(updated);
+  return mapTokenToResult(token);
 }

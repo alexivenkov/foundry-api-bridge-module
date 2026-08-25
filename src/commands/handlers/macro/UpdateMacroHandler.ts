@@ -42,6 +42,6 @@ export async function updateMacroHandler(params: UpdateMacroParams): Promise<Upd
     updateData['folder'] = params.folder;
   }
 
-  const updated = await macro.update(updateData);
-  return mapMacroToDetail(updated);
+  await macro.update(updateData);
+  return mapMacroToDetail(macro);
 }

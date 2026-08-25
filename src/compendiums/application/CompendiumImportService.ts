@@ -83,7 +83,11 @@ export class CompendiumImportService {
     }
     delete data['_id'];
 
-    return this.deps.worldImporter.createActor(data);
+    const created = await this.deps.worldImporter.createActor(data);
+    if (!created) {
+      throw new ImportCreationFailedError(command.actorId);
+    }
+    return created;
   }
 
   async importItem(command: ImportItemCommand): Promise<CreatedItemView> {
@@ -104,7 +108,11 @@ export class CompendiumImportService {
       data['folder'] = command.folder;
     }
 
-    return this.deps.worldImporter.createItem(data);
+    const created = await this.deps.worldImporter.createItem(data);
+    if (!created) {
+      throw new ImportCreationFailedError(command.itemId);
+    }
+    return created;
   }
 
   async addItemToActor(command: AddItemToActorCommand): Promise<AddItemToActorResult> {

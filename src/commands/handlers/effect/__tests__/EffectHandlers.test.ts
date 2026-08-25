@@ -1,19 +1,38 @@
-const mockEffect1 = {
-  _id: 'effect-001',
-  name: 'Bless',
-  img: 'icons/magic/holy/bless.png',
-  disabled: false,
-  origin: 'Item.spell-123',
-  transfer: false,
-  statuses: new Set<string>(),
-  changes: [
-    { key: 'system.bonuses.abilities.save', value: '1d4', mode: 2 }
-  ],
-  duration: { rounds: 10 },
-  flags: {},
-  update: jest.fn(),
-  delete: jest.fn()
-};
+interface MockEffectDoc {
+  _id: string;
+  name: string;
+  img: string;
+  disabled: boolean;
+  origin: string | null;
+  transfer: boolean;
+  statuses: Set<string>;
+  changes: { key: string; value: string; mode: number }[];
+  duration: { seconds?: number; rounds?: number; turns?: number };
+  flags: Record<string, unknown>;
+  update: jest.Mock;
+  delete: jest.Mock;
+}
+
+function createMockEffect1(): MockEffectDoc {
+  return {
+    _id: 'effect-001',
+    name: 'Bless',
+    img: 'icons/magic/holy/bless.png',
+    disabled: false,
+    origin: 'Item.spell-123',
+    transfer: false,
+    statuses: new Set<string>(),
+    changes: [
+      { key: 'system.bonuses.abilities.save', value: '1d4', mode: 2 }
+    ],
+    duration: { rounds: 10 },
+    flags: {},
+    update: jest.fn(),
+    delete: jest.fn()
+  };
+}
+
+const mockEffect1 = createMockEffect1();
 
 const mockEffect2 = {
   _id: 'effect-002',
@@ -392,11 +411,17 @@ describe('removeActorEffectHandler', () => {
 });
 
 describe('updateActorEffectHandler', () => {
+  let effectDoc: MockEffectDoc;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    effectDoc = createMockEffect1();
     mockGame.actors.get.mockReturnValue(mockActor);
-    mockEffectsCollection.get.mockReturnValue(mockEffect1);
-    mockEffect1.update.mockResolvedValue({ ...mockEffect1, name: 'Updated Effect' });
+    mockEffectsCollection.get.mockReturnValue(effectDoc);
+    effectDoc.update.mockImplementation(async (data: Record<string, unknown>) => {
+      Object.assign(effectDoc, data);
+      return undefined;
+    });
   });
 
   describe('successful updates', () => {
@@ -407,10 +432,10 @@ describe('updateActorEffectHandler', () => {
         name: 'New Name'
       });
 
-      expect(mockEffect1.update).toHaveBeenCalledWith({ name: 'New Name' });
+      expect(effectDoc.update).toHaveBeenCalledWith({ name: 'New Name' });
       expect(result.actorId).toBe('actor-123');
       expect(result.effectId).toBe('effect-001');
-      expect(result.name).toBe('Updated Effect');
+      expect(result.name).toBe('New Name');
     });
 
     it('should update effect disabled state', async () => {
@@ -420,7 +445,7 @@ describe('updateActorEffectHandler', () => {
         disabled: true
       });
 
-      expect(mockEffect1.update).toHaveBeenCalledWith({ disabled: true });
+      expect(effectDoc.update).toHaveBeenCalledWith({ disabled: true });
     });
 
     it('should update effect changes', async () => {
@@ -432,7 +457,7 @@ describe('updateActorEffectHandler', () => {
         changes: newChanges
       });
 
-      expect(mockEffect1.update).toHaveBeenCalledWith({ changes: newChanges });
+      expect(effectDoc.update).toHaveBeenCalledWith({ changes: newChanges });
     });
 
     it('should update multiple properties at once', async () => {
@@ -445,7 +470,7 @@ describe('updateActorEffectHandler', () => {
         duration: { rounds: 20 }
       });
 
-      expect(mockEffect1.update).toHaveBeenCalledWith({
+      expect(effectDoc.update).toHaveBeenCalledWith({
         name: 'Multi Update',
         disabled: true,
         img: 'new-icon.png',
@@ -460,10 +485,27 @@ describe('updateActorEffectHandler', () => {
         name: 'Only Name'
       });
 
-      const callArg = mockEffect1.update.mock.calls[0]?.[0];
+      const callArg = effectDoc.update.mock.calls[0]?.[0];
       expect(callArg).toEqual({ name: 'Only Name' });
       expect(callArg).not.toHaveProperty('disabled');
       expect(callArg).not.toHaveProperty('img');
+    });
+
+    it('should resolve with current name when no-op update() resolves undefined without mutating', async () => {
+      effectDoc.update.mockResolvedValue(undefined);
+
+      const result = await updateActorEffectHandler({
+        actorId: 'actor-123',
+        effectId: 'effect-001',
+        name: 'Bless'
+      });
+
+      expect(effectDoc.update).toHaveBeenCalledWith({ name: 'Bless' });
+      expect(result).toEqual({
+        actorId: 'actor-123',
+        effectId: 'effect-001',
+        name: 'Bless'
+      });
     });
   });
 

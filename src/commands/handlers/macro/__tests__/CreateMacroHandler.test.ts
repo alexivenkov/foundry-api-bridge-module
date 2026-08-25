@@ -176,4 +176,12 @@ describe('createMacroHandler', () => {
     expect(call).not.toHaveProperty('img');
     expect(call).not.toHaveProperty('folder');
   });
+
+  it('should reject when create() resolves undefined (hook veto)', async () => {
+    mockGetAllowScriptMacros.mockReturnValue(false);
+    mockCreate.mockResolvedValue(undefined);
+
+    await expect(createMacroHandler({ name: 'X', type: 'chat', command: '/r 1d20' }))
+      .rejects.toThrow('Macro creation was cancelled by Foundry (a module hook may have vetoed it)');
+  });
 });

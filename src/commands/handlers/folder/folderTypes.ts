@@ -11,7 +11,7 @@ export interface FoundryFolderDoc {
   contents: ReadonlyArray<{ id: string }>;
   children: ReadonlyArray<FoundryFolderDoc>;
   getSubfolders(recursive?: boolean): FoundryFolderDoc[];
-  update(data: Record<string, unknown>): Promise<FoundryFolderDoc>;
+  update(data: Record<string, unknown>): Promise<unknown>;
   delete(options?: { deleteSubfolders?: boolean; deleteContents?: boolean }): Promise<FoundryFolderDoc>;
 }
 
@@ -25,7 +25,7 @@ export interface FoundryGame {
 }
 
 export interface FoundryFolderConstructor {
-  create(data: Record<string, unknown>): Promise<FoundryFolderDoc>;
+  create(data: Record<string, unknown>): Promise<FoundryFolderDoc | undefined>;
 }
 
 export function getGame(): FoundryGame {

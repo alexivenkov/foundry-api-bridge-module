@@ -4,7 +4,7 @@ export interface FoundryJournalPage {
   id: string;
   name: string;
   type: string;
-  update(data: FoundryPageUpdateData): Promise<FoundryJournalPage>;
+  update(data: FoundryPageUpdateData): Promise<unknown>;
 }
 
 export interface FoundryPageUpdateData {
@@ -25,7 +25,7 @@ export interface FoundryJournalEntry {
   name: string;
   folder: { id: string } | null;
   pages: FoundryPagesCollection;
-  update(data: FoundryJournalUpdateData): Promise<FoundryJournalEntry>;
+  update(data: FoundryJournalUpdateData): Promise<unknown>;
   delete(): Promise<FoundryJournalEntry>;
   createEmbeddedDocuments(
     type: 'JournalEntryPage',
@@ -55,7 +55,7 @@ export interface FoundryJournalCreateData {
 }
 
 export interface JournalEntryConstructor {
-  create(data: FoundryJournalCreateData): Promise<FoundryJournalEntry>;
+  create(data: FoundryJournalCreateData): Promise<FoundryJournalEntry | undefined>;
 }
 
 export interface FoundryJournalCollection {

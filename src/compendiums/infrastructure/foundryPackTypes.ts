@@ -88,7 +88,7 @@ export interface FoundryCreatedDocument {
 }
 
 export interface FoundryWorldDocumentClass {
-  create(data: Record<string, unknown>): Promise<FoundryCreatedDocument>;
+  create(data: Record<string, unknown>): Promise<FoundryCreatedDocument | undefined>;
 }
 
 export interface FoundryWorldActorsCollection {

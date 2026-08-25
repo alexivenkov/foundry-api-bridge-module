@@ -36,7 +36,7 @@ export async function updateJournalPageHandler(
     updateData.src = params.src;
   }
 
-  const updatedPage = await page.update(updateData);
+  await page.update(updateData);
 
-  return mapPageToResult(updatedPage);
+  return mapPageToResult(page);
 }

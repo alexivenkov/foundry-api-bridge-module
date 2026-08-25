@@ -310,7 +310,7 @@ export interface FoundrySceneCrud {
   navOrder: number | undefined;
   folder: { id: string; name: string } | null | undefined;
   grid: { type: number | undefined; size: number | undefined; distance: number | undefined; units: string | undefined } | undefined;
-  update(data: Record<string, unknown>): Promise<FoundrySceneCrud>;
+  update(data: Record<string, unknown>): Promise<unknown>;
   delete(): Promise<FoundrySceneCrud>;
   clone(data?: Record<string, unknown>, options?: { save?: boolean }): Promise<FoundrySceneCrud> | FoundrySceneCrud;
   view(): Promise<FoundrySceneCrud>;
@@ -325,7 +325,7 @@ export interface FoundryGameCrud {
 }
 
 export interface FoundrySceneConstructor {
-  create(data: Record<string, unknown>): Promise<FoundrySceneCrud>;
+  create(data: Record<string, unknown>): Promise<FoundrySceneCrud | undefined>;
 }
 
 export function getGameCrud(): FoundryGameCrud {

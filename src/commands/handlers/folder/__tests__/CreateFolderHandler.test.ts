@@ -148,4 +148,11 @@ describe('createFolderHandler', () => {
     await expect(createFolderHandler({ name: 'X', type: 'Actor' }))
       .rejects.toThrow('Foundry create failed');
   });
+
+  it('should reject when create() resolves undefined (hook veto)', async () => {
+    mockCreate.mockResolvedValue(undefined);
+
+    await expect(createFolderHandler({ name: 'X', type: 'Actor' }))
+      .rejects.toThrow('Folder creation was cancelled by Foundry (a module hook may have vetoed it)');
+  });
 });

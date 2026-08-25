@@ -125,4 +125,17 @@ describe('createItemHandler', () => {
       expect(result.folder).toBe('Treasure');
     });
   });
+
+  describe('error handling', () => {
+    it('should throw a clear error when create() resolves undefined (hook veto)', async () => {
+      mockGame.items.documentClass.create.mockResolvedValue(undefined);
+
+      await expect(
+        createItemHandler({
+          name: 'Cask of Salted Pork',
+          type: 'consumable'
+        })
+      ).rejects.toThrow('Item creation was cancelled by Foundry (a module hook may have vetoed it)');
+    });
+  });
 });

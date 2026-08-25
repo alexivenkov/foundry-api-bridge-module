@@ -77,5 +77,10 @@ export async function createSceneHandler(params: CreateSceneParams): Promise<Cre
   }
 
   const scene = await getSceneClass().create(data);
+
+  if (!scene) {
+    throw new Error('Scene creation was cancelled by Foundry (a module hook may have vetoed it)');
+  }
+
   return mapSceneToCrudSummary(scene);
 }

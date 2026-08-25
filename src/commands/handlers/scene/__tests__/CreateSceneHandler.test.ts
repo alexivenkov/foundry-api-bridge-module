@@ -269,4 +269,11 @@ describe('createSceneHandler', () => {
       });
     });
   });
+
+  it('rejects when create() resolves undefined (hook veto)', async () => {
+    mockCreate.mockResolvedValue(undefined);
+
+    await expect(createSceneHandler({ name: 'Vetoed' }))
+      .rejects.toThrow('Scene creation was cancelled by Foundry (a module hook may have vetoed it)');
+  });
 });

@@ -25,7 +25,10 @@ const makeMockWall = (overrides: Partial<FoundryWallDocument> = {}): FoundryWall
     update: jest.fn(),
     ...overrides
   };
-  (wall.update as jest.Mock).mockResolvedValue(wall);
+  (wall.update as jest.Mock).mockImplementation(async (data: Partial<FoundryWallDocument>) => {
+    Object.assign(wall, data);
+    return undefined;
+  });
   return wall;
 };
 
@@ -57,7 +60,6 @@ describe('updateWallHandler', () => {
 
   it('updates only doorState', async () => {
     const wall = makeMockWall({ _id: 'w1', door: 1, ds: 0 });
-    (wall.update as jest.Mock).mockResolvedValue({ ...wall, ds: 1 });
     mockGame.scenes.active = makeMockScene('active', wall);
 
     const result = await updateWallHandler({ wallId: 'w1', doorState: 'open' });
@@ -68,16 +70,6 @@ describe('updateWallHandler', () => {
 
   it('updates multiple fields together', async () => {
     const wall = makeMockWall({ _id: 'w1' });
-    (wall.update as jest.Mock).mockResolvedValue({
-      ...wall,
-      door: 2,
-      ds: 2,
-      move: 0,
-      sense: 2,
-      sound: 0,
-      light: 0,
-      dir: 1
-    });
     mockGame.scenes.active = makeMockScene('active', wall);
 
     const result = await updateWallHandler({
@@ -109,7 +101,6 @@ describe('updateWallHandler', () => {
 
   it('partial update: only door type', async () => {
     const wall = makeMockWall({ _id: 'w1', door: 0 });
-    (wall.update as jest.Mock).mockResolvedValue({ ...wall, door: 1 });
     mockGame.scenes.active = makeMockScene('active', wall);
 
     await updateWallHandler({ wallId: 'w1', door: 'door' });
@@ -119,7 +110,6 @@ describe('updateWallHandler', () => {
 
   it('updates coordinates c', async () => {
     const wall = makeMockWall({ _id: 'w1', c: [0, 0, 100, 100] });
-    (wall.update as jest.Mock).mockResolvedValue({ ...wall, c: [50, 50, 200, 200] });
     mockGame.scenes.active = makeMockScene('active', wall);
 
     const result = await updateWallHandler({ wallId: 'w1', c: [50, 50, 200, 200] });
@@ -148,17 +138,7 @@ describe('updateWallHandler', () => {
   });
 
   it('maps numbers back to wire strings via mapWallToSummary', async () => {
-    const wall = makeMockWall({ _id: 'w1' });
-    (wall.update as jest.Mock).mockResolvedValue({
-      ...wall,
-      door: 0,
-      ds: 0,
-      move: 1,
-      sense: 1,
-      sound: 1,
-      light: 1,
-      dir: 2
-    });
+    const wall = makeMockWall({ _id: 'w1', door: 0 });
     mockGame.scenes.active = makeMockScene('active', wall);
 
     const result = await updateWallHandler({ wallId: 'w1', dir: 'right' });
@@ -173,6 +153,27 @@ describe('updateWallHandler', () => {
       sound: 'normal',
       light: 'normal',
       dir: 'right'
+    });
+  });
+
+  it('no-op update — update() resolves undefined without mutating', async () => {
+    const wall = makeMockWall({ _id: 'w1', door: 1, ds: 0 });
+    (wall.update as jest.Mock).mockResolvedValue(undefined);
+    mockGame.scenes.active = makeMockScene('active', wall);
+
+    const result = await updateWallHandler({ wallId: 'w1', doorState: 'closed' });
+
+    expect(wall.update).toHaveBeenCalledWith({ ds: 0 });
+    expect(result).toEqual({
+      id: 'w1',
+      c: [0, 0, 100, 100],
+      door: 'door',
+      doorState: 'closed',
+      move: 'normal',
+      sense: 'normal',
+      sound: 'normal',
+      light: 'normal',
+      dir: 'both'
     });
   });
 });

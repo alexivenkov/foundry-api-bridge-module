@@ -67,7 +67,10 @@ const createMockCombatant = (overrides: Partial<MockCombatant> = {}): MockCombat
     update: jest.fn(),
     ...overrides
   };
-  combatant.update.mockImplementation((data) => Promise.resolve({ ...combatant, ...data }));
+  combatant.update.mockImplementation((data) => {
+    Object.assign(combatant, data);
+    return Promise.resolve(undefined);
+  });
   return combatant;
 };
 
@@ -225,6 +228,13 @@ describe('Combat Handlers', () => {
       await createCombatHandler({});
 
       expect(mockCombatConstructor.create).toHaveBeenCalledWith({});
+    });
+
+    it('rejects when create() resolves undefined (hook veto)', async () => {
+      mockCombatConstructor.create.mockResolvedValue(undefined);
+
+      await expect(createCombatHandler({}))
+        .rejects.toThrow('Combat creation was cancelled by Foundry (a module hook may have vetoed it)');
     });
   });
 
@@ -1162,6 +1172,22 @@ describe('Combat Handlers', () => {
 
       expect(mockGame.combats.get).toHaveBeenCalledWith('combat-123');
       expect(mockCombatant.update).toHaveBeenCalled();
+    });
+
+    it('no-op toggle — update() resolves undefined without mutating', async () => {
+      const mockCombatant = createMockCombatant({ hidden: false });
+      mockCombatant.update.mockResolvedValue(undefined);
+      const mockCombat = createMockCombat();
+      mockCombat.combatants.get.mockReturnValue(mockCombatant);
+      mockGame.combat = mockCombat;
+
+      const result = await toggleCombatantVisibilityHandler({
+        combatantId: 'combatant-123'
+      });
+
+      expect(mockCombatant.update).toHaveBeenCalledWith({ hidden: true });
+      expect(result.hidden).toBe(false);
+      expect(result.id).toBe('combatant-123');
     });
   });
 

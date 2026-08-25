@@ -1,23 +1,28 @@
 import { updateItemHandler } from '../UpdateItemHandler';
 
-const mockUpdatedItem = {
-  id: 'item-123',
-  uuid: 'Item.item-123',
-  name: 'Updated Sword',
-  type: 'weapon',
-  img: 'icons/weapons/sword.webp',
-  folder: null
-};
+interface MockItemDoc {
+  id: string;
+  uuid: string;
+  name: string;
+  type: string;
+  img: string;
+  folder: { name: string } | null;
+  update: jest.Mock;
+}
 
-const mockItem = {
-  id: 'item-123',
-  uuid: 'Item.item-123',
-  name: 'Original Sword',
-  type: 'weapon',
-  img: 'icons/weapons/sword.webp',
-  folder: null,
-  update: jest.fn()
-};
+function createMockItem(): MockItemDoc {
+  return {
+    id: 'item-123',
+    uuid: 'Item.item-123',
+    name: 'Original Sword',
+    type: 'weapon',
+    img: 'icons/weapons/sword.webp',
+    folder: null,
+    update: jest.fn()
+  };
+}
+
+let mockItem: MockItemDoc;
 
 const mockGame: { items: { get: jest.Mock } | undefined } = {
   items: {
@@ -30,9 +35,13 @@ const mockGame: { items: { get: jest.Mock } | undefined } = {
 describe('updateItemHandler', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockItem = createMockItem();
     mockGame.items = { get: jest.fn() };
     mockGame.items.get.mockReturnValue(mockItem);
-    mockItem.update.mockResolvedValue(mockUpdatedItem);
+    mockItem.update.mockImplementation(async (data: Record<string, unknown>) => {
+      Object.assign(mockItem, data);
+      return undefined;
+    });
   });
 
   describe('successful updates', () => {
@@ -118,9 +127,9 @@ describe('updateItemHandler', () => {
     });
 
     it('should return folder name when item has folder', async () => {
-      mockItem.update.mockResolvedValue({
-        ...mockUpdatedItem,
-        folder: { name: 'Weapons' }
+      mockItem.update.mockImplementation(async () => {
+        mockItem.folder = { name: 'Weapons' };
+        return undefined;
       });
 
       const result = await updateItemHandler({
@@ -129,6 +138,27 @@ describe('updateItemHandler', () => {
       });
 
       expect(result.folder).toBe('Weapons');
+    });
+
+    it('should resolve with current values when no-op update() resolves undefined without mutating', async () => {
+      mockItem.update.mockResolvedValue(undefined);
+
+      const result = await updateItemHandler({
+        itemId: 'item-123',
+        name: 'Original Sword'
+      });
+
+      expect(mockItem.update).toHaveBeenCalledWith({
+        name: 'Original Sword'
+      });
+      expect(result).toEqual({
+        id: 'item-123',
+        uuid: 'Item.item-123',
+        name: 'Original Sword',
+        type: 'weapon',
+        img: 'icons/weapons/sword.webp',
+        folder: null
+      });
     });
   });
 

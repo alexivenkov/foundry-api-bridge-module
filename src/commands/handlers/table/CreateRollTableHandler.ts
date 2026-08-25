@@ -47,5 +47,10 @@ export async function createRollTableHandler(params: CreateRollTableParams): Pro
   }
 
   const table = await getGame().tables.documentClass.create(tableData);
+
+  if (!table) {
+    throw new Error('Roll table creation was cancelled by Foundry (a module hook may have vetoed it)');
+  }
+
   return mapTableToResult(table);
 }

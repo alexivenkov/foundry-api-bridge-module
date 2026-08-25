@@ -10,7 +10,7 @@ interface FoundryActor {
 }
 
 interface ActorDocumentClass {
-  create(data: Record<string, unknown>): Promise<FoundryActor>;
+  create(data: Record<string, unknown>): Promise<FoundryActor | undefined>;
 }
 
 interface ActorsCollection {
@@ -42,6 +42,10 @@ export async function createActorHandler(params: CreateActorParams): Promise<Act
   }
 
   const actor = await game.actors.documentClass.create(actorData);
+
+  if (!actor) {
+    throw new Error('Actor creation was cancelled by Foundry (a module hook may have vetoed it)');
+  }
 
   return {
     id: actor.id,

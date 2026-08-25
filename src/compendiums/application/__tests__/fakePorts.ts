@@ -135,6 +135,24 @@ export class FakeWorldImporter implements WorldImporter {
   actorData: Record<string, unknown> | null = null;
   itemData: Record<string, unknown> | null = null;
 
+  actorResult: CreatedActorView | null = {
+    id: 'a1',
+    uuid: 'Actor.a1',
+    name: 'Hero',
+    type: 'npc',
+    img: 'a.png',
+    folderName: null
+  };
+
+  itemResult: CreatedItemView | null = {
+    id: 'i1',
+    uuid: 'Item.i1',
+    name: 'Sword',
+    type: 'weapon',
+    img: 'i.png',
+    folderName: null
+  };
+
   createByDocumentType(
     documentType: string,
     data: Record<string, unknown>
@@ -144,28 +162,14 @@ export class FakeWorldImporter implements WorldImporter {
     return Promise.resolve(this.importResult);
   }
 
-  createActor(data: Record<string, unknown>): Promise<CreatedActorView> {
+  createActor(data: Record<string, unknown>): Promise<CreatedActorView | null> {
     this.actorData = data;
-    return Promise.resolve({
-      id: 'a1',
-      uuid: 'Actor.a1',
-      name: 'Hero',
-      type: 'npc',
-      img: 'a.png',
-      folderName: null
-    });
+    return Promise.resolve(this.actorResult);
   }
 
-  createItem(data: Record<string, unknown>): Promise<CreatedItemView> {
+  createItem(data: Record<string, unknown>): Promise<CreatedItemView | null> {
     this.itemData = data;
-    return Promise.resolve({
-      id: 'i1',
-      uuid: 'Item.i1',
-      name: 'Sword',
-      type: 'weapon',
-      img: 'i.png',
-      folderName: null
-    });
+    return Promise.resolve(this.itemResult);
   }
 }
 

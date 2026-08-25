@@ -140,6 +140,13 @@ describe('sendChatMessageHandler', () => {
     expect(callArgs[0]['content']).toBe(html);
   });
 
+  it('throws a clear error when create() resolves undefined (hook veto)', async () => {
+    mockChatMessage.create.mockResolvedValue(undefined);
+
+    await expect(sendChatMessageHandler({ content: 'Hello' }))
+      .rejects.toThrow('Chat message creation was cancelled by Foundry (a module hook may have vetoed it)');
+  });
+
   it('combines all params', async () => {
     mockGame.actors.get.mockReturnValue({ name: 'Innkeeper' });
 

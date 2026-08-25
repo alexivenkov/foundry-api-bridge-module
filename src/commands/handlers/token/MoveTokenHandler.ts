@@ -253,8 +253,8 @@ export async function moveTokenHandler(params: MoveTokenParams): Promise<TokenRe
     updateData.rotation = params.rotation;
   }
 
-  const updated = await token.update(updateData, { animate });
-  return mapTokenToResult(updated);
+  await token.update(updateData, { animate });
+  return mapTokenToResult(token);
 }
 
 async function moveDoorAware(
@@ -295,8 +295,8 @@ async function moveDoorAware(
     }
 
     const updateData: TokenUpdateData = { x: params.x, y: params.y, ...finalUpdate };
-    const updated = await token.update(updateData, { animate });
-    return mapTokenToResult(updated);
+    await token.update(updateData, { animate });
+    return mapTokenToResult(token);
   }
 
   const pathResult = findGridPath({

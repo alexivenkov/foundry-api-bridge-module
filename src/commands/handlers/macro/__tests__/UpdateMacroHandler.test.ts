@@ -47,7 +47,10 @@ describe('updateMacroHandler', () => {
   it('should update name on chat macro when allowScriptMacros=false', async () => {
     mockGetAllowScriptMacros.mockReturnValue(false);
     const macro = createMockMacro({ type: 'chat' });
-    (macro.update as jest.Mock).mockResolvedValue({ ...macro, name: 'Renamed' });
+    (macro.update as jest.Mock).mockImplementation(async () => {
+      macro.name = 'Renamed';
+      return undefined;
+    });
     setGame([macro]);
 
     const result = await updateMacroHandler({ macroId: 'm1', name: 'Renamed' });
@@ -70,7 +73,10 @@ describe('updateMacroHandler', () => {
   it('should update name on script macro when allowScriptMacros=true', async () => {
     mockGetAllowScriptMacros.mockReturnValue(true);
     const macro = createMockMacro({ type: 'script', command: 'console.log(1)' });
-    (macro.update as jest.Mock).mockResolvedValue({ ...macro, name: 'Renamed Script' });
+    (macro.update as jest.Mock).mockImplementation(async () => {
+      macro.name = 'Renamed Script';
+      return undefined;
+    });
     setGame([macro]);
 
     const result = await updateMacroHandler({ macroId: 'm1', name: 'Renamed Script' });
@@ -96,10 +102,10 @@ describe('updateMacroHandler', () => {
   it('should change chat -> script when allowScriptMacros=true', async () => {
     mockGetAllowScriptMacros.mockReturnValue(true);
     const macro = createMockMacro({ type: 'chat' });
-    (macro.update as jest.Mock).mockResolvedValue({
-      ...macro,
-      type: 'script',
-      command: 'console.log(1)'
+    (macro.update as jest.Mock).mockImplementation(async () => {
+      macro.type = 'script';
+      macro.command = 'console.log(1)';
+      return undefined;
     });
     setGame([macro]);
 
@@ -133,10 +139,10 @@ describe('updateMacroHandler', () => {
   it('should change script -> chat when allowScriptMacros=true', async () => {
     mockGetAllowScriptMacros.mockReturnValue(true);
     const macro = createMockMacro({ type: 'script' });
-    (macro.update as jest.Mock).mockResolvedValue({
-      ...macro,
-      type: 'chat',
-      command: '/r 1d20'
+    (macro.update as jest.Mock).mockImplementation(async () => {
+      macro.type = 'chat';
+      macro.command = '/r 1d20';
+      return undefined;
     });
     setGame([macro]);
 
@@ -160,7 +166,6 @@ describe('updateMacroHandler', () => {
   it('should partial update without affecting unspecified fields', async () => {
     mockGetAllowScriptMacros.mockReturnValue(false);
     const macro = createMockMacro({ type: 'chat' });
-    (macro.update as jest.Mock).mockResolvedValue(macro);
     setGame([macro]);
 
     await updateMacroHandler({ macroId: 'm1', img: 'new.png' });
@@ -177,15 +182,6 @@ describe('updateMacroHandler', () => {
   it('should update all optional fields together (chat -> chat with allowScriptMacros=false)', async () => {
     mockGetAllowScriptMacros.mockReturnValue(false);
     const macro = createMockMacro({ type: 'chat' });
-    (macro.update as jest.Mock).mockResolvedValue({
-      ...macro,
-      name: 'Renamed',
-      type: 'chat',
-      command: 'cmd',
-      scope: 'actor',
-      img: 'new.png',
-      folder: { id: 'f1', name: 'F1' }
-    });
     setGame([macro]);
 
     await updateMacroHandler({
@@ -211,11 +207,31 @@ describe('updateMacroHandler', () => {
   it('should move to root when folder is null', async () => {
     mockGetAllowScriptMacros.mockReturnValue(false);
     const macro = createMockMacro({ type: 'chat' });
-    (macro.update as jest.Mock).mockResolvedValue({ ...macro, folder: null });
     setGame([macro]);
 
     await updateMacroHandler({ macroId: 'm1', folder: null });
 
     expect(macro.update).toHaveBeenCalledWith({ folder: null });
+  });
+
+  it('no-op update — update() resolves undefined without mutating', async () => {
+    mockGetAllowScriptMacros.mockReturnValue(false);
+    const macro = createMockMacro({ type: 'chat' });
+    setGame([macro]);
+
+    const result = await updateMacroHandler({ macroId: 'm1', name: 'Original' });
+
+    expect(macro.update).toHaveBeenCalledWith({ name: 'Original' });
+    expect(result).toEqual({
+      id: 'm1',
+      uuid: 'Macro.m1',
+      name: 'Original',
+      type: 'chat',
+      img: 'icons/svg/dice-target.svg',
+      scope: 'global',
+      folder: null,
+      authorId: null,
+      command: '/r 1d20'
+    });
   });
 });

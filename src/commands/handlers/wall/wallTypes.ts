@@ -16,7 +16,7 @@ export interface FoundryWallDocument {
   sound: number | undefined;
   light: number | undefined;
   dir: number | undefined;
-  update(data: Record<string, unknown>): Promise<FoundryWallDocument>;
+  update(data: Record<string, unknown>): Promise<unknown>;
 }
 
 export interface WallsCollection {

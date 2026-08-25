@@ -7,7 +7,7 @@ interface FoundryActor {
   type: string;
   img: string;
   folder: { name: string } | null;
-  update(data: Record<string, unknown>): Promise<FoundryActor>;
+  update(data: Record<string, unknown>): Promise<unknown>;
 }
 
 interface ActorsCollection {
@@ -45,14 +45,14 @@ export async function updateActorHandler(params: UpdateActorParams): Promise<Act
     updateData['system'] = params.system;
   }
 
-  const updatedActor = await actor.update(updateData);
+  await actor.update(updateData);
 
   return {
-    id: updatedActor.id,
-    uuid: updatedActor.uuid,
-    name: updatedActor.name,
-    type: updatedActor.type,
-    img: updatedActor.img,
-    folder: updatedActor.folder?.name ?? null
+    id: actor.id,
+    uuid: actor.uuid,
+    name: actor.name,
+    type: actor.type,
+    img: actor.img,
+    folder: actor.folder?.name ?? null
   };
 }

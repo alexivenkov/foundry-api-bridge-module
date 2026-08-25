@@ -19,7 +19,7 @@ interface FoundryChatMessage {
 }
 
 interface ChatMessageConstructor {
-  create(data: FoundryChatMessageData): Promise<FoundryChatMessage>;
+  create(data: FoundryChatMessageData): Promise<FoundryChatMessage | undefined>;
   getSpeaker(): FoundrySpeaker;
   STYLE: { IC: number; OOC: number; EMOTE: number };
 }
@@ -74,6 +74,10 @@ export async function sendChatMessageHandler(params: SendChatMessageParams): Pro
   }
 
   const message = await ChatMessage.create(messageData);
+
+  if (!message) {
+    throw new Error('Chat message creation was cancelled by Foundry (a module hook may have vetoed it)');
+  }
 
   return {
     messageId: message.id,

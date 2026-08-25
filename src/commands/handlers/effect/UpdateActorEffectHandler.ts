@@ -38,11 +38,11 @@ export async function updateActorEffectHandler(
     updateData['duration'] = params.duration;
   }
 
-  const updatedEffect = await effect.update(updateData);
+  await effect.update(updateData);
 
   return {
     actorId: actor.id,
     effectId: params.effectId,
-    name: updatedEffect.name
+    name: effect.name
   };
 }

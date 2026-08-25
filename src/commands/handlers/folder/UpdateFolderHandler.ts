@@ -29,6 +29,6 @@ export async function updateFolderHandler(params: UpdateFolderParams): Promise<U
     updateData['sort'] = params.sort;
   }
 
-  const updated = await folder.update(updateData);
-  return mapFolderToSummary(updated);
+  await folder.update(updateData);
+  return mapFolderToSummary(folder);
 }

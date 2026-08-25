@@ -34,6 +34,6 @@ export async function updateRollTableHandler(params: UpdateRollTableParams): Pro
     updateData['img'] = params.img;
   }
 
-  const updated = await table.update(updateData);
-  return mapTableToResult(updated);
+  await table.update(updateData);
+  return mapTableToResult(table);
 }

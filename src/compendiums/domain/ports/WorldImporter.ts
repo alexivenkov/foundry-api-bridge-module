@@ -15,7 +15,9 @@ export interface WorldImporter {
     data: Record<string, unknown>
   ): Promise<ImportedWorldDocument | null>;
 
-  createActor(data: Record<string, unknown>): Promise<CreatedActorView>;
+  /** Returns null when the underlying create resolved to nothing. */
+  createActor(data: Record<string, unknown>): Promise<CreatedActorView | null>;
 
-  createItem(data: Record<string, unknown>): Promise<CreatedItemView>;
+  /** Returns null when the underlying create resolved to nothing. */
+  createItem(data: Record<string, unknown>): Promise<CreatedItemView | null>;
 }

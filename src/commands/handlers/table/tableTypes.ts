@@ -39,12 +39,12 @@ export interface FoundryRollTable {
   roll(): Promise<FoundryRollTableDraw>;
   draw(options?: { displayChat?: boolean }): Promise<FoundryRollTableDraw>;
   resetResults(): Promise<FoundryRollTable>;
-  update(data: Record<string, unknown>): Promise<FoundryRollTable>;
+  update(data: Record<string, unknown>): Promise<unknown>;
   delete(): Promise<FoundryRollTable>;
 }
 
 export interface FoundryRollTableConstructor {
-  create(data: Record<string, unknown>): Promise<FoundryRollTable>;
+  create(data: Record<string, unknown>): Promise<FoundryRollTable | undefined>;
 }
 
 export interface FoundryTablesCollection {

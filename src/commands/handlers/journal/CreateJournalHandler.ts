@@ -33,5 +33,9 @@ export async function createJournalHandler(params: CreateJournalParams): Promise
 
   const journal = await JournalEntry.create(journalData);
 
+  if (!journal) {
+    throw new Error('Journal creation was cancelled by Foundry (a module hook may have vetoed it)');
+  }
+
   return mapJournalToResult(journal);
 }

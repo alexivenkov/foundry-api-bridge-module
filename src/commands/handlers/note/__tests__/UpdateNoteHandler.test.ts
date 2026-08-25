@@ -30,7 +30,10 @@ const makeMockNote = (overrides: Partial<FoundryNoteDocument> = {}): FoundryNote
     delete: jest.fn(),
     ...overrides
   };
-  (note.update as jest.Mock).mockResolvedValue(note);
+  (note.update as jest.Mock).mockImplementation(async (data: Record<string, unknown>) => {
+    Object.assign(note, data);
+    return undefined;
+  });
   return note;
 };
 
@@ -62,7 +65,6 @@ describe('updateNoteHandler', () => {
 
   it('updates only text', async () => {
     const note = makeMockNote({ id: 'n1', _id: 'n1', text: 'Old' });
-    (note.update as jest.Mock).mockResolvedValue({ ...note, text: 'New' });
     mockGame.scenes.active = makeMockScene('active', note);
 
     const result = await updateNoteHandler({ noteId: 'n1', text: 'New' });
@@ -73,7 +75,6 @@ describe('updateNoteHandler', () => {
 
   it('unlinks entryId by setting null', async () => {
     const note = makeMockNote({ id: 'n1', _id: 'n1', entryId: 'old-entry' });
-    (note.update as jest.Mock).mockResolvedValue({ ...note, entryId: null });
     mockGame.scenes.active = makeMockScene('active', note);
 
     const result = await updateNoteHandler({ noteId: 'n1', entryId: null });
@@ -84,10 +85,6 @@ describe('updateNoteHandler', () => {
 
   it('updates icon with both fields', async () => {
     const note = makeMockNote({ id: 'n1', _id: 'n1' });
-    (note.update as jest.Mock).mockResolvedValue({
-      ...note,
-      icon: { src: 'icons/skull.svg', tint: '#660000' }
-    });
     mockGame.scenes.active = makeMockScene('active', note);
 
     const result = await updateNoteHandler({
@@ -105,9 +102,9 @@ describe('updateNoteHandler', () => {
 
   it('updates icon tint to null to clear', async () => {
     const note = makeMockNote({ id: 'n1', _id: 'n1' });
-    (note.update as jest.Mock).mockResolvedValue({
-      ...note,
-      icon: { src: 'icons/svg/book.svg', tint: null }
+    (note.update as jest.Mock).mockImplementation(async () => {
+      note.icon = { src: 'icons/svg/book.svg', tint: null };
+      return undefined;
     });
     mockGame.scenes.active = makeMockScene('active', note);
 
@@ -124,7 +121,6 @@ describe('updateNoteHandler', () => {
     ['right', 4]
   ] as const)('maps textAnchor %s → %i', async (anchor, expected) => {
     const note = makeMockNote({ id: 'n1', _id: 'n1' });
-    (note.update as jest.Mock).mockResolvedValue({ ...note, textAnchor: expected });
     mockGame.scenes.active = makeMockScene('active', note);
 
     await updateNoteHandler({ noteId: 'n1', textAnchor: anchor });
@@ -134,17 +130,6 @@ describe('updateNoteHandler', () => {
 
   it('updates multiple fields together', async () => {
     const note = makeMockNote({ id: 'n1', _id: 'n1' });
-    (note.update as jest.Mock).mockResolvedValue({
-      ...note,
-      x: 500,
-      y: 600,
-      text: 'Updated',
-      iconSize: 80,
-      fontSize: 18,
-      textAnchor: 4,
-      textColor: '#aabbcc',
-      global: true
-    });
     mockGame.scenes.active = makeMockScene('active', note);
 
     const result = await updateNoteHandler({
@@ -176,7 +161,6 @@ describe('updateNoteHandler', () => {
 
   it('partial update: only x', async () => {
     const note = makeMockNote({ id: 'n1', _id: 'n1', x: 0 });
-    (note.update as jest.Mock).mockResolvedValue({ ...note, x: 999 });
     mockGame.scenes.active = makeMockScene('active', note);
 
     await updateNoteHandler({ noteId: 'n1', x: 999 });
@@ -186,7 +170,6 @@ describe('updateNoteHandler', () => {
 
   it('partial update: only y', async () => {
     const note = makeMockNote({ id: 'n1', _id: 'n1', y: 0 });
-    (note.update as jest.Mock).mockResolvedValue({ ...note, y: 555 });
     mockGame.scenes.active = makeMockScene('active', note);
 
     await updateNoteHandler({ noteId: 'n1', y: 555 });
@@ -196,7 +179,6 @@ describe('updateNoteHandler', () => {
 
   it('unlinks pageId by setting null', async () => {
     const note = makeMockNote({ id: 'n1', _id: 'n1', pageId: 'old-page' });
-    (note.update as jest.Mock).mockResolvedValue({ ...note, pageId: null });
     mockGame.scenes.active = makeMockScene('active', note);
 
     const result = await updateNoteHandler({ noteId: 'n1', pageId: null });
@@ -221,13 +203,37 @@ describe('updateNoteHandler', () => {
 
   it('uses scene specified by sceneId', async () => {
     const note = makeMockNote({ id: 'n1', _id: 'n1' });
-    (note.update as jest.Mock).mockResolvedValue({ ...note, text: 'X' });
     const specificScene = makeMockScene('specific-scene', note);
     mockGame.scenes.get.mockReturnValue(specificScene);
 
     await updateNoteHandler({ sceneId: 'specific-scene', noteId: 'n1', text: 'X' });
 
     expect(mockGame.scenes.get).toHaveBeenCalledWith('specific-scene');
+  });
+
+  it('no-op update — update() resolves undefined without mutating', async () => {
+    const note = makeMockNote({ id: 'n1', _id: 'n1' });
+    (note.update as jest.Mock).mockResolvedValue(undefined);
+    mockGame.scenes.active = makeMockScene('active', note);
+
+    const result = await updateNoteHandler({ noteId: 'n1', text: 'Initial' });
+
+    expect(note.update).toHaveBeenCalledWith({ text: 'Initial' });
+    expect(result).toEqual({
+      id: 'n1',
+      x: 100,
+      y: 200,
+      entryId: 'entry-1',
+      pageId: 'page-1',
+      text: 'Initial',
+      iconSrc: 'icons/svg/book.svg',
+      iconTint: null,
+      iconSize: 40,
+      fontSize: 32,
+      textAnchor: 'bottom',
+      textColor: null,
+      global: false
+    });
   });
 
   it('throws when note not found', async () => {

@@ -67,7 +67,10 @@ const createMockToken = (overrides: Partial<MockToken> = {}): MockToken => {
     delete: jest.fn(),
     ...overrides
   };
-  token.update.mockImplementation((data) => Promise.resolve({ ...token, ...data }));
+  token.update.mockImplementation((data) => {
+    Object.assign(token, data);
+    return Promise.resolve(undefined);
+  });
   token.delete.mockResolvedValue(token);
   return token;
 };
@@ -335,6 +338,27 @@ describe('Token Handlers', () => {
         x: 300,
         y: 400
       })).rejects.toThrow('Token not found: nonexistent');
+    });
+
+    it('no-op move — update() resolves undefined without mutating', async () => {
+      const mockToken = createMockToken();
+      mockToken.update.mockResolvedValue(undefined);
+      const mockScene = createMockScene();
+      mockScene.tokens.get.mockReturnValue(mockToken);
+      mockGame.scenes.active = mockScene;
+
+      const result = await moveTokenHandler({
+        tokenId: 'token-123',
+        x: 100,
+        y: 200
+      });
+
+      expect(mockToken.update).toHaveBeenCalledWith(
+        { x: 100, y: 200 },
+        { animate: true }
+      );
+      expect(result.x).toBe(100);
+      expect(result.y).toBe(200);
     });
 
     it('uses direct move when collision backend is unavailable', async () => {
@@ -887,6 +911,25 @@ describe('Token Handlers', () => {
         disposition: -1,
         lockRotation: true
       });
+    });
+
+    it('no-op update — update() resolves undefined without mutating', async () => {
+      const mockToken = createMockToken();
+      mockToken.update.mockResolvedValue(undefined);
+      const mockScene = createMockScene();
+      mockScene.tokens.get.mockReturnValue(mockToken);
+      mockGame.scenes.active = mockScene;
+
+      const result = await updateTokenHandler({
+        tokenId: 'token-123',
+        hidden: false
+      });
+
+      expect(mockToken.update).toHaveBeenCalledWith({ hidden: false });
+      expect(result.id).toBe('token-123');
+      expect(result.hidden).toBe(false);
+      expect(result.x).toBe(100);
+      expect(result.y).toBe(200);
     });
 
     it('returns current token when no updates provided', async () => {

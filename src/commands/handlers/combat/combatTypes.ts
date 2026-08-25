@@ -16,7 +16,7 @@ export interface FoundryCombatant {
   defeated: boolean;
   hidden: boolean;
   // Foundry returns undefined for no-op updates (when new value matches current).
-  update(data: CombatantUpdateData): Promise<FoundryCombatant | undefined>;
+  update(data: CombatantUpdateData): Promise<unknown>;
 }
 
 export interface FoundryCombatantsCollection {
@@ -68,7 +68,7 @@ export interface FoundryCombatCreateData {
 }
 
 export interface CombatConstructor {
-  create(data?: FoundryCombatCreateData): Promise<FoundryCombat>;
+  create(data?: FoundryCombatCreateData): Promise<FoundryCombat | undefined>;
 }
 
 export interface FoundryCombatsCollection {

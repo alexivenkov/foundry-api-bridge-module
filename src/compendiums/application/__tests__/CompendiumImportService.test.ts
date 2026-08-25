@@ -123,6 +123,15 @@ describe('CompendiumImportService', () => {
       });
       expect(view.id).toBe('a1');
     });
+
+    it('throws ImportCreationFailedError when actor create yields nothing', async () => {
+      const { service, worldImporter } = setup([descriptor({ id: 'p1', type: 'Actor' })]);
+      worldImporter.actorResult = null;
+
+      await expect(
+        service.importActor({ packId: 'p1', actorId: 'a1' })
+      ).rejects.toThrow(ImportCreationFailedError);
+    });
   });
 
   describe('importItem', () => {
@@ -137,6 +146,15 @@ describe('CompendiumImportService', () => {
       await expect(
         actorPack.service.importItem({ packId: 'ap', itemId: 'i1' })
       ).rejects.toThrow('Compendium pack is not an Item pack: ap');
+    });
+
+    it('throws ImportCreationFailedError when item create yields nothing', async () => {
+      const { service, worldImporter } = setup([descriptor({ id: 'p1', type: 'Item' })]);
+      worldImporter.itemResult = null;
+
+      await expect(
+        service.importItem({ packId: 'p1', itemId: 'i1' })
+      ).rejects.toThrow(ImportCreationFailedError);
     });
   });
 

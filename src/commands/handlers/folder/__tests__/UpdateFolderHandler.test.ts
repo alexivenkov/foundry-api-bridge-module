@@ -39,8 +39,10 @@ describe('updateFolderHandler', () => {
 
   it('should update folder name', async () => {
     const folder = createMockFolder();
-    const updated = { ...folder, name: 'New Name' };
-    (folder.update as jest.Mock).mockResolvedValue(updated);
+    (folder.update as jest.Mock).mockImplementation(async () => {
+      folder.name = 'New Name';
+      return undefined;
+    });
     setGame([folder]);
 
     const result = await updateFolderHandler({ folderId: 'f1', name: 'New Name' });
@@ -58,7 +60,6 @@ describe('updateFolderHandler', () => {
 
   it('should move folder to root when parentId is null', async () => {
     const folder = createMockFolder();
-    (folder.update as jest.Mock).mockResolvedValue({ ...folder, folder: null });
     setGame([folder]);
 
     await updateFolderHandler({ folderId: 'f1', parentId: null });
@@ -68,7 +69,6 @@ describe('updateFolderHandler', () => {
 
   it('should not include folder field when parentId is undefined', async () => {
     const folder = createMockFolder();
-    (folder.update as jest.Mock).mockResolvedValue(folder);
     setGame([folder]);
 
     await updateFolderHandler({ folderId: 'f1', name: 'Renamed' });
@@ -80,7 +80,6 @@ describe('updateFolderHandler', () => {
 
   it('should set parent folder when parentId is a string', async () => {
     const folder = createMockFolder();
-    (folder.update as jest.Mock).mockResolvedValue({ ...folder, folder: { id: 'p1' } });
     setGame([folder]);
 
     await updateFolderHandler({ folderId: 'f1', parentId: 'p1' });
@@ -90,13 +89,15 @@ describe('updateFolderHandler', () => {
 
   it('should update all optional fields together', async () => {
     const folder = createMockFolder();
-    (folder.update as jest.Mock).mockResolvedValue({
-      ...folder,
-      name: 'Renamed',
-      color: '#ff0000',
-      description: 'New desc',
-      sort: 10,
-      folder: { id: 'parent' }
+    (folder.update as jest.Mock).mockImplementation(async () => {
+      Object.assign(folder, {
+        name: 'Renamed',
+        color: '#ff0000',
+        description: 'New desc',
+        sort: 10,
+        folder: { id: 'parent' }
+      });
+      return undefined;
     });
     setGame([folder]);
 
@@ -122,7 +123,6 @@ describe('updateFolderHandler', () => {
 
   it('should send empty object when no fields provided', async () => {
     const folder = createMockFolder();
-    (folder.update as jest.Mock).mockResolvedValue(folder);
     setGame([folder]);
 
     await updateFolderHandler({ folderId: 'f1' });
@@ -132,7 +132,6 @@ describe('updateFolderHandler', () => {
 
   it('should partial update without affecting unspecified fields', async () => {
     const folder = createMockFolder();
-    (folder.update as jest.Mock).mockResolvedValue(folder);
     setGame([folder]);
 
     await updateFolderHandler({ folderId: 'f1', color: '#000000' });
@@ -143,5 +142,23 @@ describe('updateFolderHandler', () => {
     expect(call).not.toHaveProperty('description');
     expect(call).not.toHaveProperty('sort');
     expect(call).not.toHaveProperty('folder');
+  });
+
+  it('no-op update — update() resolves undefined without mutating', async () => {
+    const folder = createMockFolder();
+    setGame([folder]);
+
+    const result = await updateFolderHandler({ folderId: 'f1', name: 'Original' });
+
+    expect(folder.update).toHaveBeenCalledWith({ name: 'Original' });
+    expect(result).toEqual({
+      id: 'f1',
+      name: 'Original',
+      type: 'Actor',
+      color: null,
+      description: null,
+      parentId: null,
+      sort: 0
+    });
   });
 });

@@ -49,6 +49,6 @@ export async function updateNoteHandler(params: UpdateNoteParams): Promise<Updat
     updateData['icon'] = icon;
   }
 
-  const updated = await note.update(updateData);
-  return mapNoteToSummary(updated);
+  await note.update(updateData);
+  return mapNoteToSummary(note);
 }

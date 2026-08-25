@@ -7,7 +7,7 @@ interface FoundryItem {
   type: string;
   img: string;
   folder: { name: string } | null;
-  update(data: Record<string, unknown>): Promise<FoundryItem>;
+  update(data: Record<string, unknown>): Promise<unknown>;
 }
 
 interface ItemsCollection {
@@ -45,14 +45,14 @@ export async function updateItemHandler(params: UpdateItemParams): Promise<World
     updateData['system'] = params.system;
   }
 
-  const updatedItem = await item.update(updateData);
+  await item.update(updateData);
 
   return {
-    id: updatedItem.id,
-    uuid: updatedItem.uuid,
-    name: updatedItem.name,
-    type: updatedItem.type,
-    img: updatedItem.img,
-    folder: updatedItem.folder?.name ?? null
+    id: item.id,
+    uuid: item.uuid,
+    name: item.name,
+    type: item.type,
+    img: item.img,
+    folder: item.folder?.name ?? null
   };
 }

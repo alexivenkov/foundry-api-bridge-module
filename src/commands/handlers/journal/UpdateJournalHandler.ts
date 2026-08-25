@@ -24,7 +24,7 @@ export async function updateJournalHandler(params: UpdateJournalParams): Promise
     updateData.folder = params.folder;
   }
 
-  const updatedJournal = await journal.update(updateData);
+  await journal.update(updateData);
 
-  return mapJournalToResult(updatedJournal);
+  return mapJournalToResult(journal);
 }
