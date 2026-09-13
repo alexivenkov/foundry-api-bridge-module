@@ -4,6 +4,8 @@ Foundry VTT module that connects your world to [Foundry MCP](https://foundry-mcp
 
 The module keeps an outgoing WebSocket connection to the server, receives commands, executes them inside Foundry with GM permissions, and sends the results back. It activates only for the Game Master: nothing runs on players' clients, and nothing listens for incoming connections on your machine.
 
+AI clients connect to `https://foundry-mcp.com/mcp` over MCP in one of two ways: **OAuth**, where you sign in with Patreon inside the client and never copy a key (Claude and ChatGPT connectors, Claude Code, Codex, Cursor, Gemini CLI, VS Code), or a **static API key** for clients that cannot do OAuth. See [Connect an AI client](#3-connect-an-ai-client).
+
 ## Installation
 
 **From Foundry (recommended).** Add-on Modules → Install Module → search for **Foundry API Bridge** → Install. The module is listed on [foundryvtt.com](https://foundryvtt.com/packages/foundry-api-bridge) and updates through Foundry's normal update check.
@@ -20,7 +22,7 @@ Then enable the module in your world: Game Settings → Manage Modules.
 
 ## Setup
 
-Three steps: get a key, put it into the module, connect an AI client.
+Three steps: get a key, put it into the module, connect an AI client. With OAuth the order can be reversed: connect the client first, and the key is created for you.
 
 ### 1. Get an API key
 
@@ -53,23 +55,46 @@ The **Configure** button next to the module in the module list opens the advance
 
 ### 3. Connect an AI client
 
-The MCP endpoint is `https://foundry-mcp.com/mcp` (Streamable HTTP). There are two ways to authenticate:
+The MCP endpoint is `https://foundry-mcp.com/mcp` (Streamable HTTP). Two ways to authenticate.
 
-- **OAuth — recommended.** Add the endpoint to the client and sign in with Patreon when it asks. No key copying. The client discovers the authorization server on its own (OAuth 2.1 with PKCE; clients register dynamically or via a client metadata document), and the token it receives is tied to the same Patreon account — and the same `pk_` key — that the module uses, so your tier applies everywhere.
-- **API key.** Send `Authorization: Bearer pk_…` with every request. For clients that cannot do OAuth, and for scripts.
+#### OAuth — recommended
 
-| Client | OAuth | API key |
-|---|---|---|
-| **ChatGPT** (Pro / Team / Enterprise) | Settings → turn on **Developer Mode**. In a chat: **+** → Developer Mode → **Add Sources**, paste the URL, choose **OAuth**, sign in with Patreon. Leave client ID and secret empty. Enable the connector in each new chat. | OAuth only |
-| **Claude** (web and desktop) | Settings → **Connectors** → **Add custom connector**, paste the URL, sign in with Patreon. | Older Claude Desktop builds: config file, see below |
-| **Claude Code** | `claude mcp add --transport http foundry https://foundry-mcp.com/mcp`, then run `/mcp` and choose **Authenticate**. | `claude mcp add --transport http --header "Authorization: Bearer pk_…" foundry https://foundry-mcp.com/mcp` |
-| **Codex CLI** | `codex mcp add foundry --url https://foundry-mcp.com/mcp`, then `codex mcp login foundry`. | `codex mcp add foundry --url https://foundry-mcp.com/mcp --bearer-token-env-var FOUNDRY_MCP_KEY`, with the key in that environment variable |
-| **Cursor** | `~/.cursor/mcp.json`: `{ "mcpServers": { "foundry": { "url": "https://foundry-mcp.com/mcp" } } }`, then click **Needs login** in Settings → MCP. | Add `"headers": { "Authorization": "Bearer pk_…" }` to the server entry |
-| **Gemini CLI** | `gemini mcp add --transport http foundry https://foundry-mcp.com/mcp`, then `/mcp auth foundry`. | `~/.gemini/settings.json` with `"httpUrl"` and `"headers"` |
-| **VS Code** | `.vscode/mcp.json`: `{ "servers": { "foundry": { "type": "http", "url": "https://foundry-mcp.com/mcp" } } }` | Add `"headers"` as above |
-| **Anything else** | Any client that implements the MCP authorization spec | `Authorization: Bearer pk_…` |
+You add the endpoint to the client and sign in with Patreon when it asks. No key is copied anywhere. Example with **Claude** (web or desktop app):
 
-Claude Desktop without connector support (older builds) can use a config file and the key. It goes through [mcp-remote](https://www.npmjs.com/package/mcp-remote) and needs Node.js installed; restart Claude Desktop after saving:
+1. Open **Settings → Connectors** and click **Add custom connector**.
+2. Name it `Foundry`, paste `https://foundry-mcp.com/mcp` as the URL, leave the OAuth client ID and secret empty, and click **Add**.
+3. Click **Connect** on the new connector. A Patreon sign-in page opens; approve it and you are returned to Claude.
+4. Start a chat and ask about your world. The Foundry tools are listed under the connector.
+
+What happens behind the scenes: the client asks the endpoint, gets an OAuth challenge, discovers the authorization server at `foundry-mcp.com/oauth/*`, registers itself (OAuth 2.1 with PKCE, dynamic client registration or a client metadata document) and sends you to Patreon. The token it receives is tied to your Patreon account and to the same `pk_` key the module uses, so your tier applies everywhere. If you had no key yet, it is created at this moment and shown on [foundry-mcp.com/auth/patreon](https://foundry-mcp.com/auth/patreon).
+
+The same works in every client that implements the MCP authorization spec:
+
+| Client | Steps |
+|---|---|
+| **ChatGPT** (Pro / Team / Enterprise) | Settings → turn on **Developer Mode**. In a chat: **+** → Developer Mode → **Add Sources**, paste the URL, choose **OAuth**, sign in with Patreon. Leave client ID and secret empty. Enable the connector in each new chat. |
+| **Claude Code** | `claude mcp add --transport http foundry https://foundry-mcp.com/mcp`, then run `/mcp` and choose **Authenticate**. |
+| **Codex CLI** | `codex mcp add foundry --url https://foundry-mcp.com/mcp`, then `codex mcp login foundry`. |
+| **Cursor** | `~/.cursor/mcp.json`: `{ "mcpServers": { "foundry": { "url": "https://foundry-mcp.com/mcp" } } }`, then click **Needs login** in Settings → MCP. |
+| **Gemini CLI** | `gemini mcp add --transport http foundry https://foundry-mcp.com/mcp`, then `/mcp auth foundry`. |
+| **VS Code** | `.vscode/mcp.json`: `{ "servers": { "foundry": { "type": "http", "url": "https://foundry-mcp.com/mcp" } } }`, then sign in when prompted. |
+
+#### API key
+
+For clients that cannot do OAuth, and for scripts: send `Authorization: Bearer pk_…` with every request, using the key from step 1.
+
+| Client | Configuration |
+|---|---|
+| **Claude Code** | `claude mcp add --transport http --header "Authorization: Bearer pk_…" foundry https://foundry-mcp.com/mcp` |
+| **Codex CLI** | `codex mcp add foundry --url https://foundry-mcp.com/mcp --bearer-token-env-var FOUNDRY_MCP_KEY`, with the key in that environment variable |
+| **Cursor** | Add `"headers": { "Authorization": "Bearer pk_…" }` to the server entry in `~/.cursor/mcp.json` |
+| **Gemini CLI** | `~/.gemini/settings.json` with `"httpUrl"` and `"headers"` |
+| **VS Code** | Add `"headers"` to the server entry in `.vscode/mcp.json` |
+| **Any other MCP client** | Endpoint `https://foundry-mcp.com/mcp`, Streamable HTTP, header `Authorization: Bearer pk_…` |
+
+ChatGPT connectors support OAuth only.
+
+Claude Desktop builds without connector support can use a config file and the key. It goes through [mcp-remote](https://www.npmjs.com/package/mcp-remote) and needs Node.js installed; restart Claude Desktop after saving:
 
 ```json
 {
