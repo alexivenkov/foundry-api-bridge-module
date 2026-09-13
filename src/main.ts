@@ -161,7 +161,8 @@ import {
   pf2ePostItemHandler
 } from '@/commands';
 
-const MODULE_VERSION = '8.2.0';
+// Injected by Vite from package.json (see vite.config.ts `define`).
+const MODULE_VERSION = __MODULE_VERSION__;
 
 let mcpClient: WebSocketClient | null = null;
 let apiClient: WebSocketClient | null = null;

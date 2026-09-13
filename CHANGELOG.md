@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+
+- **Console version was stuck at 8.2.0.** The `Foundry API Bridge | v…` lines in the browser console printed a hardcoded constant; the version is now injected from `package.json` at build time, so it always matches the installed release.
+
+### Technical
+
+- CI workflow now runs on `master` (it listened to `main`, which this repository does not use, so it had never run)
+
 ## [8.12.0] - 2026-09-13
 
 ### Added
