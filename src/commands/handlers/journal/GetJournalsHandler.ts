@@ -34,6 +34,11 @@ interface TextEditorClass {
   enrichHTML(content: string, options?: { secrets?: boolean }): Promise<string>;
 }
 
+/** Mapping options. `light` = index only: no page text/markdown, no enrichHTML. */
+export interface JournalMapOptions {
+  light?: boolean;
+}
+
 function getGame(): FoundryGame {
   return (globalThis as unknown as { game: FoundryGame }).game;
 }
@@ -42,8 +47,24 @@ function getTextEditor(): TextEditorClass | undefined {
   return (globalThis as unknown as { TextEditor?: TextEditorClass }).TextEditor;
 }
 
+function pageType(page: FoundryPage): string {
+  return typeof page.type === 'string' ? page.type : String(page.type);
+}
+
+/** Index entry: everything except content. Synchronous — no enrichment. */
+function mapPageToIndex(page: FoundryPage): JournalPageData {
+  return {
+    id: String(page.id),
+    name: page.name,
+    type: pageType(page),
+    text: null,
+    markdown: null,
+    enrichedText: null,
+    src: page.src ?? null
+  };
+}
+
 async function mapPageToData(page: FoundryPage): Promise<JournalPageData> {
-  const pageType = page.type;
   const textContent = page.text.content ?? null;
 
   let enrichedText: string | null = null;
@@ -61,7 +82,7 @@ async function mapPageToData(page: FoundryPage): Promise<JournalPageData> {
   return {
     id: String(page.id),
     name: page.name,
-    type: typeof pageType === 'string' ? pageType : String(pageType),
+    type: pageType(page),
     text: textContent,
     markdown: page.text.markdown ?? null,
     enrichedText,
@@ -69,13 +90,15 @@ async function mapPageToData(page: FoundryPage): Promise<JournalPageData> {
   };
 }
 
-async function mapJournalToData(journal: FoundryJournal): Promise<JournalData> {
+async function mapJournalToData(journal: FoundryJournal, options: JournalMapOptions = {}): Promise<JournalData> {
   const pages: FoundryPage[] = [];
   journal.pages.forEach(page => {
     pages.push(page);
   });
 
-  const mappedPages = await Promise.all(pages.map(mapPageToData));
+  const mappedPages = options.light === true
+    ? pages.map(mapPageToIndex)
+    : await Promise.all(pages.map(mapPageToData));
 
   return {
     id: journal.id,
@@ -88,7 +111,7 @@ async function mapJournalToData(journal: FoundryJournal): Promise<JournalData> {
 
 export { mapJournalToData, type FoundryJournal };
 
-export async function getJournalsHandler(_params: GetJournalsParams): Promise<JournalData[]> {
+export async function getJournalsHandler(params: GetJournalsParams): Promise<JournalData[]> {
   const game = getGame();
   const journals: FoundryJournal[] = [];
 
@@ -96,5 +119,6 @@ export async function getJournalsHandler(_params: GetJournalsParams): Promise<Jo
     journals.push(journal);
   });
 
-  return Promise.all(journals.map(mapJournalToData));
+  const options: JournalMapOptions = { light: params.light === true };
+  return Promise.all(journals.map(journal => mapJournalToData(journal, options)));
 }

@@ -88,6 +88,52 @@ describe('getJournalsHandler', () => {
     }]);
   });
 
+  describe('light index (params.light = true)', () => {
+    it('returns pages without text, markdown or enrichment, and never calls enrichHTML', async () => {
+      const pages = [
+        createMockPage({ id: 'p1', name: 'Intro', text: { content: '<p>@UUID[Actor.1]{Hero}</p>', markdown: '# Start' } }),
+        createMockPage({ id: 'p2', name: 'Map', type: 'image', src: 'maps/town.png', text: { content: undefined, markdown: undefined } })
+      ];
+      setGame([createMockJournal(pages, { id: 'j1', uuid: 'JE.j1', name: 'Adventure Log', folder: { name: 'Logs' } })]);
+
+      const result = await getJournalsHandler({ light: true });
+
+      expect(result).toEqual([{
+        id: 'j1',
+        uuid: 'JE.j1',
+        name: 'Adventure Log',
+        folder: 'Logs',
+        pages: [
+          { id: 'p1', name: 'Intro', type: 'text', text: null, markdown: null, enrichedText: null, src: null },
+          { id: 'p2', name: 'Map', type: 'image', text: null, markdown: null, enrichedText: null, src: 'maps/town.png' }
+        ]
+      }]);
+      expect(mockEnrichHTML).not.toHaveBeenCalled();
+    });
+
+    it('still converts numeric page types and keeps journal order', async () => {
+      setGame([
+        createMockJournal([createMockPage({ type: 7 })], { id: 'j1', uuid: 'JE.j1', name: 'First' }),
+        createMockJournal([], { id: 'j2', uuid: 'JE.j2', name: 'Second' })
+      ]);
+
+      const result = await getJournalsHandler({ light: true });
+
+      expect(result.map(j => j.name)).toEqual(['First', 'Second']);
+      expect(result[0]?.pages[0]?.type).toBe('7');
+    });
+
+    it('light: false and a missing flag both return the full payload', async () => {
+      const page = createMockPage({ text: { content: '<p>Body</p>', markdown: undefined } });
+      setGame([createMockJournal([page])]);
+
+      const full = await getJournalsHandler({ light: false });
+      expect(full[0]?.pages[0]?.text).toBe('<p>Body</p>');
+      expect(full[0]?.pages[0]?.enrichedText).toBe('<enriched><p>Body</p></enriched>');
+      expect(mockEnrichHTML).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('should return empty array when journal collection is undefined', async () => {
     setGame(undefined);
 

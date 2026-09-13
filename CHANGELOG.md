@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.12.0] - 2026-09-13
+
+### Added
+
+- **`get-journals` light index (`params.light: true`).** Returns every journal with its pages' `id`, `name`, `type` and `src` but no `text`, `markdown` or `enrichedText`, and skips `TextEditor.enrichHTML` entirely. On large worlds the full payload — every page enriched (UUID links resolved, secrets revealed) — took tens of seconds and hit the server's 30 s timeout for journal search and listing; the index takes a fraction of that. The gateway (foundry-mcp) sends `light: true` for journal lists, folder counts and search; single-journal reads (`get-journal`) are unchanged. Backward compatible in both directions: older modules ignore the flag and return the full payload, and callers that omit it get the full payload as before.
+
+### Technical
+
+- `GetJournalsParams` gains `light?: boolean`; `mapJournalToData(journal, { light })` shared with the full path; 3 new handler tests (index shape, no enrichment calls, `light: false` equals omitted)
+
 ## [8.11.2] - 2026-08-25
 
 ### Fixed

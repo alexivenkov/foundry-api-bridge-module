@@ -1608,7 +1608,15 @@ export interface WorldInfoResult {
 }
 
 // Pull query params (Batch 2)
-export type GetJournalsParams = Record<string, never>;
+export interface GetJournalsParams {
+  /**
+   * Index only: pages carry id/name/type/src but no text, markdown or
+   * enriched HTML, and TextEditor.enrichHTML is skipped entirely — the part
+   * that makes a full get-journals take tens of seconds on large worlds.
+   * Used by the gateway for journal lists and search (module 8.12+).
+   */
+  light?: boolean;
+}
 
 export interface GetJournalParams {
   journalId: string;
