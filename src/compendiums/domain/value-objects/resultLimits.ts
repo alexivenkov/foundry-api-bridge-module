@@ -11,12 +11,16 @@ export const SearchInPackLimit = Object.freeze({
   }
 });
 
+// Both cross-pack searches scan every pack in the world until the limit is
+// met, so an unbounded limit is a full scan on the GM's main thread. Values
+// above MAX are clamped, matching SearchInPackLimit.
 export const CrossPackSearchLimit = Object.freeze({
   DEFAULT: 100,
+  MAX: 500,
   resolve(requested: number | undefined): number {
-    return requested !== undefined && requested > 0
-      ? requested
-      : CrossPackSearchLimit.DEFAULT;
+    if (requested === undefined || requested < 1) return CrossPackSearchLimit.DEFAULT;
+    if (requested > CrossPackSearchLimit.MAX) return CrossPackSearchLimit.MAX;
+    return requested;
   }
 });
 
@@ -24,10 +28,11 @@ export const CrossPackSearchLimit = Object.freeze({
 // deliberately small.
 export const PageSearchLimit = Object.freeze({
   DEFAULT: 25,
+  MAX: 200,
   resolve(requested: number | undefined): number {
-    return requested !== undefined && requested > 0
-      ? requested
-      : PageSearchLimit.DEFAULT;
+    if (requested === undefined || requested < 1) return PageSearchLimit.DEFAULT;
+    if (requested > PageSearchLimit.MAX) return PageSearchLimit.MAX;
+    return requested;
   }
 });
 

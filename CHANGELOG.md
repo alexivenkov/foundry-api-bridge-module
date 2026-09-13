@@ -2,14 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [8.12.1] - 2026-09-13
+
+### Security
+
+- **The API key is no longer readable by players.** It was a world-scoped setting, and every user of the world could read it from the browser console (`game.settings.get('foundry-api-bridge','apiKey')`). It is now a client-scoped setting stored in the GM's browser. On the first start after the update the module copies a key still stored in the world settings into this browser and deletes the world copy; other browsers the GM uses need the key entered once more. Players no longer see the field at all.
 
 ### Fixed
 
-- **Console version was stuck at 8.2.0.** The `Foundry API Bridge | v…` lines in the browser console printed a hardcoded constant; the version is now injected from `package.json` at build time, so it always matches the installed release.
+- **Reconnect no longer gives up, and never waits 42 minutes.** The delay still doubles from the configured base, but is now capped at 60 seconds with up to one second of jitter, and by default the module keeps trying for as long as the world is open (**Max Reconnect Attempts** `0`; a stored value of 10 with the default 5 s base — the old default — is read as unlimited, any other value is kept).
+- **Dead connections are detected.** Browsers answer WebSocket protocol pings on their own and never expose them, so a socket that died behind a NAT or during laptop sleep looked connected until the OS gave up on it — meanwhile the AI got "Foundry not connected". The module now sends an application-level `{"type":"ping"}` every 25 s (first one a second after connecting); once a server has answered, an unanswered ping (10 s) closes the socket and reconnects. Servers that predate the heartbeat never answer, so the check stays off against them. The module also pings and skips any pending backoff when the browser reports the network is back or the tab becomes visible again.
+- **Console version was stuck at 8.2.0.** The `Foundry API Bridge | v…` lines printed a hardcoded constant; the version is now injected from `package.json` at build time.
+
+### Changed
+
+- **`roll-dice` refuses formulas that would freeze the GM's browser.** Foundry evaluates every die synchronously; the handler now rejects formulas longer than 200 characters or rolling more than 1000 dice (`Roll formula asks for too many dice (N > 1000)`), before evaluation.
+- **`search-compendiums` caps `limit` at 500 and `search-compendium-pages` at 200.** Both scan every pack in the world until the limit is met, so an unbounded limit was a full scan on the main thread. Values above the cap are clamped, matching `search-compendium`'s existing 500 cap.
 
 ### Technical
 
+- Transport: `WebSocketClient` gains `maxReconnectDelay`, `heartbeatInterval`, `heartbeatTimeout`, `reconnectNow()`, `pingNow()`; pong frames never reach the command router; 47 transport tests (14 new)
+- `migrateLegacyApiKey()` in `SettingsManager` (6 tests); `normalizeLegacyDefaults()` in `ConfigManager` (2 tests); roll-dice size guards (5 tests); page-search cap tests — 2873 tests passing (272 suites)
 - CI workflow now runs on `master` (it listened to `main`, which this repository does not use, so it had never run)
 
 ## [8.12.0] - 2026-09-13

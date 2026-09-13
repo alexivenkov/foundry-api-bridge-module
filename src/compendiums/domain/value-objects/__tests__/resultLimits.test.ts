@@ -1,4 +1,4 @@
-import { CrossPackSearchLimit, PageOffset, SearchInPackLimit } from '../resultLimits';
+import { CrossPackSearchLimit, PageOffset, PageSearchLimit, SearchInPackLimit } from '../resultLimits';
 
 describe('SearchInPackLimit', () => {
   it('defaults to 50 when undefined', () => {
@@ -28,9 +28,31 @@ describe('CrossPackSearchLimit', () => {
     expect(CrossPackSearchLimit.resolve(-1)).toBe(100);
   });
 
-  it('does not cap positive values', () => {
-    expect(CrossPackSearchLimit.resolve(5000)).toBe(5000);
+  it('caps at 500', () => {
+    expect(CrossPackSearchLimit.resolve(5000)).toBe(500);
+    expect(CrossPackSearchLimit.resolve(500)).toBe(500);
+  });
+
+  it('passes valid values through', () => {
     expect(CrossPackSearchLimit.resolve(3)).toBe(3);
+    expect(CrossPackSearchLimit.resolve(499)).toBe(499);
+  });
+});
+
+describe('PageSearchLimit', () => {
+  it('defaults to 25 when undefined or non-positive', () => {
+    expect(PageSearchLimit.resolve(undefined)).toBe(25);
+    expect(PageSearchLimit.resolve(0)).toBe(25);
+  });
+
+  it('caps at 200', () => {
+    expect(PageSearchLimit.resolve(1e9)).toBe(200);
+    expect(PageSearchLimit.resolve(200)).toBe(200);
+  });
+
+  it('passes valid values through', () => {
+    expect(PageSearchLimit.resolve(1)).toBe(1);
+    expect(PageSearchLimit.resolve(150)).toBe(150);
   });
 });
 

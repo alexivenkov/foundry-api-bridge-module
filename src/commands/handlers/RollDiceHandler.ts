@@ -8,6 +8,21 @@ interface FoundryRoll {
   total: number;
   formula: string;
   terms: FoundryDiceTerm[];
+  /** Parsed dice terms, available before evaluation. */
+  dice?: Array<{ number?: unknown }>;
+}
+
+// Guards against formulas that would freeze the GM's browser: Foundry
+// evaluates every die synchronously on the main thread, and a single
+// "10000d20" is enough to stall the UI for seconds.
+const MAX_FORMULA_LENGTH = 200;
+const MAX_DICE = 1000;
+
+function countDice(roll: FoundryRoll): number {
+  return (roll.dice ?? []).reduce((sum, term) => {
+    const n = term.number;
+    return sum + (typeof n === 'number' && Number.isFinite(n) ? n : 1);
+  }, 0);
 }
 
 interface RollConstructor {
@@ -28,7 +43,19 @@ function checkCritical(terms: FoundryDiceTerm[]): { isCritical: boolean; isFumbl
 }
 
 export async function rollDiceHandler(params: RollDiceParams): Promise<RollResult> {
-  const roll = new Roll(params.formula);
+  const formula = params.formula.trim();
+  if (formula === '') {
+    throw new Error('Roll formula is required');
+  }
+  if (formula.length > MAX_FORMULA_LENGTH) {
+    throw new Error(`Roll formula is too long (${String(formula.length)} > ${String(MAX_FORMULA_LENGTH)} characters)`);
+  }
+
+  const roll = new Roll(formula);
+  const diceCount = countDice(roll);
+  if (diceCount > MAX_DICE) {
+    throw new Error(`Roll formula asks for too many dice (${String(diceCount)} > ${String(MAX_DICE)})`);
+  }
   await roll.evaluate();
 
   if (params.showInChat) {

@@ -10,6 +10,7 @@ interface MockRollInstance {
     number?: number;
     results?: Array<{ result: number; active?: boolean }>;
   }>;
+  dice?: Array<{ number?: unknown }>;
 }
 
 const mockRollInstance: MockRollInstance = {
@@ -27,8 +28,47 @@ const MockRoll = jest.fn().mockImplementation(() => mockRollInstance);
 describe('rollDiceHandler', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    delete mockRollInstance.dice;
     mockRollInstance.evaluate.mockResolvedValue(mockRollInstance);
     mockRollInstance.toMessage.mockResolvedValue(undefined);
+  });
+
+  describe('size guards', () => {
+    it('rejects an empty formula before touching Roll', async () => {
+      await expect(rollDiceHandler({ formula: '   ' })).rejects.toThrow('Roll formula is required');
+      expect(MockRoll).not.toHaveBeenCalled();
+    });
+
+    it('rejects a formula longer than 200 characters before touching Roll', async () => {
+      const formula = '1d6+'.repeat(60) + '1';
+      await expect(rollDiceHandler({ formula })).rejects.toThrow('Roll formula is too long (241 > 200 characters)');
+      expect(MockRoll).not.toHaveBeenCalled();
+    });
+
+    it('rejects more than 1000 dice without evaluating', async () => {
+      mockRollInstance.dice = [{ number: 600 }, { number: 401 }];
+      await expect(rollDiceHandler({ formula: '600d20+401d6' })).rejects.toThrow('Roll formula asks for too many dice (1001 > 1000)');
+      expect(mockRollInstance.evaluate).not.toHaveBeenCalled();
+    });
+
+    it('counts a die term with a non-numeric count as one die', async () => {
+      mockRollInstance.dice = [{ number: undefined }, { number: '(1d4)' }];
+      mockRollInstance.total = 3;
+      mockRollInstance.formula = '(1d4)d6';
+      mockRollInstance.terms = [];
+
+      await expect(rollDiceHandler({ formula: '(1d4)d6' })).resolves.toEqual({ total: 3, formula: '(1d4)d6', dice: [] });
+    });
+
+    it('allows exactly 1000 dice', async () => {
+      mockRollInstance.dice = [{ number: 1000 }];
+      mockRollInstance.total = 3500;
+      mockRollInstance.formula = '1000d6';
+      mockRollInstance.terms = [];
+
+      await expect(rollDiceHandler({ formula: '1000d6' })).resolves.toEqual({ total: 3500, formula: '1000d6', dice: [] });
+      expect(mockRollInstance.evaluate).toHaveBeenCalled();
+    });
   });
 
   it('should roll dice and return result', async () => {

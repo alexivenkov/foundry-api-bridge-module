@@ -59,6 +59,7 @@ describe('WebSocketClient', () => {
 
   beforeEach(() => {
     jest.useFakeTimers();
+    jest.spyOn(Math, 'random').mockReturnValue(0);
     mockSocket = new MockWebSocket();
     client = new WebSocketClient(
       { url: 'ws://localhost:8080', reconnectInterval: 1000, maxReconnectAttempts: 3 },
@@ -68,7 +69,14 @@ describe('WebSocketClient', () => {
 
   afterEach(() => {
     jest.useRealTimers();
+    jest.restoreAllMocks();
   });
+
+  function sentPings(socket: MockWebSocket): unknown[] {
+    return socket.getSentMessages()
+      .map(m => JSON.parse(m) as { type?: string })
+      .filter(m => m.type === 'ping');
+  }
 
   describe('connect', () => {
     it('should create socket connection', () => {
@@ -500,6 +508,270 @@ describe('WebSocketClient', () => {
       mockSocket.simulateOpen();
       client.disconnect();
       expect(client.isConnected()).toBe(false);
+    });
+  });
+
+  describe('backoff ceiling and jitter', () => {
+    it('caps the delay at maxReconnectDelay', () => {
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const factoryMock = jest.fn(() => {
+        mockSocket = new MockWebSocket();
+        return mockSocket;
+      });
+
+      client = new WebSocketClient(
+        { url: 'ws://localhost:8080', reconnectInterval: 1000, maxReconnectDelay: 2500, maxReconnectAttempts: 0 },
+        factoryMock
+      );
+
+      client.connect();
+      mockSocket.simulateClose(); // 1000
+      jest.advanceTimersByTime(1000);
+      mockSocket.simulateClose(); // 2000
+      jest.advanceTimersByTime(2000);
+      mockSocket.simulateClose(); // 4000 → capped to 2500
+
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Reconnecting in 2500ms (attempt 3)'));
+
+      jest.advanceTimersByTime(2500);
+      mockSocket.simulateClose(); // still 2500
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Reconnecting in 2500ms (attempt 4)'));
+      consoleSpy.mockRestore();
+    });
+
+    it('adds up to one second of jitter to every delay', () => {
+      (Math.random as jest.Mock).mockReturnValue(0.5);
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+      client.connect();
+      mockSocket.simulateClose();
+
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Reconnecting in 1500ms (attempt 1/3)'));
+      consoleSpy.mockRestore();
+    });
+
+    it('keeps reconnecting forever when maxReconnectAttempts is 0', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const factoryMock = jest.fn(() => {
+        mockSocket = new MockWebSocket();
+        return mockSocket;
+      });
+
+      client = new WebSocketClient(
+        { url: 'ws://localhost:8080', reconnectInterval: 1000, maxReconnectDelay: 1000, maxReconnectAttempts: 0 },
+        factoryMock
+      );
+
+      client.connect();
+      for (let i = 0; i < 25; i++) {
+        mockSocket.simulateClose();
+        jest.advanceTimersByTime(1000);
+      }
+
+      expect(factoryMock).toHaveBeenCalledTimes(26);
+      expect(warnSpy).not.toHaveBeenCalledWith(expect.stringContaining('Max reconnect attempts reached'));
+      warnSpy.mockRestore();
+    });
+
+    it('defaults to unlimited attempts and a 60 s ceiling', () => {
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const factoryMock = jest.fn(() => {
+        mockSocket = new MockWebSocket();
+        return mockSocket;
+      });
+
+      client = new WebSocketClient({ url: 'ws://localhost:8080' }, factoryMock);
+      client.connect();
+      // 5000 · 2^(n-1) passes 60 000 at attempt 5 (80 000)
+      const delays = [5000, 10000, 20000, 40000, 60000];
+      for (const d of delays) {
+        mockSocket.simulateClose();
+        jest.advanceTimersByTime(d);
+      }
+      mockSocket.simulateClose();
+
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Reconnecting in 60000ms (attempt 6)'));
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('reconnectNow', () => {
+    it('skips the pending backoff and reconnects immediately', () => {
+      const factoryMock = jest.fn(() => {
+        mockSocket = new MockWebSocket();
+        return mockSocket;
+      });
+
+      client = new WebSocketClient(
+        { url: 'ws://localhost:8080', reconnectInterval: 60000, maxReconnectAttempts: 0 },
+        factoryMock
+      );
+
+      client.connect();
+      mockSocket.simulateClose(); // reconnect scheduled in 60 s
+      client.reconnectNow();
+
+      expect(factoryMock).toHaveBeenCalledTimes(2);
+      jest.advanceTimersByTime(60000);
+      expect(factoryMock).toHaveBeenCalledTimes(2); // the old timer was cancelled
+    });
+
+    it('does nothing while connected, connecting, or after a manual disconnect', () => {
+      const factoryMock = jest.fn(() => {
+        mockSocket = new MockWebSocket();
+        return mockSocket;
+      });
+
+      client = new WebSocketClient({ url: 'ws://localhost:8080', reconnectInterval: 1000 }, factoryMock);
+
+      client.connect(); // connecting
+      client.reconnectNow();
+      mockSocket.simulateOpen(); // connected
+      client.reconnectNow();
+      expect(factoryMock).toHaveBeenCalledTimes(1);
+
+      client.disconnect();
+      mockSocket.simulateClose();
+      client.reconnectNow();
+      expect(factoryMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('heartbeat', () => {
+    const heartbeat = { url: 'ws://localhost:8080', reconnectInterval: 1000, heartbeatInterval: 5000, heartbeatTimeout: 2000 };
+
+    it('sends a ping one second after connecting and then every interval', () => {
+      client = new WebSocketClient(heartbeat, () => mockSocket);
+      client.connect();
+      mockSocket.simulateOpen();
+
+      expect(sentPings(mockSocket)).toHaveLength(0);
+      jest.advanceTimersByTime(1000);
+      expect(sentPings(mockSocket)).toHaveLength(1);
+      expect(sentPings(mockSocket)[0]).toEqual({ type: 'ping', ts: expect.any(Number) });
+
+      // The pong must arrive, otherwise the next ping is held back.
+      mockSocket.simulateMessage({ type: 'pong' });
+      jest.advanceTimersByTime(5000);
+      expect(sentPings(mockSocket)).toHaveLength(2);
+    });
+
+    it('does not hand pong frames to the command handler', () => {
+      const messageHandler = jest.fn();
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation();
+      client = new WebSocketClient(heartbeat, () => mockSocket);
+      client.onMessage(messageHandler);
+      client.connect();
+      mockSocket.simulateOpen();
+
+      mockSocket.simulateMessage({ type: 'pong', ts: 123 });
+
+      expect(messageHandler).not.toHaveBeenCalled();
+      expect(errorSpy).not.toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
+
+    it('drops the socket and reconnects when a server that answered before stops answering', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const disconnectHandler = jest.fn();
+      const factoryMock = jest.fn(() => {
+        mockSocket = new MockWebSocket();
+        return mockSocket;
+      });
+
+      client = new WebSocketClient(heartbeat, factoryMock);
+      client.onDisconnect(disconnectHandler);
+      client.connect();
+      mockSocket.simulateOpen();
+      const firstSocket = mockSocket;
+
+      jest.advanceTimersByTime(1000); // ping 1
+      mockSocket.simulateMessage({ type: 'pong' }); // server supports the heartbeat
+      jest.advanceTimersByTime(5000); // ping 2, never answered
+      jest.advanceTimersByTime(2000); // timeout
+
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('No pong within 2000ms'));
+      expect(firstSocket.readyState).toBe(WS_CLOSED);
+      expect(disconnectHandler).toHaveBeenCalledTimes(1);
+      expect(client.isConnected()).toBe(false);
+
+      jest.advanceTimersByTime(1000); // backoff attempt 1
+      expect(factoryMock).toHaveBeenCalledTimes(2);
+
+      // A late close event from the dead socket must not schedule a second reconnect.
+      firstSocket.onclose?.(new MockCloseEvent('close'));
+      jest.advanceTimersByTime(10000);
+      expect(factoryMock).toHaveBeenCalledTimes(2);
+      expect(disconnectHandler).toHaveBeenCalledTimes(1);
+      warnSpy.mockRestore();
+    });
+
+    it('never drops a connection to a server that has not answered a ping yet', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      client = new WebSocketClient(heartbeat, () => mockSocket);
+      client.connect();
+      mockSocket.simulateOpen();
+
+      jest.advanceTimersByTime(1000 + 2000 + 5000 * 3); // several unanswered pings
+
+      expect(client.isConnected()).toBe(true);
+      expect(warnSpy).not.toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+
+    it('starts a fresh capability check on every new connection', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const factoryMock = jest.fn(() => {
+        mockSocket = new MockWebSocket();
+        return mockSocket;
+      });
+
+      client = new WebSocketClient(heartbeat, factoryMock);
+      client.connect();
+      mockSocket.simulateOpen();
+      jest.advanceTimersByTime(1000);
+      mockSocket.simulateMessage({ type: 'pong' });
+
+      mockSocket.simulateClose();
+      jest.advanceTimersByTime(1000); // reconnected to a server that never answers
+      mockSocket.simulateOpen();
+      jest.advanceTimersByTime(1000 + 2000 + 5000);
+
+      expect(client.isConnected()).toBe(true);
+      expect(warnSpy).not.toHaveBeenCalledWith(expect.stringContaining('No pong'));
+      warnSpy.mockRestore();
+    });
+
+    it('pingNow sends a ping immediately while connected', () => {
+      client = new WebSocketClient(heartbeat, () => mockSocket);
+      client.connect();
+      mockSocket.simulateOpen();
+
+      client.pingNow();
+
+      expect(sentPings(mockSocket)).toHaveLength(1);
+      client.pingNow(); // one outstanding ping at a time
+      expect(sentPings(mockSocket)).toHaveLength(1);
+    });
+
+    it('stops pinging after disconnect', () => {
+      client = new WebSocketClient(heartbeat, () => mockSocket);
+      client.connect();
+      mockSocket.simulateOpen();
+      client.disconnect();
+
+      jest.advanceTimersByTime(20000);
+      expect(sentPings(mockSocket)).toHaveLength(0);
+    });
+
+    it('is disabled when heartbeatInterval is 0', () => {
+      client = new WebSocketClient({ ...heartbeat, heartbeatInterval: 0 }, () => mockSocket);
+      client.connect();
+      mockSocket.simulateOpen();
+
+      jest.advanceTimersByTime(20000);
+      client.pingNow();
+      expect(sentPings(mockSocket)).toHaveLength(0);
     });
   });
 

@@ -36,10 +36,10 @@ Game Settings → Configure Settings → Module Settings → **Foundry API Bridg
 |---|---|---|
 | **MCP WebSocket URL** | `wss://foundry-mcp.com/ws` | Channel for AI assistants (MCP). Leave as is. |
 | **API WebSocket URL** | `wss://api.foundry-mcp.com/v1/connect` | Channel for the public REST API. Leave as is, or clear it if you never use the REST API. |
-| **API Key** | empty | Your `pk_…` key from step 1. |
+| **API Key** | empty | Your `pk_…` key from step 1. Stored in this browser only; enter it again on another computer. |
 | **Allow Script Macros** | off | Lets the API create and run script macros — arbitrary JavaScript with GM rights. Keep it off unless you need it and trust every client that holds your key. |
 
-Save. Foundry reloads the world and two notifications confirm the link: `[MCP] Connected to server` and `[API] Connected to server`. After a network drop the module reconnects on its own with exponential backoff; after the configured number of failed attempts it stops, and reloading the world starts over.
+Save. Foundry reloads the world and two notifications confirm the link: `[MCP] Connected to server` and `[API] Connected to server`. After a network drop the module reconnects on its own: the delay doubles from 5 seconds up to a 60-second ceiling, and it keeps trying for as long as the world is open. While connected it pings the server every 25 seconds; a ping that goes unanswered means the connection is dead, and it is re-established without waiting. The same check runs when the browser comes back online or the tab becomes visible again.
 
 The **Configure** button next to the module in the module list opens the advanced form:
 
@@ -47,7 +47,7 @@ The **Configure** button next to the module in the module list opens the advance
 |---|---|---|
 | WebSocket Enabled | `true` | Turn the connections on or off without clearing the URLs |
 | Reconnect Interval | 5000 ms | Base delay between reconnection attempts (doubles each time) |
-| Max Reconnect Attempts | 10 | Attempts before the module gives up until the next reload |
+| Max Reconnect Attempts | 0 | Attempts before the module gives up until the next reload; 0 = keep trying |
 | Logging Enabled | `true` | Module logging in the browser console (`Foundry API Bridge \| …`) |
 | Log Level | `info` | `debug`, `info`, `warn`, `error` |
 
@@ -119,14 +119,14 @@ Connection status shows as Foundry notifications; details are in the browser con
 
 - Anyone who holds your key can control your world through the API. Treat it like a password.
 - Commands run with GM permissions. Script macros are blocked unless **Allow Script Macros** is on.
-- The key is stored in the world's module settings. Foundry world settings are readable by users of that world, so use the module only in worlds whose players you trust.
+- The key is stored in your browser (a client-scoped setting), not in the world, so players cannot read it. Enter it once in every browser you run the GM session from. Versions before 8.12.1 kept it in the world settings; the first start after updating moves it into the browser and deletes the world copy.
 
 ## Supported commands
 
 164 commands. Names are what the server sends over the wire; MCP tools and REST routes map onto them.
 
 ### Dice, rolls & chat
-`roll-dice`, `roll-ability`, `roll-skill`, `roll-save`, `roll-attack`, `roll-damage`, `roll-perception`, `send-chat-message`, `get-chat-messages`, `update-chat-message`, `delete-chat-message`, `clear-chat`, `export-chat`
+`roll-dice` (up to 1000 dice per formula), `roll-ability`, `roll-skill`, `roll-save`, `roll-attack`, `roll-damage`, `roll-perception`, `send-chat-message`, `get-chat-messages`, `update-chat-message`, `delete-chat-message`, `clear-chat`, `export-chat`
 
 ### Actors
 `get-actors`, `get-actor`, `filter-actors`, `create-actor`, `create-actor-from-compendium`, `update-actor`, `delete-actor`
@@ -184,6 +184,7 @@ Connection status shows as Foundry notifications; details are in the browser con
 - **The assistant says "Foundry not connected".** Open the world as GM with the module enabled and a key saved, and wait for the `[MCP] Connected to server` notification. The message from the server tells you when it last saw your world. If the module had given up reconnecting, reload the world.
 - **A tool answers with a lock and a tier name.** That tool is above your Patreon tier; see the table above.
 - **Nothing in the console.** The module only starts for the GM user. Check that logging is enabled in the Configure form.
+- **Connected on one computer, not on another.** The key is stored per browser. Open the module settings on the other computer and paste it again.
 
 ## Compatibility
 

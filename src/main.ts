@@ -1,5 +1,5 @@
 import { ConfigManager } from '@/config/ConfigManager';
-import { registerSettings, registerMenu, getWsUrl, getApiUrl, getApiKey } from '@/settings/SettingsManager';
+import { registerSettings, registerMenu, getWsUrl, getApiUrl, getApiKey, migrateLegacyApiKey } from '@/settings/SettingsManager';
 import { WebSocketClient } from '@/transport';
 import {
   CommandRouter,
@@ -183,6 +183,13 @@ Hooks.on('renderSettingsConfig', (_app: unknown, html: unknown) => {
   const formGroup = apiKeyInput.closest('.form-group');
   if (!formGroup) return;
 
+  // The key is client-scoped and only the GM's browser needs it; players get
+  // nothing to fill in.
+  if (!game.user?.isGM) {
+    formGroup.remove();
+    return;
+  }
+
   const button = document.createElement('button');
   button.type = 'button';
   button.innerHTML = '<i class="fas fa-key"></i> Get API Key';
@@ -206,8 +213,21 @@ Hooks.once('ready', () => {
     return;
   }
 
-  initializeModule();
+  void startModule();
 });
+
+async function startModule(): Promise<void> {
+  try {
+    const outcome = await migrateLegacyApiKey();
+    if (outcome !== 'none') {
+      console.log(`Foundry API Bridge | API key moved out of world settings into this browser (${outcome})`);
+    }
+  } catch (error: unknown) {
+    console.warn('Foundry API Bridge | Could not migrate the API key setting:', error);
+  }
+
+  initializeModule();
+}
 
 function initializeModule(): void {
   try {
@@ -458,6 +478,23 @@ function initializeWebSocket(
   if (apiUrl) {
     apiClient = createChannel('API', apiUrl, apiKey, wsConfig);
     apiClient.connect();
+  }
+
+  // A socket that died while the laptop slept or the network was down looks
+  // open until a ping goes unanswered. Check right away when the browser says
+  // it is back online or the tab becomes visible, and skip any backoff wait.
+  window.addEventListener('online', wakeChannels);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      wakeChannels();
+    }
+  });
+}
+
+function wakeChannels(): void {
+  for (const client of [mcpClient, apiClient]) {
+    client?.pingNow();
+    client?.reconnectNow();
   }
 }
 

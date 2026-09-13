@@ -5,13 +5,15 @@ jest.mock('@/ui/ApiConfigForm', () => ({
   ApiConfigForm: class MockApiConfigForm {}
 }));
 
-import { registerSettings, registerMenu, getConfig, setConfig, getWsUrl, getApiUrl, getAllowScriptMacros } from '@/settings/SettingsManager';
+import { registerSettings, registerMenu, getConfig, setConfig, getWsUrl, getApiUrl, getAllowScriptMacros, migrateLegacyApiKey } from '@/settings/SettingsManager';
 
+const mockWorldStorage = { getSetting: jest.fn() };
 const mockSettings = {
   register: jest.fn(),
   registerMenu: jest.fn(),
   get: jest.fn(),
-  set: jest.fn()
+  set: jest.fn(),
+  storage: new Map<string, unknown>([['world', mockWorldStorage]])
 };
 
 (global as unknown as Record<string, unknown>)['game'] = {
@@ -70,8 +72,15 @@ describe('SettingsManager', () => {
       expect(mockSettings.register).toHaveBeenCalledWith(
         'foundry-api-bridge',
         'apiKey',
-        expect.objectContaining({ name: 'API Key', type: String })
+        expect.objectContaining({ name: 'API Key', type: String, scope: 'client', requiresReload: true })
       );
+    });
+
+    it('never registers the API key as a world setting (players can read those)', () => {
+      registerSettings();
+
+      const apiKeyCall = mockSettings.register.mock.calls.find(([, key]) => key === 'apiKey');
+      expect(apiKeyCall?.[2]).toEqual(expect.objectContaining({ scope: 'client' }));
     });
 
     it('should register allowScriptMacros boolean setting (default false)', () => {
@@ -194,6 +203,73 @@ describe('SettingsManager', () => {
       await setConfig(newConfig);
 
       expect(mockSettings.set).toHaveBeenCalledWith('foundry-api-bridge', 'config', newConfig);
+    });
+  });
+
+  describe('migrateLegacyApiKey', () => {
+    beforeEach(() => {
+      mockSettings.set.mockResolvedValue(undefined);
+    });
+
+    it('returns none when the world has no legacy key document', async () => {
+      mockWorldStorage.getSetting.mockReturnValue(undefined);
+
+      await expect(migrateLegacyApiKey()).resolves.toBe('none');
+
+      expect(mockWorldStorage.getSetting).toHaveBeenCalledWith('foundry-api-bridge.apiKey');
+      expect(mockSettings.set).not.toHaveBeenCalled();
+    });
+
+    it('moves a world key into client storage and deletes the world copy', async () => {
+      const legacy = { value: 'pk_legacy123', delete: jest.fn().mockResolvedValue(undefined) };
+      mockWorldStorage.getSetting.mockReturnValue(legacy);
+      mockSettings.get.mockReturnValue('');
+
+      await expect(migrateLegacyApiKey()).resolves.toBe('migrated');
+
+      expect(mockSettings.set).toHaveBeenCalledWith('foundry-api-bridge', 'apiKey', 'pk_legacy123');
+      expect(legacy.delete).toHaveBeenCalledTimes(1);
+    });
+
+    it('accepts a JSON-encoded legacy value', async () => {
+      const legacy = { value: '"pk_json456"', delete: jest.fn().mockResolvedValue(undefined) };
+      mockWorldStorage.getSetting.mockReturnValue(legacy);
+      mockSettings.get.mockReturnValue('');
+
+      await expect(migrateLegacyApiKey()).resolves.toBe('migrated');
+
+      expect(mockSettings.set).toHaveBeenCalledWith('foundry-api-bridge', 'apiKey', 'pk_json456');
+    });
+
+    it('keeps the key already stored in this browser and only deletes the world copy', async () => {
+      const legacy = { value: 'pk_old', delete: jest.fn().mockResolvedValue(undefined) };
+      mockWorldStorage.getSetting.mockReturnValue(legacy);
+      mockSettings.get.mockReturnValue('pk_current');
+
+      await expect(migrateLegacyApiKey()).resolves.toBe('deleted');
+
+      expect(mockSettings.set).not.toHaveBeenCalled();
+      expect(legacy.delete).toHaveBeenCalledTimes(1);
+    });
+
+    it('deletes an empty legacy document without writing anything', async () => {
+      const legacy = { value: '', delete: jest.fn().mockResolvedValue(undefined) };
+      mockWorldStorage.getSetting.mockReturnValue(legacy);
+      mockSettings.get.mockReturnValue('');
+
+      await expect(migrateLegacyApiKey()).resolves.toBe('deleted');
+
+      expect(mockSettings.set).not.toHaveBeenCalled();
+      expect(legacy.delete).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns none when the world storage API is missing', async () => {
+      const storage = mockSettings.storage;
+      mockSettings.storage = new Map();
+
+      await expect(migrateLegacyApiKey()).resolves.toBe('none');
+
+      mockSettings.storage = storage;
     });
   });
 });

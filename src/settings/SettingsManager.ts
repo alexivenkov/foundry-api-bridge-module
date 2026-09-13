@@ -3,6 +3,16 @@ import { DEFAULT_CONFIG } from '@/config/defaults';
 
 const MODULE_ID = 'foundry-api-bridge';
 const CONFIG_KEY = 'config';
+const LEGACY_API_KEY_SETTING = `${MODULE_ID}.apiKey`;
+
+interface LegacySettingDocument {
+  value: unknown;
+  delete(): Promise<unknown>;
+}
+
+interface WorldSettingsStorage {
+  getSetting?(key: string): LegacySettingDocument | undefined;
+}
 
 export function registerSettings(): void {
   if (!game.settings) {
@@ -36,10 +46,12 @@ export function registerSettings(): void {
     requiresReload: true
   });
 
+  // Client scope on purpose: a world-scoped setting is readable by every user
+  // of the world from the browser console. The key lives in the GM's browser.
   game.settings.register(MODULE_ID, 'apiKey', {
     name: 'API Key',
-    hint: 'API key for server authorization (format: pk_...)',
-    scope: 'world',
+    hint: 'API key for server authorization (format: pk_...). Stored in this browser only.',
+    scope: 'client',
     config: true,
     type: String,
     default: '',
@@ -115,4 +127,47 @@ export async function setConfig(config: ModuleConfig): Promise<void> {
     throw new Error('game.settings is not available');
   }
   await game.settings.set(MODULE_ID, CONFIG_KEY, config);
+}
+
+export type ApiKeyMigrationOutcome = 'migrated' | 'deleted' | 'none';
+
+/**
+ * Up to 8.12.0 the API key was a world-scoped setting, which every user of the
+ * world could read from the browser console. It is client-scoped since 8.12.1.
+ * This copies a key still stored in the world settings into this browser and
+ * deletes the world copy. GM only; safe to call on every start.
+ */
+export async function migrateLegacyApiKey(): Promise<ApiKeyMigrationOutcome> {
+  if (!game.settings) {
+    throw new Error('game.settings is not available');
+  }
+  const storage = (game.settings as unknown as { storage?: Map<string, unknown> }).storage;
+  const world = storage?.get('world') as WorldSettingsStorage | undefined;
+  const legacy = world?.getSetting?.(LEGACY_API_KEY_SETTING);
+  if (!legacy) {
+    return 'none';
+  }
+
+  const legacyKey = readLegacyValue(legacy.value);
+  let outcome: ApiKeyMigrationOutcome = 'deleted';
+  if (legacyKey !== '' && getApiKey() === '') {
+    await game.settings.set(MODULE_ID, 'apiKey', legacyKey);
+    outcome = 'migrated';
+  }
+  await legacy.delete();
+  return outcome;
+}
+
+// Setting documents hold the value either parsed or as its JSON text,
+// depending on the Foundry generation; accept both.
+function readLegacyValue(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  if (!trimmed.startsWith('"')) return trimmed;
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    return typeof parsed === 'string' ? parsed.trim() : '';
+  } catch {
+    return '';
+  }
 }

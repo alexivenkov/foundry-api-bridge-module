@@ -30,6 +30,31 @@ describe('ConfigManager', () => {
     });
   });
 
+  describe('legacy reconnect defaults', () => {
+    it('reads the pre-8.12.1 stored default (10 attempts, 5 s) as unlimited', () => {
+      mockGetConfig.mockReturnValue({
+        ...DEFAULT_CONFIG,
+        webSocket: { enabled: true, reconnectInterval: 5000, maxReconnectAttempts: 10 }
+      });
+
+      ConfigManager.initialize();
+
+      expect(ConfigManager.getConfig().webSocket.maxReconnectAttempts).toBe(0);
+      expect(mockSetConfig).not.toHaveBeenCalled();
+    });
+
+    it('keeps a limit the user chose on purpose', () => {
+      mockGetConfig.mockReturnValue({
+        ...DEFAULT_CONFIG,
+        webSocket: { enabled: true, reconnectInterval: 2000, maxReconnectAttempts: 10 }
+      });
+
+      ConfigManager.initialize();
+
+      expect(ConfigManager.getConfig().webSocket.maxReconnectAttempts).toBe(10);
+    });
+  });
+
   describe('updateConfig', () => {
     beforeEach(() => {
       mockGetConfig.mockReturnValue(DEFAULT_CONFIG);

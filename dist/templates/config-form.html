@@ -19,8 +19,8 @@
       </div>
 
       <div class="form-group">
-        <label for="maxReconnectAttempts">Max Reconnect Attempts</label>
-        <input type="number" name="webSocket.maxReconnectAttempts" id="maxReconnectAttempts" value="{{config.webSocket.maxReconnectAttempts}}" min="1" step="1" />
+        <label for="maxReconnectAttempts">Max Reconnect Attempts (0 = keep trying)</label>
+        <input type="number" name="webSocket.maxReconnectAttempts" id="maxReconnectAttempts" value="{{config.webSocket.maxReconnectAttempts}}" min="0" step="1" />
       </div>
     </div>
   </div>
