@@ -1,13 +1,14 @@
 import type { GetActorEffectsParams, ActorEffectsResult } from '@/commands/types';
-import { getGame, mapEffectToSummary } from './effectTypes';
+import { mapEffectToSummary, resolveEffectActor } from './effectTypes';
 
 export function getActorEffectsHandler(
   params: GetActorEffectsParams
 ): Promise<ActorEffectsResult> {
-  const actor = getGame().actors.get(params.actorId);
-
-  if (!actor) {
-    return Promise.reject(new Error(`Actor not found: ${params.actorId}`));
+  let actor;
+  try {
+    actor = resolveEffectActor(params);
+  } catch (error) {
+    return Promise.reject(error instanceof Error ? error : new Error(String(error)));
   }
 
   const includeDisabled = params.includeDisabled ?? true;

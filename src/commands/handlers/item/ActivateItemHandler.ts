@@ -1,6 +1,7 @@
 import type {
   ActivateItemParams,
   ActivateItemResult,
+  AppliedHitPointsResult,
   MidiWorkflowResult,
   RollResult
 } from '@/commands/types';
@@ -12,13 +13,15 @@ import {
   Dnd5eItemActivationGateway,
   Dnd5eTargetingGateway,
   Dnd5eMidiWorkflowGateway,
+  Dnd5eActivationDialogGateway,
   activateItemRequestSchema,
   RequestToCommandMapper,
+  type AppliedHitPoints,
   type ItemActivationOutcome,
   type MidiWorkflowOutcome
 } from '@/systems/dnd5e/item-actions';
 
-function toRollResult(outcome: RollOutcome): RollResult {
+export function toRollResult(outcome: RollOutcome): RollResult {
   const result: RollResult = {
     total: outcome.total,
     formula: outcome.formula,
@@ -35,12 +38,33 @@ function toRollResult(outcome: RollOutcome): RollResult {
   if (outcome.isFumble) {
     result.isFumble = true;
   }
+  if (outcome.mode !== undefined) {
+    result.mode = outcome.mode;
+  }
+  if (outcome.kept !== undefined) {
+    result.kept = outcome.kept;
+  }
 
   return result;
 }
 
+export function toAppliedHitPointsResult(applied: AppliedHitPoints): AppliedHitPointsResult {
+  const result: AppliedHitPointsResult = {};
+  for (const [key, delta] of Object.entries(applied)) {
+    const entry: AppliedHitPointsResult[string] = {
+      applied: delta.applied,
+      hpBefore: delta.hpBefore,
+      hpAfter: delta.hpAfter
+    };
+    if (delta.tempBefore !== undefined) entry.tempBefore = delta.tempBefore;
+    if (delta.tempAfter !== undefined) entry.tempAfter = delta.tempAfter;
+    result[key] = entry;
+  }
+  return result;
+}
+
 function toMidiWorkflowResult(workflow: MidiWorkflowOutcome): MidiWorkflowResult {
-  return {
+  const result: MidiWorkflowResult = {
     attackTotal: workflow.attackTotal,
     damageTotal: workflow.damageTotal,
     isCritical: workflow.isCritical,
@@ -49,18 +73,29 @@ function toMidiWorkflowResult(workflow: MidiWorkflowOutcome): MidiWorkflowResult
     saveTargetIds: [...workflow.saveTargetIds],
     failedSaveTargetIds: [...workflow.failedSaveTargetIds]
   };
+  if (workflow.appliedDamage) {
+    result.appliedDamage = toAppliedHitPointsResult(workflow.appliedDamage);
+  }
+  if (workflow.appliedHealing) {
+    result.appliedHealing = toAppliedHitPointsResult(workflow.appliedHealing);
+  }
+  return result;
 }
 
-function toActivateItemResult(outcome: ItemActivationOutcome): ActivateItemResult {
+export function toActivateItemResult(outcome: ItemActivationOutcome): ActivateItemResult {
   const result: ActivateItemResult = {
     itemId: outcome.itemId,
     itemName: outcome.itemName,
     itemType: outcome.itemType,
     activated: outcome.activated,
+    status: outcome.status,
     targetsSet: outcome.targetsSet,
     rolls: outcome.rolls.map(toRollResult)
   };
 
+  if (outcome.dialog !== undefined) {
+    result.dialog = outcome.dialog;
+  }
   if (outcome.activityUsed) {
     result.activityUsed = {
       id: outcome.activityUsed.id,
@@ -74,8 +109,26 @@ function toActivateItemResult(outcome: ItemActivationOutcome): ActivateItemResul
   if (outcome.workflow) {
     result.workflow = toMidiWorkflowResult(outcome.workflow);
   }
+  if (outcome.appliedDamage) {
+    result.appliedDamage = toAppliedHitPointsResult(outcome.appliedDamage);
+  }
+  if (outcome.appliedHealing) {
+    result.appliedHealing = toAppliedHitPointsResult(outcome.appliedHealing);
+  }
+  if (outcome.warning !== undefined) {
+    result.warning = outcome.warning;
+  }
 
   return result;
+}
+
+export function createActivationService(): ReturnType<typeof createDnd5eItemActivationService> {
+  return createDnd5eItemActivationService({
+    activation: new Dnd5eItemActivationGateway(),
+    targeting: new Dnd5eTargetingGateway(),
+    midi: new Dnd5eMidiWorkflowGateway(),
+    dialogs: new Dnd5eActivationDialogGateway()
+  });
 }
 
 export async function activateItemHandler(params: ActivateItemParams): Promise<ActivateItemResult> {
@@ -87,13 +140,6 @@ export async function activateItemHandler(params: ActivateItemParams): Promise<A
   }
 
   const command = RequestToCommandMapper.toActivateItemCommand(parsed.data);
-
-  const service = createDnd5eItemActivationService({
-    activation: new Dnd5eItemActivationGateway(),
-    targeting: new Dnd5eTargetingGateway(),
-    midi: new Dnd5eMidiWorkflowGateway()
-  });
-
-  const outcome = await service.activate(command);
+  const outcome = await createActivationService().activate(command);
   return toActivateItemResult(outcome);
 }

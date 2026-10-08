@@ -527,3 +527,70 @@ describe('updateActorEffectHandler', () => {
     });
   });
 });
+describe('tokenId addressing', () => {
+  const tokenActor = {
+    id: 'actor-123',
+    name: 'Goblin 3',
+    effects: { contents: [], get: jest.fn() },
+    statuses: new Set<string>(),
+    toggleStatusEffect: jest.fn(),
+    createEmbeddedDocuments: jest.fn()
+  };
+  const scene = { id: 'scene-1', tokens: { get: jest.fn() } };
+  const gameWithScenes = {
+    actors: { get: jest.fn() },
+    scenes: { get: jest.fn(), active: scene as typeof scene | null }
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (globalThis as Record<string, unknown>)['game'] = gameWithScenes;
+    gameWithScenes.scenes.active = scene;
+    scene.tokens.get.mockImplementation((id: string) =>
+      id === 'token-3' ? { id: 'token-3', actor: tokenActor } : undefined
+    );
+    tokenActor.toggleStatusEffect.mockResolvedValue(true);
+    tokenActor.createEmbeddedDocuments.mockResolvedValue([{ _id: 'eff-9', name: 'Prone' }]);
+  });
+
+  afterAll(() => {
+    (globalThis as Record<string, unknown>)['game'] = mockGame;
+  });
+
+  it('toggles a status on one token\'s actor without touching the world actor', async () => {
+    const result = await toggleActorStatusHandler({ tokenId: 'token-3', statusId: 'prone' });
+
+    expect(gameWithScenes.actors.get).not.toHaveBeenCalled();
+    expect(tokenActor.toggleStatusEffect).toHaveBeenCalledWith('prone', undefined);
+    expect(result.active).toBe(true);
+  });
+
+  it('adds an effect to the token\'s actor', async () => {
+    const result = await addActorEffectHandler({ tokenId: 'token-3', name: 'Prone' });
+
+    expect(tokenActor.createEmbeddedDocuments).toHaveBeenCalledWith('ActiveEffect', [{ name: 'Prone' }]);
+    expect(result.effectId).toBe('eff-9');
+  });
+
+  it('uses the given scene for the token', async () => {
+    const other = { id: 'scene-2', tokens: { get: jest.fn().mockReturnValue({ id: 'token-3', actor: tokenActor }) } };
+    gameWithScenes.scenes.get.mockReturnValue(other);
+
+    await getActorEffectsHandler({ tokenId: 'token-3', sceneId: 'scene-2' });
+
+    expect(gameWithScenes.scenes.get).toHaveBeenCalledWith('scene-2');
+    expect(scene.tokens.get).not.toHaveBeenCalled();
+  });
+
+  it('rejects an unknown token, a token without an actor, and a request with neither id', async () => {
+    await expect(removeActorEffectHandler({ tokenId: 'missing', effectId: 'e' })).rejects.toThrow('Token not found: missing');
+
+    scene.tokens.get.mockReturnValue({ id: 'token-3', actor: null });
+    await expect(toggleActorStatusHandler({ tokenId: 'token-3', statusId: 'prone' })).rejects.toThrow('Token has no actor: token-3');
+
+    await expect(toggleActorStatusHandler({ statusId: 'prone' })).rejects.toThrow('Either actorId or tokenId is required');
+
+    gameWithScenes.scenes.active = null;
+    await expect(toggleActorStatusHandler({ tokenId: 'token-3', statusId: 'prone' })).rejects.toThrow('No active scene');
+  });
+});

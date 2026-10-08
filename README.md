@@ -186,12 +186,12 @@ The module opens two outgoing WebSocket connections, one per server, authenticat
 
 ## Supported commands
 
-164 wire commands. Names are what the server sends over the wire; MCP tools and REST routes map onto them. The full list, with notes on each group, is in [docs/COMMANDS.md](docs/COMMANDS.md).
+168 wire commands. Names are what the server sends over the wire; MCP tools and REST routes map onto them. The full list, with notes on each group, is in [docs/COMMANDS.md](docs/COMMANDS.md).
 
 | Group | Commands | Examples |
 |---|---|---|
 | Dice, rolls & chat | 13 | `roll-dice`, `roll-skill`, `send-chat-message`, `export-chat` |
-| Actors | 7 | `get-actors`, `filter-actors`, `create-actor-from-compendium` |
+| Actors | 9 | `get-actors`, `filter-actors`, `create-actor-from-compendium`, `apply-damage` |
 | Items & inventory | 14 | `get-actor-items`, `add-item-from-compendium`, `use-item` |
 | Active effects & status conditions | 5 | `add-actor-effect`, `toggle-actor-status` |
 | Combat | 17 | `start-combat`, `next-turn`, `roll-initiative`, `get-combat-turn-context` |
@@ -204,10 +204,10 @@ The module opens two outgoing WebSocket connections, one per server, authenticat
 | Playlists & sounds | 8 | `play-playlist`, `play-sound-once` |
 | Compendiums | 9 | `search-compendiums`, `import-from-compendium`, `resolve-uuid` |
 | World, time & UI | 10 | `get-world-info`, `advance-time`, `pause-game`, `ping-location` |
-| D&D 5e (`dnd5e/*`) | 10 | `dnd5e/roll-attack`, `dnd5e/use-item`, `dnd5e/filter-compendium-actors` |
+| D&D 5e (`dnd5e/*`) | 12 | `dnd5e/roll-attack`, `dnd5e/activate-item`, `dnd5e/apply-damage`, `dnd5e/filter-compendium-actors` |
 | Pathfinder 2e (`pf2e/*`) | 16 | `pf2e/roll-strike`, `pf2e/set-condition`, `pf2e/cast-spell` |
 
-The core command set is system-agnostic. `dnd5e/*` and `pf2e/*` commands require the matching game system in the world; calling one in another system returns `Operation '<command>' is not supported by game system '<world>'`. The bare `roll-ability`, `roll-skill`, `roll-save`, `roll-attack`, `roll-damage`, `roll-perception`, `use-item` and `activate-item` are legacy aliases of the `dnd5e/*` commands.
+The core command set is system-agnostic. `dnd5e/*` and `pf2e/*` commands require the matching game system in the world; calling one in another system returns `Operation '<command>' is not supported by game system '<world>'`. The bare `roll-ability`, `roll-skill`, `roll-save`, `roll-attack`, `roll-damage`, `roll-perception`, `use-item` and `activate-item` are legacy aliases of the `dnd5e/*` commands; `apply-damage` and `apply-healing` are aliases of `dnd5e/apply-damage` and `dnd5e/apply-healing`.
 
 ## Troubleshooting
 
@@ -227,7 +227,7 @@ The core command set is system-agnostic. `dnd5e/*` and `pf2e/*` commands require
 | v12 | Verified |
 | v11 | Minimum supported |
 
-Module version 8.13.0. The core command set works with any game system; `dnd5e/*` and `pf2e/*` require the respective system.
+Module version 8.14.0. The core command set works with any game system; `dnd5e/*` and `pf2e/*` require the respective system.
 
 ## Development
 

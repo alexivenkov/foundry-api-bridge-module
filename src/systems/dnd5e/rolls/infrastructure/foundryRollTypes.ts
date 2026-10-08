@@ -3,7 +3,7 @@ import type { SkillKey, AbilityKey } from '@/systems/dnd5e/rolls/domain';
 export interface FoundryDiceTerm {
   faces?: number;
   number?: number;
-  results?: Array<{ result: number }>;
+  results?: Array<{ result: number; active?: boolean }>;
 }
 
 export interface FoundryD20Roll {
@@ -12,6 +12,7 @@ export interface FoundryD20Roll {
   terms: FoundryDiceTerm[];
   isCritical: boolean;
   isFumble: boolean;
+  options?: { advantageMode?: number };
 }
 
 export interface RollDialogConfig {

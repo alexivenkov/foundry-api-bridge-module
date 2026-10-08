@@ -29,6 +29,12 @@ function toRollResult(outcome: RollOutcome): RollResult {
   if (outcome.isFumble) {
     result.isFumble = true;
   }
+  if (outcome.mode !== undefined) {
+    result.mode = outcome.mode;
+  }
+  if (outcome.kept !== undefined) {
+    result.kept = outcome.kept;
+  }
 
   return result;
 }

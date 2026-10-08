@@ -1,14 +1,10 @@
 import type { UpdateActorEffectParams, UpdateEffectResult } from '@/commands/types';
-import { getGame } from './effectTypes';
+import { resolveEffectActor } from './effectTypes';
 
 export async function updateActorEffectHandler(
   params: UpdateActorEffectParams
 ): Promise<UpdateEffectResult> {
-  const actor = getGame().actors.get(params.actorId);
-
-  if (!actor) {
-    throw new Error(`Actor not found: ${params.actorId}`);
-  }
+  const actor = resolveEffectActor(params);
 
   const effect = actor.effects.get(params.effectId);
 

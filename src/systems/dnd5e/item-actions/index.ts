@@ -9,8 +9,22 @@ export {
   Dnd5eItemUseGateway,
   Dnd5eItemActivationGateway,
   Dnd5eTargetingGateway,
-  Dnd5eMidiWorkflowGateway
+  Dnd5eMidiWorkflowGateway,
+  Dnd5eActivationDialogGateway
 } from './infrastructure';
-export type { FoundryItemActionGame } from './infrastructure';
-export { useItemRequestSchema, activateItemRequestSchema, RequestToCommandMapper } from './validation';
-export type { UseItemOutcome, ItemActivationOutcome, MidiWorkflowOutcome } from './domain';
+export type { FoundryItemActionGame, ActivityDescription } from './infrastructure';
+export {
+  useItemRequestSchema,
+  activateItemRequestSchema,
+  RequestToCommandMapper,
+  BOTH_ADVANTAGE_AND_DISADVANTAGE
+} from './validation';
+export type {
+  UseItemOutcome,
+  ItemActivationOutcome,
+  MidiWorkflowOutcome,
+  ActivationStatus,
+  AppliedHitPoints,
+  HitPointsDelta,
+  UserDialogKind
+} from './domain';

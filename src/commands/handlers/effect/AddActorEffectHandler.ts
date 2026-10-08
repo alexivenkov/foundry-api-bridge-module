@@ -1,14 +1,10 @@
 import type { AddActorEffectParams, AddEffectResult } from '@/commands/types';
-import { getGame, type ActiveEffectCreateData } from './effectTypes';
+import { resolveEffectActor, type ActiveEffectCreateData } from './effectTypes';
 
 export async function addActorEffectHandler(
   params: AddActorEffectParams
 ): Promise<AddEffectResult> {
-  const actor = getGame().actors.get(params.actorId);
-
-  if (!actor) {
-    throw new Error(`Actor not found: ${params.actorId}`);
-  }
+  const actor = resolveEffectActor(params);
 
   const effectData: ActiveEffectCreateData = {
     name: params.name

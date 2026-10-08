@@ -132,3 +132,60 @@ describe('Dnd5eItemRollGateway', () => {
     ).rejects.toThrow('Damage roll returned no results');
   });
 });
+
+describe('Dnd5eItemRollGateway with Midi-QOL', () => {
+  function midiGatewayWith(rollAttack: jest.Mock): Dnd5eItemRollGateway {
+    const activity = { _id: 'a1', type: 'attack', rollAttack, rollDamage: jest.fn() };
+    const item = { id: 'item-1', name: 'Sword', type: 'weapon', system: { activities: { find: jest.fn().mockReturnValue(activity) } } };
+    const actor = { id: 'actor-1', name: 'Hero', items: { get: jest.fn().mockReturnValue(item) } };
+    const game = {
+      actors: { get: jest.fn().mockReturnValue(actor) },
+      modules: { get: jest.fn().mockReturnValue({ active: true }) }
+    } as unknown as FoundryItemRollGame;
+    return new Dnd5eItemRollGateway(game);
+  }
+
+  it('also hands the flags to Midi through midiOptions and its workflowOptions', async () => {
+    const rollAttack = jest.fn().mockResolvedValue([mockRoll]);
+    await midiGatewayWith(rollAttack).rollAttack('actor-1', 'item-1', { advantage: true, disadvantage: false, showInChat: false });
+
+    expect(rollAttack.mock.calls[0]?.[0]).toStrictEqual({
+      advantage: true,
+      midiOptions: { advantage: true, workflowOptions: { advantage: true } }
+    });
+  });
+
+  it('sends no midiOptions when no flag is set, even with Midi active', async () => {
+    const rollAttack = jest.fn().mockResolvedValue([mockRoll]);
+    await midiGatewayWith(rollAttack).rollAttack('actor-1', 'item-1', noAdv);
+
+    expect(rollAttack.mock.calls[0]?.[0]).toStrictEqual({});
+  });
+
+  it('reports the applied mode and the kept d20 when the roll carries advantageMode', async () => {
+    const advRoll = {
+      total: 21,
+      formula: '2d20kh + 5',
+      terms: [{ faces: 20, number: 2, results: [{ result: 6, active: false }, { result: 16, active: true }] }],
+      isCritical: false,
+      isFumble: false,
+      options: { advantageMode: 1 }
+    };
+    const rollAttack = jest.fn().mockResolvedValue([advRoll]);
+    const outcome = await gatewayWith(rollAttack).rollAttack('actor-1', 'item-1', { advantage: true, disadvantage: false, showInChat: false });
+
+    expect(outcome.mode).toBe('advantage');
+    expect(outcome.kept).toBe(16);
+    expect(outcome.dice).toEqual([{ type: 'd20', count: 2, results: [6, 16] }]);
+  });
+
+  it('maps disadvantage and normal modes', async () => {
+    const dis = { ...mockRoll, options: { advantageMode: -1 }, terms: [{ faces: 20, number: 2, results: [{ result: 3, active: true }, { result: 6, active: false }] }] };
+    const normal = { ...mockRoll, options: { advantageMode: 0 } };
+    const outcomeDis = await gatewayWith(jest.fn().mockResolvedValue([dis])).rollAttack('actor-1', 'item-1', noAdv);
+    const outcomeNormal = await gatewayWith(jest.fn().mockResolvedValue([normal])).rollAttack('actor-1', 'item-1', noAdv);
+
+    expect([outcomeDis.mode, outcomeDis.kept]).toEqual(['disadvantage', 3]);
+    expect([outcomeNormal.mode, outcomeNormal.kept]).toEqual(['normal', 13]);
+  });
+});

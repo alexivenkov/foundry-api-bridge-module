@@ -11,6 +11,19 @@ function mapTemplatePosition(
   return p.direction === undefined ? { x: p.x, y: p.y } : { x: p.x, y: p.y, direction: p.direction };
 }
 
+function mapConsume(
+  c: ActivateItemRequest['consume']
+): { spellSlot?: boolean; itemUses?: boolean; ammunition?: boolean } | undefined {
+  if (!c) {
+    return undefined;
+  }
+  const consume: { spellSlot?: boolean; itemUses?: boolean; ammunition?: boolean } = {};
+  if (c.spellSlot !== undefined) consume.spellSlot = c.spellSlot;
+  if (c.itemUses !== undefined) consume.itemUses = c.itemUses;
+  if (c.ammunition !== undefined) consume.ammunition = c.ammunition;
+  return consume;
+}
+
 export const RequestToCommandMapper = {
   toUseItemCommand(request: UseItemRequest): UseItemCommand {
     return {
@@ -32,7 +45,18 @@ export const RequestToCommandMapper = {
       activityType: request.activityType,
       targetTokenIds: request.targetTokenIds ?? [],
       templatePosition: mapTemplatePosition(request.templatePosition),
-      spellLevel: request.spellLevel
+      spellLevel: request.spellLevel,
+      attackerTokenId: request.attackerTokenId,
+      attackMode: request.attackMode,
+      ammunition: request.ammunition,
+      consume: mapConsume(request.consume),
+      // Dialogs are skipped unless the caller asks to see them.
+      fastForward: request.fastForward !== false,
+      advantage: request.advantage ?? false,
+      disadvantage: request.disadvantage ?? false,
+      attackBonus: request.attackBonus,
+      damageBonus: request.damageBonus,
+      targetAcBonus: request.targetAcBonus
     };
   }
 };

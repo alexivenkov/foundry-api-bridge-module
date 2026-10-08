@@ -1,4 +1,5 @@
 import type { UpdateActorParams, ActorResult } from '@/commands/types';
+import { resolveActorTarget, type ActorTargetGame } from '@/commands/handlers/actorTarget';
 
 interface FoundryActor {
   id: string;
@@ -10,22 +11,12 @@ interface FoundryActor {
   update(data: Record<string, unknown>): Promise<unknown>;
 }
 
-interface ActorsCollection {
-  get(id: string): FoundryActor | undefined;
-}
-
-interface FoundryGame {
-  actors: ActorsCollection;
-}
+type FoundryGame = ActorTargetGame<FoundryActor>;
 
 declare const game: FoundryGame;
 
 export async function updateActorHandler(params: UpdateActorParams): Promise<ActorResult> {
-  const actor = game.actors.get(params.actorId);
-
-  if (!actor) {
-    throw new Error(`Actor not found: ${params.actorId}`);
-  }
+  const { actor, tokenId } = resolveActorTarget(game, params);
 
   const updateData: Record<string, unknown> = {};
 
@@ -47,7 +38,7 @@ export async function updateActorHandler(params: UpdateActorParams): Promise<Act
 
   await actor.update(updateData);
 
-  return {
+  const result: ActorResult = {
     id: actor.id,
     uuid: actor.uuid,
     name: actor.name,
@@ -55,4 +46,8 @@ export async function updateActorHandler(params: UpdateActorParams): Promise<Act
     img: actor.img,
     folder: actor.folder?.name ?? null
   };
+  if (tokenId !== undefined) {
+    result.tokenId = tokenId;
+  }
+  return result;
 }

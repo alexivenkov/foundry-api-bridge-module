@@ -7,7 +7,7 @@ import type {
   UseItemOutcome
 } from '@/systems/dnd5e/item-actions/domain';
 import type { ActivityUsageConfig, FoundryItemActionGame } from './foundryItemActionTypes';
-import { resolveActivity } from './activityResolver';
+import { resolveActivity, type ActivitySelector } from './activityResolver';
 import { toRollOutcomes } from './rollResultMapper';
 
 interface MutableUseItemOutcome {
@@ -23,8 +23,35 @@ interface MutableUseItemOutcome {
  * Anti-corruption layer between the domain ItemUsePort and the Foundry dnd5e
  * activity/item API. All dnd5e use-pipeline knowledge stays quarantined here.
  */
+export interface ActivityDescription {
+  readonly id: string;
+  readonly type: string;
+  readonly affectsSelf: boolean;
+}
+
 export class Dnd5eItemUseGateway implements ItemUsePort {
   constructor(private readonly game: FoundryItemActionGame) {}
+
+  /** Type and targeting of the activity a use would run, or undefined when the item has none. */
+  describeActivity(actorId: string, itemId: string, selector: ActivitySelector): ActivityDescription | undefined {
+    const actor = this.game.actors.get(actorId);
+    if (!actor) {
+      throw new ActorNotFoundError(actorId);
+    }
+    const item = actor.items.get(itemId);
+    if (!item) {
+      throw new ItemNotFoundError(itemId);
+    }
+    const activity = resolveActivity(item, selector);
+    if (!activity) {
+      return undefined;
+    }
+    return {
+      id: activity._id,
+      type: activity.type,
+      affectsSelf: activity.target?.affects?.type === 'self'
+    };
+  }
 
   async use(actorId: string, itemId: string, options: UseItemOptions): Promise<UseItemOutcome> {
     const actor = this.game.actors.get(actorId);

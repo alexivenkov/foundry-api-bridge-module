@@ -17,6 +17,8 @@ import {
   createActorHandler,
   createActorFromCompendiumHandler,
   updateActorHandler,
+  dnd5eApplyDamageHandler,
+  dnd5eApplyHealingHandler,
   deleteActorHandler,
   getActorsHandler,
   getActorHandler,
@@ -334,6 +336,10 @@ function initializeWebSocket(
   commandRouter.register('create-actor', createActorHandler);
   commandRouter.register('create-actor-from-compendium', createActorFromCompendiumHandler);
   commandRouter.register('update-actor', updateActorHandler);
+  commandRouter.register('dnd5e/apply-damage', dnd5eApplyDamageHandler);
+  commandRouter.register('apply-damage', dnd5eApplyDamageHandler); // alias of 'dnd5e/apply-damage'
+  commandRouter.register('dnd5e/apply-healing', dnd5eApplyHealingHandler);
+  commandRouter.register('apply-healing', dnd5eApplyHealingHandler); // alias of 'dnd5e/apply-healing'
   commandRouter.register('delete-actor', deleteActorHandler);
 
   // Journal CRUD

@@ -1,7 +1,8 @@
 import { RollResolutionError } from '@/systems/shared/domain/errors';
 import type { RollOutcome } from '@/systems/shared/domain';
 import type { ItemRollPort, AttackRollOptions, DamageRollOptions } from '@/systems/dnd5e/item-rolls/domain';
-import type { AttackRollConfig, DamageRollConfig, FoundryItemRollGame } from './foundryItemRollTypes';
+import type { AttackRollConfig, DamageRollConfig, FoundryItemRollGame, MidiAdvantageOptions } from './foundryItemRollTypes';
+import { isMidiQolActive } from './foundryItemRollTypes';
 import { resolveAttackActivity } from './attackActivityResolver';
 import { toRollOutcome, toDamageRollOutcome } from './rollOutcomeMapper';
 
@@ -25,6 +26,9 @@ export class Dnd5eItemRollGateway implements ItemRollPort {
     }
     if (options.disadvantage) {
       config.disadvantage = true;
+    }
+    if ((options.advantage || options.disadvantage) && isMidiQolActive(this.game)) {
+      config.midiOptions = midiAdvantageOptions(options);
     }
 
     const rolls = await activity.rollAttack(
@@ -74,4 +78,15 @@ export class Dnd5eItemRollGateway implements ItemRollPort {
 
     return toDamageRollOutcome(roll);
   }
+}
+
+function midiAdvantageOptions(options: AttackRollOptions): MidiAdvantageOptions {
+  const flags: { advantage?: boolean; disadvantage?: boolean } = {};
+  if (options.advantage) {
+    flags.advantage = true;
+  }
+  if (options.disadvantage) {
+    flags.disadvantage = true;
+  }
+  return { ...flags, workflowOptions: { ...flags } };
 }

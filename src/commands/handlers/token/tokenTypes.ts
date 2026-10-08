@@ -12,6 +12,7 @@ export interface TokenUpdateData {
   displayName?: number;
   disposition?: number;
   lockRotation?: boolean;
+  actorLink?: boolean;
 }
 
 export interface FoundryToken {
@@ -29,8 +30,10 @@ export interface FoundryToken {
   };
   disposition: number;
   actorId?: string | null;
+  actorLink?: boolean;
   actor: {
     id: string;
+    type?: string;
     system?: {
       attributes?: {
         hp?: { value: number; max: number };
@@ -61,6 +64,7 @@ export interface TokenCreateData {
   elevation?: number;
   rotation?: number;
   scale?: number;
+  actorLink?: boolean;
 }
 
 export interface FoundrySceneGrid {
@@ -108,6 +112,7 @@ export function mapTokenToResult(token: FoundryToken): TokenResult {
     hidden: token.hidden,
     img: token.texture.src,
     disposition: token.disposition,
+    actorLink: token.actorLink ?? false,
     conditions: token.actor?.statuses ? [...token.actor.statuses] : []
   };
 
@@ -119,6 +124,12 @@ export function mapTokenToResult(token: FoundryToken): TokenResult {
   const ac = token.actor?.system?.attributes?.ac;
   if (ac) {
     result.ac = ac.value;
+  }
+
+  // A player character placed as an unlinked token keeps its own HP and
+  // effects: damage lands on the copy while sheet edits land on the actor.
+  if (token.actorLink === false && token.actor?.type === 'character') {
+    result.warning = 'unlinked_character_token';
   }
 
   return result;
@@ -197,6 +208,7 @@ export function mapTokenToDetail(token: FoundryToken, scene: FoundryScene): Toke
     hidden: token.hidden,
     disposition: dispositionFromNumber(token.disposition),
     actorId,
+    actorLink: token.actorLink ?? false,
     textureSrc: token.texture.src,
     hp,
     ac

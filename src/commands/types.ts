@@ -53,6 +53,10 @@ export type CommandType =
   | 'create-actor'
   | 'create-actor-from-compendium'
   | 'update-actor'
+  | 'dnd5e/apply-damage'
+  | 'apply-damage' // alias of 'dnd5e/apply-damage'
+  | 'dnd5e/apply-healing'
+  | 'apply-healing' // alias of 'dnd5e/apply-healing'
   | 'delete-actor'
   | 'create-scene'
   | 'update-scene'
@@ -375,7 +379,12 @@ export interface CreateActorFromCompendiumParams {
 }
 
 export interface UpdateActorParams {
-  actorId: string;
+  /** World actor id. Either this or `tokenId` is required. */
+  actorId?: string;
+  /** A token's actor instead: the synthetic actor of an unlinked token, or the linked actor. */
+  tokenId?: string;
+  /** Scene the token is on; defaults to the active scene. */
+  sceneId?: string;
   name?: string;
   img?: string;
   folder?: string;
@@ -386,10 +395,43 @@ export interface DeleteActorParams {
   actorId: string;
 }
 
+// Hit points (dnd5e): damage and healing through Actor5e#applyDamage
+export interface ApplyDamageParams {
+  /** World actor id. Either this or `tokenId` is required. */
+  actorId?: string;
+  /** A token's actor instead: an unlinked token takes the hit alone. */
+  tokenId?: string;
+  /** Scene the token is on; defaults to the active scene. */
+  sceneId?: string;
+  /** Damage amount before resistances; temp HP absorbs it first. */
+  amount: number;
+  /** dnd5e damage type (`slashing`, `fire`, …); resistances and immunities apply when given. */
+  type?: string;
+}
+
+export interface ApplyHealingParams {
+  actorId?: string;
+  tokenId?: string;
+  sceneId?: string;
+  amount: number;
+}
+
+export interface HitPointsChangeResult {
+  actorId: string;
+  tokenId?: string;
+  hpBefore: number;
+  hpAfter: number;
+  tempBefore: number;
+  tempAfter: number;
+  maxHp: number;
+}
+
 // Actor Results
 export interface ActorResult {
   id: string;
   uuid: string;
+  /** Set when the command addressed a token rather than a world actor. */
+  tokenId?: string;
   name: string;
   type: string;
   img: string;
@@ -842,6 +884,8 @@ export interface CreateTokenParams {
   elevation?: number;
   rotation?: number;
   scale?: number;
+  /** Link the token to its actor (shared HP/effects) or make it an independent copy. */
+  actorLink?: boolean;
 }
 
 export interface DeleteTokenParams {
@@ -871,6 +915,7 @@ export interface UpdateTokenParams {
   displayName?: number;
   disposition?: number;
   lockRotation?: boolean;
+  actorLink?: boolean;
 }
 
 export interface GetSceneTokensParams {
@@ -892,6 +937,7 @@ export interface TokenDetail {
   hidden: boolean;
   disposition: TokenDisposition;
   actorId: string | null;
+  actorLink: boolean;
   textureSrc: string;
   hp: { current: number; max: number } | null;
   ac: number | null;
@@ -971,6 +1017,10 @@ export interface RollResult {
   dice: DiceResult[];
   isCritical?: boolean;
   isFumble?: boolean;
+  /** Advantage mode the system applied to a d20 roll (dnd5e), when reported. */
+  mode?: 'advantage' | 'normal' | 'disadvantage';
+  /** The d20 result that was kept after advantage/disadvantage. */
+  kept?: number;
 }
 
 export interface DiceResult {
@@ -1061,11 +1111,15 @@ export interface TokenResult {
   hidden: boolean;
   img: string;
   disposition: number;
+  /** Whether the token shares its actor's data (linked) or is an independent copy. */
+  actorLink: boolean;
   hp?: TokenHpData;
   ac?: number;
   conditions: string[];
   pathCost?: number | undefined;
   doorsOpened?: string[] | undefined;
+  /** `unlinked_character_token`: a player character placed as an unlinked copy. */
+  warning?: string;
 }
 
 export interface SceneTokensResult {
@@ -1126,6 +1180,12 @@ export interface UseItemResult {
   activityUsed?: ActivityInfo;
   rolls: RollResult[];
   chatMessageId?: string;
+  /** Set when a self-targeted heal went through the activation pipeline. */
+  status?: ActivationStatus;
+  dialog?: UserDialogKind;
+  /** `no_roll_performed`: the card was posted but the system never rolled. */
+  warning?: string;
+  appliedHealing?: AppliedHitPointsResult;
 }
 
 // Item CRUD Commands
@@ -1222,7 +1282,12 @@ export interface DeleteItemResult {
 
 // Effect Commands
 export interface GetActorEffectsParams {
-  actorId: string;
+  /** World actor id. Either this or `tokenId` is required. */
+  actorId?: string;
+  /** A token's actor instead (unlinked tokens keep their own effects). */
+  tokenId?: string;
+  /** Scene the token is on; defaults to the active scene. */
+  sceneId?: string;
   includeDisabled?: boolean;
 }
 
@@ -1258,7 +1323,12 @@ export interface ActorEffectsResult {
 }
 
 export interface ToggleActorStatusParams {
-  actorId: string;
+  /** World actor id. Either this or `tokenId` is required. */
+  actorId?: string;
+  /** A token's actor instead (unlinked tokens keep their own effects). */
+  tokenId?: string;
+  /** Scene the token is on; defaults to the active scene. */
+  sceneId?: string;
   statusId: string;
   active?: boolean;
   overlay?: boolean;
@@ -1272,7 +1342,12 @@ export interface ToggleStatusResult {
 }
 
 export interface AddActorEffectParams {
-  actorId: string;
+  /** World actor id. Either this or `tokenId` is required. */
+  actorId?: string;
+  /** A token's actor instead (unlinked tokens keep their own effects). */
+  tokenId?: string;
+  /** Scene the token is on; defaults to the active scene. */
+  sceneId?: string;
   name: string;
   img?: string;
   disabled?: boolean;
@@ -1289,7 +1364,12 @@ export interface AddEffectResult {
 }
 
 export interface RemoveActorEffectParams {
-  actorId: string;
+  /** World actor id. Either this or `tokenId` is required. */
+  actorId?: string;
+  /** A token's actor instead (unlinked tokens keep their own effects). */
+  tokenId?: string;
+  /** Scene the token is on; defaults to the active scene. */
+  sceneId?: string;
   effectId: string;
 }
 
@@ -1300,7 +1380,12 @@ export interface RemoveEffectResult {
 }
 
 export interface UpdateActorEffectParams {
-  actorId: string;
+  /** World actor id. Either this or `tokenId` is required. */
+  actorId?: string;
+  /** A token's actor instead (unlinked tokens keep their own effects). */
+  tokenId?: string;
+  /** Scene the token is on; defaults to the active scene. */
+  sceneId?: string;
   effectId: string;
   name?: string;
   img?: string;
@@ -1316,6 +1401,12 @@ export interface UpdateEffectResult {
 }
 
 // Activate Item Command (full automation pipeline)
+export interface ActivateItemConsume {
+  spellSlot?: boolean;
+  itemUses?: boolean;
+  ammunition?: boolean;
+}
+
 export interface ActivateItemParams {
   actorId: string;
   itemId: string;
@@ -1324,7 +1415,38 @@ export interface ActivateItemParams {
   targetTokenIds?: string[];
   templatePosition?: { x: number; y: number; direction?: number };
   spellLevel?: number;
+  /** Act as this token of the actor (one of several copies); its actor for an unlinked token. */
+  attackerTokenId?: string;
+  /** dnd5e attack mode: `oneHanded`, `twoHanded`, `offhand`, `thrown`, `thrown-offhand`. */
+  attackMode?: string;
+  /** Ammunition item id, or `false` to attack without consuming any. */
+  ammunition?: string | false;
+  consume?: ActivateItemConsume;
+  /** Skip every configuration dialog and auto-roll. Default true. */
+  fastForward?: boolean;
+  advantage?: boolean;
+  disadvantage?: boolean;
+  /** One-off bonus to this attack roll (`2`, `"1d4"`). */
+  attackBonus?: number | string;
+  /** One-off bonus to the first damage part (`"1d6"` for Sneak Attack). */
+  damageBonus?: string;
+  /** Added to every target's AC for this hit check (Midi-QOL only). */
+  targetAcBonus?: number;
 }
+
+export type ActivationStatus = 'completed' | 'awaiting_user_dialog' | 'workflow_timeout' | 'workflow_aborted';
+export type UserDialogKind = 'attack-roll' | 'consume' | 'damage' | 'other';
+
+export interface HitPointsDeltaResult {
+  applied: boolean;
+  hpBefore: number;
+  hpAfter: number;
+  tempBefore?: number;
+  tempAfter?: number;
+}
+
+/** Keyed by token id (actor id when the target has no token). */
+export type AppliedHitPointsResult = Record<string, HitPointsDeltaResult>;
 
 export interface MidiWorkflowResult {
   attackTotal: number | undefined;
@@ -1334,6 +1456,8 @@ export interface MidiWorkflowResult {
   hitTargetIds: string[];
   saveTargetIds: string[];
   failedSaveTargetIds: string[];
+  appliedDamage?: AppliedHitPointsResult;
+  appliedHealing?: AppliedHitPointsResult;
 }
 
 export interface ActivateItemResult {
@@ -1342,10 +1466,19 @@ export interface ActivateItemResult {
   itemType: string;
   activityUsed?: ActivityInfo;
   activated: boolean;
+  /** `completed`, `awaiting_user_dialog` (a dialog on the GM's client holds the use), `workflow_timeout`, `workflow_aborted`. */
+  status: ActivationStatus;
+  /** The dialog that opened, when `status` is `awaiting_user_dialog`. */
+  dialog?: UserDialogKind;
   targetsSet: number;
   rolls: RollResult[];
   chatMessageId?: string;
   workflow?: MidiWorkflowResult;
+  /** HP changes the workflow (Midi-QOL) or the module (vanilla healing) applied, per token. */
+  appliedDamage?: AppliedHitPointsResult;
+  appliedHealing?: AppliedHitPointsResult;
+  /** `no_roll_performed`, `midi_workflow_timeout`, `midi_workflow_aborted`. */
+  warning?: string;
 }
 
 // Scene Commands
@@ -2489,6 +2622,10 @@ export interface CommandParamsMap {
   'create-actor': CreateActorParams;
   'create-actor-from-compendium': CreateActorFromCompendiumParams;
   'update-actor': UpdateActorParams;
+  'dnd5e/apply-damage': ApplyDamageParams;
+  'apply-damage': ApplyDamageParams; // alias of 'dnd5e/apply-damage'
+  'dnd5e/apply-healing': ApplyHealingParams;
+  'apply-healing': ApplyHealingParams; // alias of 'dnd5e/apply-healing'
   'delete-actor': DeleteActorParams;
   'send-chat-message': SendChatMessageParams;
   'create-journal': CreateJournalParams;
@@ -2656,6 +2793,10 @@ export interface CommandResultMap {
   'create-actor': ActorResult;
   'create-actor-from-compendium': ActorResult;
   'update-actor': ActorResult;
+  'dnd5e/apply-damage': HitPointsChangeResult;
+  'apply-damage': HitPointsChangeResult; // alias of 'dnd5e/apply-damage'
+  'dnd5e/apply-healing': HitPointsChangeResult;
+  'apply-healing': HitPointsChangeResult; // alias of 'dnd5e/apply-healing'
   'delete-actor': DeleteResult;
   'send-chat-message': SendChatMessageResult;
   'create-journal': JournalResult;

@@ -39,6 +39,9 @@ export async function updateTokenHandler(params: UpdateTokenParams): Promise<Tok
   if (params.lockRotation !== undefined) {
     updateData.lockRotation = params.lockRotation;
   }
+  if (params.actorLink !== undefined) {
+    updateData.actorLink = params.actorLink;
+  }
 
   if (Object.keys(updateData).length === 0) {
     return mapTokenToResult(token);

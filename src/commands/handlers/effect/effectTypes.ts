@@ -1,4 +1,5 @@
 import type { EffectSummary, EffectChangeData, EffectDurationData } from '@/commands/types';
+import { resolveActorTarget, type ActorTargetGame, type ActorTargetParams } from '@/commands/handlers/actorTarget';
 
 export interface FoundryEffectChange {
   key: string;
@@ -66,12 +67,17 @@ export interface EffectActorsCollection {
   get(id: string): EffectFoundryActor | undefined;
 }
 
-export interface EffectFoundryGame {
+export interface EffectFoundryGame extends ActorTargetGame<EffectFoundryActor> {
   actors: EffectActorsCollection;
 }
 
 export function getGame(): EffectFoundryGame {
   return (globalThis as unknown as { game: EffectFoundryGame }).game;
+}
+
+/** The actor an effect command addresses: `actorId`, or `tokenId` for one token's actor. */
+export function resolveEffectActor(params: ActorTargetParams): EffectFoundryActor {
+  return resolveActorTarget(getGame(), params).actor;
 }
 
 export function mapEffectToSummary(effect: FoundryActiveEffect): EffectSummary {

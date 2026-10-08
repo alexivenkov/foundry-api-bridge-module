@@ -1,7 +1,7 @@
 export interface FoundryDiceTerm {
   faces?: number;
   number?: number;
-  results?: Array<{ result: number }>;
+  results?: Array<{ result: number; active?: boolean }>;
 }
 
 export interface FoundryD20Roll {
@@ -10,6 +10,7 @@ export interface FoundryD20Roll {
   terms: FoundryDiceTerm[];
   isCritical: boolean;
   isFumble: boolean;
+  options?: { advantageMode?: number };
 }
 
 export interface FoundryDamageRoll {
@@ -26,9 +27,23 @@ export interface RollMessageConfig {
   create: boolean;
 }
 
+/**
+ * Midi-QOL rebuilds `advantage` from its own tracker before calling dnd5e, so a
+ * plain `config.advantage` is ignored while Midi is active. The tracker reads
+ * `workflowOptions.advantage/disadvantage` (verified against midi-qol 14.0.13,
+ * `Workflow#checkAttackAdvantage`); `midiOptions.advantage` is the pre-computed
+ * source Midi's roll helpers accept.
+ */
+export interface MidiAdvantageOptions {
+  advantage?: boolean;
+  disadvantage?: boolean;
+  workflowOptions?: { advantage?: boolean; disadvantage?: boolean };
+}
+
 export interface AttackRollConfig {
   advantage?: boolean;
   disadvantage?: boolean;
+  midiOptions?: MidiAdvantageOptions;
 }
 
 export interface DamageRollConfig {
@@ -83,4 +98,9 @@ export interface FoundryItemRollActorsCollection {
 
 export interface FoundryItemRollGame {
   actors: FoundryItemRollActorsCollection;
+  modules?: { get(id: string): { active: boolean } | undefined };
+}
+
+export function isMidiQolActive(game: FoundryItemRollGame): boolean {
+  return game.modules?.get('midi-qol')?.active ?? false;
 }

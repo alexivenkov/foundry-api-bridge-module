@@ -142,6 +142,7 @@ describe('Token Handlers', () => {
         hidden: false,
         img: 'icons/token.png',
         disposition: 1,
+        actorLink: false,
         hp: { value: 25, max: 30 },
         ac: 15,
         conditions: []
@@ -989,6 +990,7 @@ describe('Token Handlers', () => {
             hidden: false,
             img: 'icons/token.png',
             disposition: 1,
+            actorLink: false,
             hp: { value: 25, max: 30 },
             ac: 15,
             conditions: []
@@ -1006,6 +1008,7 @@ describe('Token Handlers', () => {
             hidden: false,
             img: 'icons/token.png',
             disposition: 1,
+            actorLink: false,
             conditions: []
           }
         ]
@@ -1060,5 +1063,60 @@ describe('Token Handlers', () => {
         sceneId: 'nonexistent'
       })).rejects.toThrow('Scene not found: nonexistent');
     });
+  });
+});
+describe('actorLink', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('create-token passes actorLink through and reports it', async () => {
+    const mockToken = createMockToken();
+    (mockToken as unknown as { actorLink: boolean }).actorLink = true;
+    const mockScene = createMockScene();
+    mockScene.createEmbeddedDocuments.mockResolvedValue([mockToken]);
+    mockGame.scenes.active = mockScene;
+
+    const result = await createTokenHandler({ actorId: 'actor-456', x: 0, y: 0, actorLink: true });
+
+    expect(mockScene.createEmbeddedDocuments).toHaveBeenCalledWith('Token', [
+      { actorId: 'actor-456', x: 0, y: 0, actorLink: true }
+    ]);
+    expect(result.actorLink).toBe(true);
+    expect(result.warning).toBeUndefined();
+  });
+
+  it('update-token changes actorLink', async () => {
+    const mockToken = createMockToken();
+    const mockScene = createMockScene();
+    mockScene.tokens.get.mockReturnValue(mockToken);
+    mockGame.scenes.active = mockScene;
+
+    await updateTokenHandler({ tokenId: 'token-123', actorLink: true });
+
+    expect(mockToken.update).toHaveBeenCalledWith({ actorLink: true });
+  });
+
+  it('get-scene-tokens flags an unlinked player character', async () => {
+    const pc = createMockToken({ id: 'pc-1', name: 'Randal' });
+    (pc as unknown as { actorLink: boolean }).actorLink = false;
+    (pc.actor as { type?: string }).type = 'character';
+    const npc = createMockToken({ id: 'npc-1', name: 'Goblin' });
+    (npc as unknown as { actorLink: boolean }).actorLink = false;
+    (npc.actor as { type?: string }).type = 'npc';
+    const linkedPc = createMockToken({ id: 'pc-2', name: 'Riswynn' });
+    (linkedPc as unknown as { actorLink: boolean }).actorLink = true;
+    (linkedPc.actor as { type?: string }).type = 'character';
+    const mockScene = createMockScene();
+    mockScene.tokens.contents = [pc, npc, linkedPc];
+    mockGame.scenes.active = mockScene;
+
+    const result = await getSceneTokensHandler({});
+
+    expect(result.tokens.map((t) => [t.id, t.actorLink, t.warning])).toEqual([
+      ['pc-1', false, 'unlinked_character_token'],
+      ['npc-1', false, undefined],
+      ['pc-2', true, undefined]
+    ]);
   });
 });

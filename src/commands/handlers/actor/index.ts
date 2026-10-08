@@ -21,6 +21,8 @@ export {
   createCreateActorFromCompendiumHandler
 } from './CreateActorFromCompendiumHandler';
 export { updateActorHandler } from './UpdateActorHandler';
+export { dnd5eApplyDamageHandler } from './Dnd5eApplyDamageHandler';
+export { dnd5eApplyHealingHandler } from './Dnd5eApplyHealingHandler';
 export { deleteActorHandler } from './DeleteActorHandler';
 export { getActorsHandler } from './GetActorsHandler';
 export { getActorHandler } from './GetActorHandler';

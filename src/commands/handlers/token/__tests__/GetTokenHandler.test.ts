@@ -93,6 +93,7 @@ describe('getTokenHandler', () => {
       hidden: false,
       disposition: 'hostile',
       actorId: 'actor-1',
+      actorLink: false,
       textureSrc: 'icons/goblin.png',
       hp: { current: 7, max: 10 },
       ac: 13

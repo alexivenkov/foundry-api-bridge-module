@@ -1,4 +1,5 @@
-import type { DiceOutcome, RollOutcome } from '@/systems/shared/domain';
+import type { DiceOutcome, RollMode, RollOutcome } from '@/systems/shared/domain';
+import { keptD20Of, rollModeOf } from '@/systems/shared/domain';
 import type { FoundryRoll, FoundryDiceTerm } from './foundryItemActionTypes';
 
 function extractDice(terms: FoundryDiceTerm[]): DiceOutcome[] {
@@ -27,6 +28,8 @@ export function toRollOutcomes(rolls: FoundryRoll[] | undefined): RollOutcome[] 
       dice: DiceOutcome[];
       isCritical?: boolean;
       isFumble?: boolean;
+      mode?: RollMode;
+      kept?: number;
     } = {
       total: roll.total,
       formula: roll.formula,
@@ -38,6 +41,12 @@ export function toRollOutcomes(rolls: FoundryRoll[] | undefined): RollOutcome[] 
     }
     if (roll.isFumble) {
       outcome.isFumble = true;
+    }
+    const mode = rollModeOf(roll);
+    const kept = keptD20Of(roll);
+    if (mode !== undefined && kept !== undefined) {
+      outcome.mode = mode;
+      outcome.kept = kept;
     }
 
     return outcome;

@@ -180,3 +180,22 @@ describe('updateActorHandler', () => {
     });
   });
 });
+describe('updateActorHandler by tokenId', () => {
+  it('updates the token\'s actor and echoes the token id', async () => {
+    const tokenActor = createMockActor();
+    tokenActor.update.mockImplementation(async (data: Record<string, unknown>) => {
+      Object.assign(tokenActor, data);
+      return undefined;
+    });
+    const scene = { id: 's1', tokens: { get: jest.fn().mockReturnValue({ id: 'token-7', actor: tokenActor }) } };
+    (global as Record<string, unknown>)['game'] = { actors: { get: jest.fn() }, scenes: { get: jest.fn(), active: scene } };
+
+    const result = await updateActorHandler({ tokenId: 'token-7', system: { attributes: { hp: { value: 3 } } } });
+
+    expect(tokenActor.update).toHaveBeenCalledWith({ system: { attributes: { hp: { value: 3 } } } });
+    expect(result.tokenId).toBe('token-7');
+    expect(result.id).toBe('actor-123');
+
+    (global as Record<string, unknown>)['game'] = mockGame;
+  });
+});

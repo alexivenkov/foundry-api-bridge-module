@@ -15,6 +15,8 @@ export {
   createActorHandler,
   createActorFromCompendiumHandler,
   updateActorHandler,
+  dnd5eApplyDamageHandler,
+  dnd5eApplyHealingHandler,
   deleteActorHandler,
   getActorsHandler,
   getActorHandler,

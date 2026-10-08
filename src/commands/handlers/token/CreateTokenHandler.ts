@@ -29,6 +29,9 @@ export async function createTokenHandler(params: CreateTokenParams): Promise<Tok
   if (params.scale !== undefined) {
     tokenData.scale = params.scale;
   }
+  if (params.actorLink !== undefined) {
+    tokenData.actorLink = params.actorLink;
+  }
 
   const [token] = await scene.createEmbeddedDocuments('Token', [tokenData]);
 

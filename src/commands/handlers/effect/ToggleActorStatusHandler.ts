@@ -1,14 +1,10 @@
 import type { ToggleActorStatusParams, ToggleStatusResult } from '@/commands/types';
-import { getGame } from './effectTypes';
+import { resolveEffectActor } from './effectTypes';
 
 export async function toggleActorStatusHandler(
   params: ToggleActorStatusParams
 ): Promise<ToggleStatusResult> {
-  const actor = getGame().actors.get(params.actorId);
-
-  if (!actor) {
-    throw new Error(`Actor not found: ${params.actorId}`);
-  }
+  const actor = resolveEffectActor(params);
 
   const options: { active?: boolean; overlay?: boolean } = {};
 
