@@ -151,4 +151,58 @@ describe('rollAbilityHandler', () => {
       expect(ABILITY_KEYS).toHaveLength(6);
     });
   });
+
+  describe('advantage and disadvantage', () => {
+    it('should pass advantage to rollAbilityCheck', async () => {
+      await rollAbilityHandler({
+        actorId: 'actor-123',
+        ability: 'str',
+        advantage: true
+      });
+
+      expect(mockActor.rollAbilityCheck).toHaveBeenCalledWith(
+        { ability: 'str', advantage: true },
+        { configure: false },
+        { create: false }
+      );
+    });
+
+    it('should pass disadvantage to rollAbilityCheck', async () => {
+      await rollAbilityHandler({
+        actorId: 'actor-123',
+        ability: 'str',
+        disadvantage: true
+      });
+
+      expect(mockActor.rollAbilityCheck).toHaveBeenCalledWith(
+        { ability: 'str', disadvantage: true },
+        { configure: false },
+        { create: false }
+      );
+    });
+
+    it('should not add the flags to the config when they are false', async () => {
+      await rollAbilityHandler({
+        actorId: 'actor-123',
+        ability: 'str',
+        advantage: false,
+        disadvantage: false
+      });
+
+      expect(mockActor.rollAbilityCheck.mock.calls[0]?.[0]).toStrictEqual({ ability: 'str' });
+    });
+
+    it('should reject advantage and disadvantage together without rolling', async () => {
+      await expect(
+        rollAbilityHandler({
+          actorId: 'actor-123',
+          ability: 'str',
+          advantage: true,
+          disadvantage: true
+        })
+      ).rejects.toThrow('Cannot have both advantage and disadvantage');
+
+      expect(mockActor.rollAbilityCheck).not.toHaveBeenCalled();
+    });
+  });
 });

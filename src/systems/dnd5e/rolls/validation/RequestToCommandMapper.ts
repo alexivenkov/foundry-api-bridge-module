@@ -14,6 +14,8 @@ export const RequestToCommandMapper = {
     return {
       actorId: request.actorId,
       skill: request.skill,
+      advantage: request.advantage ?? false,
+      disadvantage: request.disadvantage ?? false,
       showInChat: request.showInChat ?? false
     };
   },
@@ -21,6 +23,8 @@ export const RequestToCommandMapper = {
     return {
       actorId: request.actorId,
       ability: request.ability,
+      advantage: request.advantage ?? false,
+      disadvantage: request.disadvantage ?? false,
       showInChat: request.showInChat ?? false
     };
   },
@@ -28,12 +32,16 @@ export const RequestToCommandMapper = {
     return {
       actorId: request.actorId,
       ability: request.ability,
+      advantage: request.advantage ?? false,
+      disadvantage: request.disadvantage ?? false,
       showInChat: request.showInChat ?? false
     };
   },
   toRollPerceptionCommand(request: RollPerceptionRequest): RollPerceptionCommand {
     return {
       actorId: request.actorId,
+      advantage: request.advantage ?? false,
+      disadvantage: request.disadvantage ?? false,
       showInChat: request.showInChat ?? false
     };
   }

@@ -2,7 +2,12 @@ import { ActorNotFoundError, RollResolutionError } from '@/systems/shared/domain
 import type { RollOutcome } from '@/systems/shared/domain';
 import type { ActorRollPort, RollOptions } from '@/systems/dnd5e/rolls/domain';
 import { parseSkillKey, parseAbilityKey } from '@/systems/dnd5e/rolls/domain';
-import type { FoundryD20Roll, FoundryRollActor, FoundryRollGame } from './foundryRollTypes';
+import type {
+  D20RollFlags,
+  FoundryD20Roll,
+  FoundryRollActor,
+  FoundryRollGame
+} from './foundryRollTypes';
 import { toRollOutcome } from './rollOutcomeMapper';
 
 /**
@@ -17,7 +22,11 @@ export class Dnd5eActorRollGateway implements ActorRollPort {
     return this.rollD20(
       actorId,
       (actor) =>
-        actor.rollSkill({ skill: parseSkillKey(skill) }, { configure: false }, { create: options.showInChat }),
+        actor.rollSkill(
+          { skill: parseSkillKey(skill), ...d20Flags(options) },
+          { configure: false },
+          { create: options.showInChat }
+        ),
       'Skill roll returned no results'
     );
   }
@@ -26,7 +35,11 @@ export class Dnd5eActorRollGateway implements ActorRollPort {
     return this.rollD20(
       actorId,
       (actor) =>
-        actor.rollSavingThrow({ ability: parseAbilityKey(save) }, { configure: false }, { create: options.showInChat }),
+        actor.rollSavingThrow(
+          { ability: parseAbilityKey(save), ...d20Flags(options) },
+          { configure: false },
+          { create: options.showInChat }
+        ),
       'Saving throw roll returned no results'
     );
   }
@@ -35,7 +48,11 @@ export class Dnd5eActorRollGateway implements ActorRollPort {
     return this.rollD20(
       actorId,
       (actor) =>
-        actor.rollAbilityCheck({ ability: parseAbilityKey(ability) }, { configure: false }, { create: options.showInChat }),
+        actor.rollAbilityCheck(
+          { ability: parseAbilityKey(ability), ...d20Flags(options) },
+          { configure: false },
+          { create: options.showInChat }
+        ),
       'Ability check roll returned no results'
     );
   }
@@ -44,7 +61,11 @@ export class Dnd5eActorRollGateway implements ActorRollPort {
     return this.rollD20(
       actorId,
       (actor) =>
-        actor.rollSkill({ skill: parseSkillKey('prc') }, { configure: false }, { create: options.showInChat }),
+        actor.rollSkill(
+          { skill: parseSkillKey('prc'), ...d20Flags(options) },
+          { configure: false },
+          { create: options.showInChat }
+        ),
       'Perception roll returned no results'
     );
   }
@@ -67,4 +88,18 @@ export class Dnd5eActorRollGateway implements ActorRollPort {
 
     return toRollOutcome(roll);
   }
+}
+
+// The flags are set only when true: dnd5e treats a present `false` the same as
+// an absent key, but keeping the config minimal makes the call sites and the
+// gateway tests exact about what reaches the system.
+function d20Flags(options: RollOptions): D20RollFlags {
+  const flags: D20RollFlags = {};
+  if (options.advantage) {
+    flags.advantage = true;
+  }
+  if (options.disadvantage) {
+    flags.disadvantage = true;
+  }
+  return flags;
 }

@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.13.0] - 2026-10-08
+
+### Fixed
+
+- **`advantage` / `disadvantage` were silently dropped by `dnd5e/roll-skill`, `dnd5e/roll-save`, `dnd5e/roll-ability` and `dnd5e/roll-perception` (and their bare aliases).** The gateway validated and forwarded the flags and the MCP tools promised them, but the module's request schemas did not know the fields, so a check asked for with disadvantage went out as a plain `1d20 + N`. The four commands now accept `advantage?: boolean` and `disadvantage?: boolean` and pass them as top-level flags of the dnd5e process config (`actor.rollSkill({ skill, disadvantage: true }, { configure: false }, …)`) — the same mechanism `dnd5e/roll-attack` already uses; dnd5e's `D20Roll.applyKeybindings` turns them into `advantageMode`, so the result comes back as `2d20kh + N` / `2d20kl + N` with both d20 results in `dice[0].results` (verified against dnd5e 5.3.3). Both flags at once are rejected before rolling with `Cannot have both advantage and disadvantage`, matching the gateway's own check. A flag is only written to the config when `true`; requests without flags produce exactly the previous call.
+
+### Technical
+
+- `RollOptions` and the four `Roll*Command`s carry `advantage` + `disadvantage`; the request schemas share `validation/advantageFlags.ts` (a `.refine` on the pair); `D20RollFlags`, `SkillRollConfig` and `AbilityRollConfig` in `foundryRollTypes.ts`; wire types `Roll{Skill,Save,Ability,Perception}Params` extended
+- 2918 tests passing (274 suites): flag propagation per command and per gateway method with the exact config shape (`toStrictEqual`), both-flags rejection without a roll, schema and mapper defaults; new `RollPerceptionHandler` and `RollRequestSchemas` suites
+- Docs: README restructured (quick start, client table with OAuth first, code mode, tiers, catalog listings); the full command list moved to `docs/COMMANDS.md`; wiki Home rewritten and `WebSocket API` completed to all 164 commands
+
 ## [8.12.1] - 2026-09-13
 
 ### Security

@@ -188,18 +188,24 @@ export interface RollDiceParams {
 export interface RollAbilityParams {
   actorId: string;
   ability: AbilityKey;
+  advantage?: boolean;
+  disadvantage?: boolean;
   showInChat?: boolean;
 }
 
 export interface RollSkillParams {
   actorId: string;
   skill: string;
+  advantage?: boolean;
+  disadvantage?: boolean;
   showInChat?: boolean;
 }
 
 export interface RollSaveParams {
   actorId: string;
   ability: AbilityKey;
+  advantage?: boolean;
+  disadvantage?: boolean;
   showInChat?: boolean;
 }
 
@@ -220,6 +226,8 @@ export interface RollDamageParams {
 
 export interface RollPerceptionParams {
   actorId: string;
+  advantage?: boolean;
+  disadvantage?: boolean;
   showInChat?: boolean;
 }
 

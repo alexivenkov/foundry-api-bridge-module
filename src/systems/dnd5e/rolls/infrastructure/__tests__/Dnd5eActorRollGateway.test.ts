@@ -10,6 +10,8 @@ const mockRoll = {
   isFumble: false
 };
 
+const noFlags = { advantage: false, disadvantage: false, showInChat: false };
+
 function createGame(actor: unknown): FoundryRollGame {
   return {
     actors: { get: jest.fn().mockReturnValue(actor) }
@@ -21,7 +23,7 @@ describe('Dnd5eActorRollGateway', () => {
     const rollSkill = jest.fn().mockResolvedValue([mockRoll]);
     const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollSkill }));
 
-    const outcome = await gateway.rollSkill('a1', 'ste', { showInChat: false });
+    const outcome = await gateway.rollSkill('a1', 'ste', noFlags);
 
     expect(rollSkill).toHaveBeenCalledWith(
       { skill: 'ste' },
@@ -39,7 +41,7 @@ describe('Dnd5eActorRollGateway', () => {
     const rollSkill = jest.fn().mockResolvedValue([mockRoll]);
     const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollSkill }));
 
-    await gateway.rollSkill('a1', 'prc', { showInChat: true });
+    await gateway.rollSkill('a1', 'prc', { ...noFlags, showInChat: true });
 
     expect(rollSkill).toHaveBeenCalledWith(
       { skill: 'prc' },
@@ -58,7 +60,7 @@ describe('Dnd5eActorRollGateway', () => {
     const rollSkill = jest.fn().mockResolvedValue([critRoll]);
     const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollSkill }));
 
-    const outcome = await gateway.rollSkill('a1', 'ath', { showInChat: false });
+    const outcome = await gateway.rollSkill('a1', 'ath', noFlags);
 
     expect(outcome.isCritical).toBe(true);
     expect(outcome.isFumble).toBeUndefined();
@@ -68,10 +70,10 @@ describe('Dnd5eActorRollGateway', () => {
     const gateway = new Dnd5eActorRollGateway(createGame(undefined));
 
     await expect(
-      gateway.rollSkill('missing', 'ste', { showInChat: false })
+      gateway.rollSkill('missing', 'ste', noFlags)
     ).rejects.toThrow(ActorNotFoundError);
     await expect(
-      gateway.rollSkill('missing', 'ste', { showInChat: false })
+      gateway.rollSkill('missing', 'ste', noFlags)
     ).rejects.toThrow('Actor not found: missing');
   });
 
@@ -80,10 +82,10 @@ describe('Dnd5eActorRollGateway', () => {
     const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollSkill }));
 
     await expect(
-      gateway.rollSkill('a1', 'ste', { showInChat: false })
+      gateway.rollSkill('a1', 'ste', noFlags)
     ).rejects.toThrow(RollResolutionError);
     await expect(
-      gateway.rollSkill('a1', 'ste', { showInChat: false })
+      gateway.rollSkill('a1', 'ste', noFlags)
     ).rejects.toThrow('Skill roll returned no results');
   });
 
@@ -91,7 +93,7 @@ describe('Dnd5eActorRollGateway', () => {
     const rollAbilityCheck = jest.fn().mockResolvedValue([mockRoll]);
     const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollAbilityCheck }));
 
-    const outcome = await gateway.rollAbility('a1', 'str', { showInChat: false });
+    const outcome = await gateway.rollAbility('a1', 'str', noFlags);
 
     expect(rollAbilityCheck).toHaveBeenCalledWith(
       { ability: 'str' },
@@ -110,7 +112,7 @@ describe('Dnd5eActorRollGateway', () => {
     const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollAbilityCheck }));
 
     await expect(
-      gateway.rollAbility('a1', 'str', { showInChat: false })
+      gateway.rollAbility('a1', 'str', noFlags)
     ).rejects.toThrow('Ability check roll returned no results');
   });
 
@@ -118,7 +120,7 @@ describe('Dnd5eActorRollGateway', () => {
     const rollSavingThrow = jest.fn().mockResolvedValue([mockRoll]);
     const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollSavingThrow }));
 
-    const outcome = await gateway.rollSave('a1', 'dex', { showInChat: false });
+    const outcome = await gateway.rollSave('a1', 'dex', noFlags);
 
     expect(rollSavingThrow).toHaveBeenCalledWith(
       { ability: 'dex' },
@@ -137,7 +139,7 @@ describe('Dnd5eActorRollGateway', () => {
     const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollSavingThrow }));
 
     await expect(
-      gateway.rollSave('a1', 'dex', { showInChat: false })
+      gateway.rollSave('a1', 'dex', noFlags)
     ).rejects.toThrow('Saving throw roll returned no results');
   });
 
@@ -145,7 +147,7 @@ describe('Dnd5eActorRollGateway', () => {
     const rollSkill = jest.fn().mockResolvedValue([mockRoll]);
     const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollSkill }));
 
-    await gateway.rollPerception('a1', { showInChat: true });
+    await gateway.rollPerception('a1', { ...noFlags, showInChat: true });
 
     expect(rollSkill).toHaveBeenCalledWith(
       { skill: 'prc' },
@@ -159,7 +161,64 @@ describe('Dnd5eActorRollGateway', () => {
     const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollSkill }));
 
     await expect(
-      gateway.rollSkill('a1', 'acrobatics', { showInChat: false })
+      gateway.rollSkill('a1', 'acrobatics', noFlags)
     ).rejects.toThrow(ValidationError);
+  });
+
+  describe('advantage and disadvantage', () => {
+    it('sets advantage on the skill roll config only when requested', async () => {
+      const rollSkill = jest.fn().mockResolvedValue([mockRoll]);
+      const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollSkill }));
+
+      await gateway.rollSkill('a1', 'ste', { advantage: true, disadvantage: false, showInChat: true });
+
+      expect(rollSkill.mock.calls[0]?.[0]).toStrictEqual({ skill: 'ste', advantage: true });
+      expect(rollSkill).toHaveBeenCalledWith(expect.anything(), { configure: false }, { create: true });
+    });
+
+    it('sets disadvantage on the skill roll config only when requested', async () => {
+      const rollSkill = jest.fn().mockResolvedValue([mockRoll]);
+      const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollSkill }));
+
+      await gateway.rollSkill('a1', 'ste', { advantage: false, disadvantage: true, showInChat: false });
+
+      expect(rollSkill.mock.calls[0]?.[0]).toStrictEqual({ skill: 'ste', disadvantage: true });
+    });
+
+    it('leaves both flags out of the config when neither is requested', async () => {
+      const rollSkill = jest.fn().mockResolvedValue([mockRoll]);
+      const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollSkill }));
+
+      await gateway.rollSkill('a1', 'ste', noFlags);
+
+      expect(rollSkill.mock.calls[0]?.[0]).toStrictEqual({ skill: 'ste' });
+    });
+
+    it('passes the flags to saving throws', async () => {
+      const rollSavingThrow = jest.fn().mockResolvedValue([mockRoll]);
+      const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollSavingThrow }));
+
+      await gateway.rollSave('a1', 'dex', { advantage: false, disadvantage: true, showInChat: false });
+
+      expect(rollSavingThrow.mock.calls[0]?.[0]).toStrictEqual({ ability: 'dex', disadvantage: true });
+    });
+
+    it('passes the flags to ability checks', async () => {
+      const rollAbilityCheck = jest.fn().mockResolvedValue([mockRoll]);
+      const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollAbilityCheck }));
+
+      await gateway.rollAbility('a1', 'str', { advantage: true, disadvantage: false, showInChat: false });
+
+      expect(rollAbilityCheck.mock.calls[0]?.[0]).toStrictEqual({ ability: 'str', advantage: true });
+    });
+
+    it('passes the flags to perception rolls', async () => {
+      const rollSkill = jest.fn().mockResolvedValue([mockRoll]);
+      const gateway = new Dnd5eActorRollGateway(createGame({ id: 'a1', name: 'Hero', rollSkill }));
+
+      await gateway.rollPerception('a1', { advantage: false, disadvantage: true, showInChat: false });
+
+      expect(rollSkill.mock.calls[0]?.[0]).toStrictEqual({ skill: 'prc', disadvantage: true });
+    });
   });
 });

@@ -227,7 +227,7 @@ The core command set is system-agnostic. `dnd5e/*` and `pf2e/*` commands require
 | v12 | Verified |
 | v11 | Minimum supported |
 
-Module version 8.12.1. The core command set works with any game system; `dnd5e/*` and `pf2e/*` require the respective system.
+Module version 8.13.0. The core command set works with any game system; `dnd5e/*` and `pf2e/*` require the respective system.
 
 ## Development
 

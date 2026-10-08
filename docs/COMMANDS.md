@@ -1,6 +1,6 @@
 # Supported commands
 
-164 wire commands in Foundry API Bridge 8.12.1. Names are what the server sends over the wire; MCP tools and REST routes map onto them. The list is taken from the handlers registered in `src/main.ts`.
+164 wire commands in Foundry API Bridge 8.13.0. Names are what the server sends over the wire; MCP tools and REST routes map onto them. The list is taken from the handlers registered in `src/main.ts`.
 
 Each command runs in the GM's browser session with GM permissions. Access follows the Patreon tier of the key (see [Tiers](../README.md#tiers) in the README).
 
@@ -89,6 +89,8 @@ Script macros require **Allow Script Macros** in the module settings; it is off 
 Require the `dnd5e` system in the world.
 
 `dnd5e/roll-ability`, `dnd5e/roll-skill`, `dnd5e/roll-save`, `dnd5e/roll-attack`, `dnd5e/roll-damage`, `dnd5e/roll-perception`, `dnd5e/use-item`, `dnd5e/activate-item`, `dnd5e/filter-compendium-actors`, `dnd5e/filter-compendium-items`
+
+`dnd5e/roll-ability`, `dnd5e/roll-skill`, `dnd5e/roll-save` and `dnd5e/roll-perception` take `actorId`, the `ability` or `skill` key, optional `showInChat` and, since 8.13.0, optional `advantage` / `disadvantage` booleans that roll `2d20kh` / `2d20kl` instead of `1d20`. Both flags at once are a validation error: `Cannot have both advantage and disadvantage`. `dnd5e/roll-attack` takes the same two flags; `dnd5e/roll-damage` takes `critical`.
 
 `dnd5e/filter-compendium-actors` and `dnd5e/filter-compendium-items` search packs by D&D 5e fields (challenge rating, type, spell level, rarity, …); results carry `packId` and `uuid`.
 

@@ -7,3 +7,4 @@ export type { RollSaveRequest } from './RollSaveRequestSchema';
 export { rollPerceptionRequestSchema } from './RollPerceptionRequestSchema';
 export type { RollPerceptionRequest } from './RollPerceptionRequestSchema';
 export { RequestToCommandMapper } from './RequestToCommandMapper';
+export { BOTH_ADVANTAGE_AND_DISADVANTAGE } from './advantageFlags';

@@ -1,6 +1,8 @@
 import type { RollOutcome } from '@/systems/shared/domain';
 
 export interface RollOptions {
+  readonly advantage: boolean;
+  readonly disadvantage: boolean;
   readonly showInChat: boolean;
 }
 
