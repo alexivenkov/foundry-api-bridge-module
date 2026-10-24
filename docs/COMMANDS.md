@@ -1,6 +1,6 @@
 # Supported commands
 
-168 wire commands in Foundry API Bridge 8.14.0. Names are what the server sends over the wire; MCP tools and REST routes map onto them. The list is taken from the handlers registered in `src/main.ts`.
+168 wire commands in Foundry API Bridge 8.15.0. Names are what the server sends over the wire; MCP tools and REST routes map onto them. The list is taken from the handlers registered in `src/main.ts`.
 
 Each command runs in the GM's browser session with GM permissions. Access follows the Patreon tier of the key (see [Tiers](../README.md#tiers) in the README).
 

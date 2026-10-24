@@ -1,7 +1,11 @@
 import type { ModuleConfig } from '@/config/types';
 import { DEFAULT_CONFIG } from '@/config/defaults';
+import { validateApiKey, type InvalidApiKey } from '@/settings/apiKeyFormat';
 
 const MODULE_ID = 'foundry-api-bridge';
+
+export const INVALID_API_KEY_MESSAGE =
+  'Foundry API Bridge | The API key in Module Settings is not a Foundry MCP key (expected pk_… from foundry-mcp.com). Fix it in Module Settings and reload.';
 const CONFIG_KEY = 'config';
 const LEGACY_API_KEY_SETTING = `${MODULE_ID}.apiKey`;
 
@@ -55,7 +59,14 @@ export function registerSettings(): void {
     config: true,
     type: String,
     default: '',
-    requiresReload: true
+    requiresReload: true,
+    // Tell the GM about a broken key right after saving, not after the reload.
+    onChange: (value: unknown): void => {
+      const check = validateApiKey(typeof value === 'string' ? value : '');
+      if (!check.ok && check.reason !== 'empty') {
+        reportInvalidApiKey(check);
+      }
+    }
   });
 
   game.settings.register(MODULE_ID, 'allowScriptMacros', {
@@ -105,6 +116,21 @@ export function getApiKey(): string {
     throw new Error('game.settings is not available');
   }
   return game.settings.get(MODULE_ID, 'apiKey') as string;
+}
+
+export async function setApiKey(key: string): Promise<void> {
+  if (!game.settings) {
+    throw new Error('game.settings is not available');
+  }
+  await game.settings.set(MODULE_ID, 'apiKey', key);
+}
+
+/** Logs why the key was refused and shows a toast that stays until dismissed. */
+export function reportInvalidApiKey(check: InvalidApiKey): void {
+  console.error(`Foundry API Bridge | API key rejected (${check.reason}): ${check.detail}`);
+  if (ui.notifications) {
+    ui.notifications.error(INVALID_API_KEY_MESSAGE, { permanent: true });
+  }
 }
 
 export function getAllowScriptMacros(): boolean {

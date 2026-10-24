@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.15.0] - 2026-10-24
+
+### Fixed
+
+- **A wrong API key no longer looks like a flaky connection.** When the key in Module Settings is not the one foundry-mcp.com issued, the gateway accepts the WebSocket upgrade and only then closes it with code `4001` (`Missing API key` / `Invalid API key`). The module saw a connect, a disconnect and a reconnect every five seconds, forever, with nothing but "Connected" / "Disconnected" toasts to show for it. On `4001` it now stops reconnecting and shows one red notification that stays until dismissed: *The server rejected the API key. Open Module Settings, paste the key again (use the Copy button on foundry-mcp.com) and reload the world.* The "network is back" / "tab is visible" shortcut does not retry either; reloading the world, which re-reads the settings, does.
+- **Two GM clients with one key no longer knock each other out every six seconds.** The server keeps one connection per key and closes the older one when a new client arrives. The closed client reconnected after five seconds and took the key back, the other did the same, and so on for the whole session (one world logged 2859 such swaps in three days). The server now closes the displaced connection with code `4002` (`replaced by a newer connection with the same API key`); on that code the module waits two minutes (plus the usual jitter) before reconnecting, does not count the wait as a backoff attempt, ignores the "network is back" / "tab is visible" shortcut meanwhile, and shows a yellow notification: *Another Foundry client is connected with this API key (another browser, device or your host's own GM session). This one retries in 2 minutes.* Against a server that still closes without a code the behaviour is unchanged.
+- **Keys damaged by the paste are repaired or refused before the first connection.** All whitespace and invisible characters (line breaks, tabs, non-breaking and zero-width spaces, BOM) are removed from the whole key on load, not only from its ends; a key that changed is written back to the settings (client scope, no reload) and the console says `API key cleaned up: removed whitespace`. A key that is still not a key — no `pk_` prefix (an OAuth token pasted by mistake), characters outside `A-Za-z0-9_-+/=`, fewer than 20 or more than 64 characters — is refused with a permanent red notification (*The API key in Module Settings is not a Foundry MCP key (expected pk_… from foundry-mcp.com). Fix it in Module Settings and reload.*) and the module does not connect. The same check runs when the key is saved in Module Settings, so the notification appears before the reload. The length is a range rather than the 35 characters the current generator produces, on purpose; a key with a stray `Copy` at the end passes the format check and is caught by `4001`.
+
+### Changed
+
+- **Close codes from the server now mean something to the module.** `4001`: the key was rejected, stop and tell the GM. `4002`: another client took the key, wait two minutes. Every other code (`1000`, `1005`, `1006`, …) keeps the exponential backoff (5 s doubling to a 60 s ceiling, up to 1 s jitter). The generic "Disconnected from server" toast is skipped for `4001` and `4002`, since the dedicated notification already explains the close, and the console line for a close carries the code and reason (`WebSocket disconnected (code 4001: Invalid API key)`).
+
+### Technical
+
+- `src/settings/apiKeyFormat.ts`: `normalizeApiKey` / `validateApiKey` (`empty` / `prefix` / `charset` / `length`); `setApiKey`, `reportInvalidApiKey` and an `onChange` on the `apiKey` setting in `SettingsManager`
+- `WebSocketClient`: `onClose(code, reason)` hook (fires before `onDisconnect`), exported `CLOSE_CODE_API_KEY_REJECTED` / `CLOSE_CODE_REPLACED`, `haltedByServer` and `waitingAfterReplacement` guards on `reconnectNow()`, `REPLACED_RETRY_DELAY_MS` outside the backoff
+- 2994 tests passing (282 suites): key normalization and every rejection reason, the settings `onChange` notification, `4001` halt / `reconnectNow` no-op / explicit reconnect, `4002` delay, jitter, attempt counter, `reconnectNow` suppression and manual cancel, backoff regression for `1000` / `1005` / `1006`
+
 ## [8.14.0] - 2026-10-08
 
 ### Added

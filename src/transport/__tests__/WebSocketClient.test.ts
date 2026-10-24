@@ -6,10 +6,17 @@ const WS_CONNECTING = 0;
 const WS_OPEN = 1;
 const WS_CLOSED = 3;
 
+// 1005 is what a browser reports when the server closed without a status code.
+const NO_STATUS_CODE = 1005;
+
 const MockCloseEvent = class {
   type: string;
-  constructor(type: string) {
+  code: number;
+  reason: string;
+  constructor(type: string, init: { code?: number; reason?: string } = {}) {
     this.type = type;
+    this.code = init.code ?? NO_STATUS_CODE;
+    this.reason = init.reason ?? '';
   }
 } as unknown as typeof CloseEvent;
 
@@ -39,9 +46,9 @@ class MockWebSocket implements WebSocketLike {
     this.onopen?.(new Event('open'));
   }
 
-  simulateClose(): void {
+  simulateClose(code: number = NO_STATUS_CODE, reason = ''): void {
     this.readyState = WS_CLOSED;
-    this.onclose?.(new MockCloseEvent('close'));
+    this.onclose?.(new MockCloseEvent('close', { code, reason }));
   }
 
   simulateMessage(data: unknown): void {
@@ -634,6 +641,201 @@ describe('WebSocketClient', () => {
       mockSocket.simulateClose();
       client.reconnectNow();
       expect(factoryMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('server close codes', () => {
+    let factoryMock: jest.Mock<MockWebSocket, []>;
+
+    beforeEach(() => {
+      factoryMock = jest.fn(() => {
+        mockSocket = new MockWebSocket();
+        return mockSocket;
+      });
+      client = new WebSocketClient(
+        { url: 'ws://localhost:8080', reconnectInterval: 1000, maxReconnectAttempts: 3 },
+        factoryMock
+      );
+    });
+
+    describe('4001: the server rejected the API key', () => {
+      it('hands the code and reason to onClose, logs an error and never reconnects', () => {
+        const errorSpy = jest.spyOn(console, 'error').mockImplementation();
+        const closeHandler = jest.fn();
+        client.onClose(closeHandler);
+
+        client.connect();
+        mockSocket.simulateOpen();
+        mockSocket.simulateClose(4001, 'Invalid API key');
+
+        expect(closeHandler).toHaveBeenCalledWith(4001, 'Invalid API key');
+        expect(errorSpy).toHaveBeenCalledWith(
+          'Foundry API Bridge | Server rejected the API key (4001 Invalid API key): not reconnecting'
+        );
+
+        jest.advanceTimersByTime(10 * 60_000);
+        expect(factoryMock).toHaveBeenCalledTimes(1);
+        errorSpy.mockRestore();
+      });
+
+      it('still fires onDisconnect, after onClose', () => {
+        jest.spyOn(console, 'error').mockImplementation();
+        const order: string[] = [];
+        client.onClose(() => order.push('close'));
+        client.onDisconnect(() => order.push('disconnect'));
+
+        client.connect();
+        mockSocket.simulateOpen();
+        mockSocket.simulateClose(4001, 'Missing API key');
+
+        expect(order).toEqual(['close', 'disconnect']);
+      });
+
+      it('ignores reconnectNow while halted', () => {
+        jest.spyOn(console, 'error').mockImplementation();
+        client.connect();
+        mockSocket.simulateOpen();
+        mockSocket.simulateClose(4001, 'Invalid API key');
+
+        client.reconnectNow();
+
+        expect(factoryMock).toHaveBeenCalledTimes(1);
+      });
+
+      it('connects again on an explicit connect()', () => {
+        jest.spyOn(console, 'error').mockImplementation();
+        client.connect();
+        mockSocket.simulateOpen();
+        mockSocket.simulateClose(4001, 'Invalid API key');
+
+        client.connect();
+        mockSocket.simulateOpen();
+
+        expect(factoryMock).toHaveBeenCalledTimes(2);
+        expect(client.isConnected()).toBe(true);
+      });
+    });
+
+    describe('4002: replaced by another client with the same key', () => {
+      const REASON = 'replaced by a newer connection with the same API key';
+
+      it('waits 120 s instead of the backoff delay', () => {
+        const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+        const closeHandler = jest.fn();
+        client.onClose(closeHandler);
+
+        client.connect();
+        mockSocket.simulateOpen();
+        mockSocket.simulateClose(4002, REASON);
+
+        expect(closeHandler).toHaveBeenCalledWith(4002, REASON);
+        expect(warnSpy).toHaveBeenCalledWith(
+          'Foundry API Bridge | Replaced by another client with the same API key: retrying in 120 s'
+        );
+
+        jest.advanceTimersByTime(119_999);
+        expect(factoryMock).toHaveBeenCalledTimes(1);
+        jest.advanceTimersByTime(1);
+        expect(factoryMock).toHaveBeenCalledTimes(2);
+        warnSpy.mockRestore();
+      });
+
+      it('adds the usual jitter on top of the 120 s', () => {
+        (Math.random as jest.Mock).mockReturnValue(0.5);
+        jest.spyOn(console, 'warn').mockImplementation();
+
+        client.connect();
+        mockSocket.simulateOpen();
+        mockSocket.simulateClose(4002, REASON);
+
+        jest.advanceTimersByTime(120_000);
+        expect(factoryMock).toHaveBeenCalledTimes(1);
+        jest.advanceTimersByTime(500);
+        expect(factoryMock).toHaveBeenCalledTimes(2);
+      });
+
+      it('does not count as a reconnect attempt', () => {
+        const logSpy = jest.spyOn(console, 'log').mockImplementation();
+        jest.spyOn(console, 'warn').mockImplementation();
+
+        client.connect();
+        mockSocket.simulateOpen();
+        mockSocket.simulateClose(4002, REASON);
+        jest.advanceTimersByTime(120_000);
+
+        // The retry socket fails without ever opening: the backoff starts at attempt 1.
+        mockSocket.simulateClose();
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Reconnecting in 1000ms (attempt 1/3)'));
+        logSpy.mockRestore();
+      });
+
+      it('ignores reconnectNow during the wait', () => {
+        jest.spyOn(console, 'warn').mockImplementation();
+
+        client.connect();
+        mockSocket.simulateOpen();
+        mockSocket.simulateClose(4002, REASON);
+
+        jest.advanceTimersByTime(60_000);
+        client.reconnectNow();
+        expect(factoryMock).toHaveBeenCalledTimes(1);
+
+        jest.advanceTimersByTime(60_000);
+        expect(factoryMock).toHaveBeenCalledTimes(2);
+      });
+
+      it('honours reconnectNow again once the retry has happened', () => {
+        jest.spyOn(console, 'warn').mockImplementation();
+
+        client.connect();
+        mockSocket.simulateOpen();
+        mockSocket.simulateClose(4002, REASON);
+        jest.advanceTimersByTime(120_000);
+        mockSocket.simulateClose(); // backoff of 1 s scheduled
+
+        client.reconnectNow();
+        expect(factoryMock).toHaveBeenCalledTimes(3);
+      });
+
+      it('is cancelled by a manual disconnect', () => {
+        jest.spyOn(console, 'warn').mockImplementation();
+
+        client.connect();
+        mockSocket.simulateOpen();
+        mockSocket.simulateClose(4002, REASON);
+        client.disconnect();
+
+        jest.advanceTimersByTime(130_000);
+        expect(factoryMock).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('every other code keeps the exponential backoff', () => {
+      it.each([1006, 1000, 1005])('code %i', (code) => {
+        const logSpy = jest.spyOn(console, 'log').mockImplementation();
+
+        client.connect();
+        mockSocket.simulateClose(code);
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Reconnecting in 1000ms (attempt 1/3)'));
+
+        jest.advanceTimersByTime(1000);
+        mockSocket.simulateClose(code);
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Reconnecting in 2000ms (attempt 2/3)'));
+
+        jest.advanceTimersByTime(2000);
+        expect(factoryMock).toHaveBeenCalledTimes(3);
+        logSpy.mockRestore();
+      });
+
+      it('passes the code and reason to onClose', () => {
+        const closeHandler = jest.fn();
+        client.onClose(closeHandler);
+
+        client.connect();
+        mockSocket.simulateClose(1006);
+
+        expect(closeHandler).toHaveBeenCalledWith(1006, '');
+      });
     });
   });
 

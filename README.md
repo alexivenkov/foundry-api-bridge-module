@@ -212,6 +212,9 @@ The core command set is system-agnostic. `dnd5e/*` and `pf2e/*` commands require
 ## Troubleshooting
 
 - **The assistant says "Foundry not connected".** Open the world as GM with the module enabled and a key saved, and wait for the `[MCP] Connected to server` notification. The message from the server tells you when it last saw your world. If the module had given up reconnecting, reload the world.
+- **The status flips between Connected and Disconnected every few seconds.** Two causes, and since 8.15.0 the module names the one it sees:
+  - *The server rejected the API key* (red notification that stays until dismissed; the module stops reconnecting). The saved key is not the one foundry-mcp.com issued: a character got lost or added in the paste, the word "Copy" came along with the mouse selection, or an OAuth token was pasted instead of a key. Open Module Settings, clear the field, go to your key page on foundry-mcp.com, use the **Copy** button there, paste, save, reload the world. A key that is obviously not a key (no `pk_` prefix, wrong characters or length) is refused on save and on load with the same red notification, before any connection is attempted. Whitespace inside the key is removed on its own.
+  - *Another Foundry client is connected with this API key* (yellow notification; this client retries in two minutes). The server keeps one connection per key, and a second GM client with the same key, in another browser, on another device or in your host's own GM session, keeps taking over. Close the other client, or give it its own key.
 - **A tool answers with a lock and a tier name.** That tool is above your Patreon tier; see [Tiers](#tiers).
 - **OAuth login fails in a CLI client.** Update the client to its latest version and try again. Sign-in from Claude Code, Codex CLI, Cursor, Gemini CLI and VS Code works since 2026-09-21; before that date the authorization server rejected clients with a `localhost` callback.
 - **429 / rate limited.** The limit is 240 requests per minute per key (Dungeon Master: twice that). Wait a minute and retry.
@@ -227,7 +230,7 @@ The core command set is system-agnostic. `dnd5e/*` and `pf2e/*` commands require
 | v12 | Verified |
 | v11 | Minimum supported |
 
-Module version 8.14.0. The core command set works with any game system; `dnd5e/*` and `pf2e/*` require the respective system.
+Module version 8.15.0. The core command set works with any game system; `dnd5e/*` and `pf2e/*` require the respective system.
 
 ## Development
 

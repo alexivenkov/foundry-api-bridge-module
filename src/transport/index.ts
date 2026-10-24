@@ -1,2 +1,2 @@
-export { WebSocketClient } from '@/transport/WebSocketClient';
-export type { WebSocketClientConfig, WebSocketLike, WebSocketFactory } from '@/transport/WebSocketClient';
+export { WebSocketClient, CLOSE_CODE_API_KEY_REJECTED, CLOSE_CODE_REPLACED } from '@/transport/WebSocketClient';
+export type { WebSocketClientConfig, WebSocketLike, WebSocketFactory, CloseHandler } from '@/transport/WebSocketClient';

@@ -8,6 +8,7 @@ interface SettingConfig {
   type: typeof String | typeof Number | typeof Boolean | typeof Object | typeof Array;
   default: unknown;
   requiresReload?: boolean;
+  onChange?: (value: unknown) => void;
 }
 
 interface SettingMenuConfig {

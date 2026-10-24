@@ -1,6 +1,16 @@
 import { ConfigManager } from '@/config/ConfigManager';
-import { registerSettings, registerMenu, getWsUrl, getApiUrl, getApiKey, migrateLegacyApiKey } from '@/settings/SettingsManager';
-import { WebSocketClient } from '@/transport';
+import {
+  registerSettings,
+  registerMenu,
+  getWsUrl,
+  getApiUrl,
+  getApiKey,
+  setApiKey,
+  reportInvalidApiKey,
+  migrateLegacyApiKey
+} from '@/settings/SettingsManager';
+import { validateApiKey } from '@/settings/apiKeyFormat';
+import { WebSocketClient, CLOSE_CODE_API_KEY_REJECTED, CLOSE_CODE_REPLACED } from '@/transport';
 import {
   CommandRouter,
   rollDiceHandler,
@@ -238,11 +248,29 @@ function initializeModule(): void {
 
     const wsUrl = getWsUrl();
     const apiUrl = getApiUrl();
-    const apiKey = getApiKey();
+    const storedKey = getApiKey();
+    const keyCheck = validateApiKey(storedKey);
 
-    if (!apiKey) {
-      console.log(`Foundry API Bridge | v${MODULE_VERSION} loaded. Configure API Key in module settings to connect.`);
+    if (!keyCheck.ok) {
+      if (keyCheck.reason === 'empty') {
+        console.log(`Foundry API Bridge | v${MODULE_VERSION} loaded. Configure API Key in module settings to connect.`);
+      } else {
+        reportInvalidApiKey(keyCheck);
+      }
       return;
+    }
+
+    const apiKey = keyCheck.key;
+    if (apiKey !== storedKey) {
+      // A line break or a stray space from the paste; the cleaned key is kept
+      // so the next start reads a clean value. Client scope, no reload needed.
+      setApiKey(apiKey)
+        .then(() => {
+          console.log('Foundry API Bridge | API key cleaned up: removed whitespace');
+        })
+        .catch((error: unknown) => {
+          console.warn('Foundry API Bridge | Could not save the cleaned-up API key:', error);
+        });
     }
 
     if (!wsUrl && !apiUrl) {
@@ -524,7 +552,31 @@ function createChannel(
     }
   });
 
+  // 4001 and 4002 get their own notification below; the generic one would
+  // only add noise right after it. onClose always runs before onDisconnect.
+  let explainedByCloseCode = false;
+
+  client.onClose((code) => {
+    explainedByCloseCode = code === CLOSE_CODE_API_KEY_REJECTED || code === CLOSE_CODE_REPLACED;
+    if (!ui.notifications) return;
+
+    if (code === CLOSE_CODE_API_KEY_REJECTED) {
+      ui.notifications.error(
+        `Foundry API Bridge | [${label}] The server rejected the API key. Open Module Settings, paste the key again (use the Copy button on foundry-mcp.com) and reload the world.`,
+        { permanent: true }
+      );
+    } else if (code === CLOSE_CODE_REPLACED) {
+      ui.notifications.warn(
+        `Foundry API Bridge | [${label}] Another Foundry client is connected with this API key (another browser, device or your host's own GM session). This one retries in 2 minutes.`
+      );
+    }
+  });
+
   client.onDisconnect(() => {
+    if (explainedByCloseCode) {
+      explainedByCloseCode = false;
+      return;
+    }
     if (ui.notifications) {
       ui.notifications.warn(`Foundry API Bridge | [${label}] Disconnected from server`);
     }

@@ -5,7 +5,19 @@ jest.mock('@/ui/ApiConfigForm', () => ({
   ApiConfigForm: class MockApiConfigForm {}
 }));
 
-import { registerSettings, registerMenu, getConfig, setConfig, getWsUrl, getApiUrl, getAllowScriptMacros, migrateLegacyApiKey } from '@/settings/SettingsManager';
+import {
+  registerSettings,
+  registerMenu,
+  getConfig,
+  setConfig,
+  getWsUrl,
+  getApiUrl,
+  getAllowScriptMacros,
+  migrateLegacyApiKey,
+  setApiKey,
+  reportInvalidApiKey,
+  INVALID_API_KEY_MESSAGE
+} from '@/settings/SettingsManager';
 
 const mockWorldStorage = { getSetting: jest.fn() };
 const mockSettings = {
@@ -15,10 +27,24 @@ const mockSettings = {
   set: jest.fn(),
   storage: new Map<string, unknown>([['world', mockWorldStorage]])
 };
+const mockNotifications = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
 
 (global as unknown as Record<string, unknown>)['game'] = {
   settings: mockSettings
 };
+(global as unknown as Record<string, unknown>)['ui'] = {
+  notifications: mockNotifications
+};
+
+function registeredApiKeyOnChange(): (value: unknown) => void {
+  registerSettings();
+  const apiKeyCall = mockSettings.register.mock.calls.find(([, key]) => key === 'apiKey');
+  const config = apiKeyCall?.[2] as { onChange?: (value: unknown) => void } | undefined;
+  if (!config?.onChange) {
+    throw new Error('apiKey setting has no onChange');
+  }
+  return config.onChange;
+}
 
 describe('SettingsManager', () => {
   beforeEach(() => {
@@ -81,6 +107,47 @@ describe('SettingsManager', () => {
 
       const apiKeyCall = mockSettings.register.mock.calls.find(([, key]) => key === 'apiKey');
       expect(apiKeyCall?.[2]).toEqual(expect.objectContaining({ scope: 'client' }));
+    });
+
+    describe('apiKey onChange', () => {
+      let errorSpy: jest.SpyInstance;
+
+      beforeEach(() => {
+        errorSpy = jest.spyOn(console, 'error').mockImplementation();
+      });
+
+      afterEach(() => {
+        errorSpy.mockRestore();
+      });
+
+      it('shows a permanent error notification right after an invalid key is saved', () => {
+        const onChange = registeredApiKeyOnChange();
+
+        onChange('abc');
+
+        expect(mockNotifications.error).toHaveBeenCalledWith(INVALID_API_KEY_MESSAGE, { permanent: true });
+        expect(errorSpy).toHaveBeenCalledWith(
+          'Foundry API Bridge | API key rejected (prefix): expected a key starting with "pk_"'
+        );
+      });
+
+      it('stays quiet for a valid key, even one pasted with a line break inside', () => {
+        const onChange = registeredApiKeyOnChange();
+
+        onChange('pk_aB3-_x9Qz0LmNo\nPqRsTuVwXyZ1234567');
+
+        expect(mockNotifications.error).not.toHaveBeenCalled();
+        expect(errorSpy).not.toHaveBeenCalled();
+      });
+
+      it('stays quiet when the field is cleared', () => {
+        const onChange = registeredApiKeyOnChange();
+
+        onChange('');
+        onChange(undefined);
+
+        expect(mockNotifications.error).not.toHaveBeenCalled();
+      });
     });
 
     it('should register allowScriptMacros boolean setting (default false)', () => {
@@ -203,6 +270,28 @@ describe('SettingsManager', () => {
       await setConfig(newConfig);
 
       expect(mockSettings.set).toHaveBeenCalledWith('foundry-api-bridge', 'config', newConfig);
+    });
+  });
+
+  describe('setApiKey', () => {
+    it('writes the key to the client-scoped setting', async () => {
+      mockSettings.set.mockResolvedValue(undefined);
+
+      await setApiKey('pk_cleaned');
+
+      expect(mockSettings.set).toHaveBeenCalledWith('foundry-api-bridge', 'apiKey', 'pk_cleaned');
+    });
+  });
+
+  describe('reportInvalidApiKey', () => {
+    it('logs the reason and detail and shows the permanent notification', () => {
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      reportInvalidApiKey({ ok: false, reason: 'length', detail: 'length 8, expected 20..64' });
+
+      expect(errorSpy).toHaveBeenCalledWith('Foundry API Bridge | API key rejected (length): length 8, expected 20..64');
+      expect(mockNotifications.error).toHaveBeenCalledWith(INVALID_API_KEY_MESSAGE, { permanent: true });
+      errorSpy.mockRestore();
     });
   });
 

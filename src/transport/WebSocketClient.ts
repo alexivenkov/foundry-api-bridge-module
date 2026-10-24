@@ -17,6 +17,8 @@ export interface WebSocketClientConfig {
 
 export type MessageHandler = (command: Command) => void;
 export type ConnectionHandler = () => void;
+/** Receives the close code and reason of every close, before the reconnect decision. */
+export type CloseHandler = (code: number, reason: string) => void;
 
 export interface WebSocketLike {
   readyState: number;
@@ -39,6 +41,15 @@ const DEFAULT_HEARTBEAT_TIMEOUT = 10_000;
 const FIRST_HEARTBEAT_DELAY = 1000;
 /** Random extra delay added to every reconnect so many worlds do not retry in lockstep. */
 const RECONNECT_JITTER_MS = 1000;
+/** The server accepted the upgrade and then refused the key (`Missing API key` / `Invalid API key`). */
+export const CLOSE_CODE_API_KEY_REJECTED = 4001;
+/** Another client connected with the same key and the server kept that one. */
+export const CLOSE_CODE_REPLACED = 4002;
+/**
+ * Wait after being replaced. A quick retry would knock the other client out,
+ * which would knock this one out five seconds later, for the whole session.
+ */
+const REPLACED_RETRY_DELAY_MS = 120_000;
 const WS_CONNECTING = 0;
 const WS_OPEN = 1; // WS_OPEN constant for Node.js compatibility
 const LOG_BASE = 'Foundry API Bridge | ';
@@ -59,7 +70,12 @@ export class WebSocketClient {
   private messageHandler: MessageHandler | null = null;
   private connectHandler: ConnectionHandler | null = null;
   private disconnectHandler: ConnectionHandler | null = null;
+  private closeHandler: CloseHandler | null = null;
   private isManualClose = false;
+  /** The server rejected the key: retrying cannot help until the settings change. */
+  private haltedByServer = false;
+  /** Sitting out the long delay after another client took over the key. */
+  private waitingAfterReplacement = false;
 
   private readonly config: Required<WebSocketClientConfig>;
   private readonly createSocket: WebSocketFactory;
@@ -86,6 +102,8 @@ export class WebSocketClient {
     }
 
     this.isManualClose = false;
+    this.haltedByServer = false;
+    this.waitingAfterReplacement = false;
     this.pongSupported = false;
     this.socket = this.createSocket(this.config.url);
     this.setupSocketHandlers();
@@ -102,11 +120,12 @@ export class WebSocketClient {
   /**
    * Skip the remaining backoff delay and reconnect immediately. Used when the
    * browser reports the network is back or the tab becomes visible again.
-   * No-op while connected, while a connection attempt is in flight, or after
-   * a manual disconnect.
+   * No-op while connected, while a connection attempt is in flight, after a
+   * manual disconnect, after the server rejected the key, and during the wait
+   * after another client took over the key.
    */
   reconnectNow(): void {
-    if (this.isManualClose) return;
+    if (this.isManualClose || this.haltedByServer || this.waitingAfterReplacement) return;
     if (this.socket?.readyState === WS_OPEN || this.socket?.readyState === WS_CONNECTING) return;
     if (this.reconnectTimer === null) return;
 
@@ -145,6 +164,10 @@ export class WebSocketClient {
     this.disconnectHandler = handler;
   }
 
+  onClose(handler: CloseHandler): void {
+    this.closeHandler = handler;
+  }
+
   isConnected(): boolean {
     return this.socket?.readyState === WS_OPEN;
   }
@@ -169,13 +192,25 @@ export class WebSocketClient {
       this.connectHandler?.();
     };
 
-    this.socket.onclose = (): void => {
+    this.socket.onclose = (event: CloseEvent): void => {
+      const { code, reason } = event;
       this.stopHeartbeat();
-      this.log('log', 'WebSocket disconnected');
+      this.log('log', `WebSocket disconnected (code ${String(code)}${reason ? `: ${reason}` : ''})`);
+      this.closeHandler?.(code, reason);
       this.disconnectHandler?.();
 
-      if (!this.isManualClose) {
-        this.scheduleReconnect();
+      if (this.isManualClose) return;
+
+      switch (code) {
+        case CLOSE_CODE_API_KEY_REJECTED:
+          this.haltedByServer = true;
+          this.log('error', `Server rejected the API key (${String(code)}${reason ? ` ${reason}` : ''}): not reconnecting`);
+          return;
+        case CLOSE_CODE_REPLACED:
+          this.scheduleReplacedRetry();
+          return;
+        default:
+          this.scheduleReconnect();
       }
     };
 
@@ -331,6 +366,18 @@ export class WebSocketClient {
       this.reconnectTimer = null;
       this.connect();
     }, delay);
+  }
+
+  /** Fixed long delay, outside the backoff: the attempt counter is left alone. */
+  private scheduleReplacedRetry(): void {
+    this.waitingAfterReplacement = true;
+    const jitter = Math.floor(Math.random() * RECONNECT_JITTER_MS);
+    this.log('warn', `Replaced by another client with the same API key: retrying in ${String(REPLACED_RETRY_DELAY_MS / 1000)} s`);
+
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.connect();
+    }, REPLACED_RETRY_DELAY_MS + jitter);
   }
 
   private clearReconnectTimer(): void {
