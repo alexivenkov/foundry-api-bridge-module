@@ -7,13 +7,15 @@
     "dev": "vite build --watch",
     "build": "tsc --noEmit && vite build && npm run copy-config",
     "copy-config": "cp config/config.schema.json dist/config.schema.json",
+    "manifest": "node scripts/manifest.mjs",
+    "manifest:check": "node scripts/manifest.mjs --check",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "type-check": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "all": "npm run lint && npm test && npm run build"
+    "all": "npm run lint && npm test && npm run manifest:check && npm run build"
   },
   "keywords": [
     "foundry-vtt",

@@ -22,6 +22,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check manifest is in sync
+        run: npm run manifest:check
+
       - name: Run linter
         run: npm run lint
 

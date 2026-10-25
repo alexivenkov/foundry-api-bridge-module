@@ -24,6 +24,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check manifest matches the tag
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          PKG_VERSION="$(node -p 'require("./package.json").version')"
+          if [ "$VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::tag v$VERSION does not match package.json version $PKG_VERSION"
+            exit 1
+          fi
+          npm run manifest:check
+
       - name: Run tests
         run: npm test
 
@@ -35,6 +45,20 @@ jobs:
           cd dist
           zip -r ../foundry-api-bridge.zip .
           cd ..
+
+      - name: Verify the package matches the tag
+        env:
+          PACKAGE_MANIFEST: ${{ runner.temp }}/module.json
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          unzip -p foundry-api-bridge.zip module.json > "$PACKAGE_MANIFEST"
+          read -r PKG_VERSION PKG_ID REPO_URL PKG_DOWNLOAD <<< "$(node -p 'const m = require(process.env.PACKAGE_MANIFEST); [m.version, m.id, m.url, m.download].join(" ")')"
+          EXPECTED="$REPO_URL/releases/download/v$VERSION/$PKG_ID.zip"
+          if [ "$PKG_VERSION" != "$VERSION" ] || [ "$PKG_DOWNLOAD" != "$EXPECTED" ]; then
+            echo "::error::release package describes v$PKG_VERSION downloading $PKG_DOWNLOAD, expected v$VERSION downloading $EXPECTED"
+            exit 1
+          fi
+          echo "release package describes v$PKG_VERSION and downloads $PKG_DOWNLOAD"
 
       - name: Get version from tag
         id: get_version

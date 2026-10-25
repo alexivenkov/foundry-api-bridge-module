@@ -241,8 +241,11 @@ npm run build        # Production build (type-check + Vite + copy config)
 npm test             # Run tests
 npm run lint         # ESLint check
 npm run type-check   # TypeScript check only
-npm run all          # lint + test + build
+npm run manifest     # Restamp dist/module.json (version + download) from package.json
+npm run all          # lint + test + manifest:check + build
 ```
+
+`dist/module.json` is the manifest Foundry fetches from `master`. Its `version` and `download` are derived from `package.json`: `npm run manifest` writes them, `npm run manifest:check` (CI and every release) fails when the committed copy is stale. A manifest that announces one version while pointing at another release's archive makes Foundry download the same old build on every update check.
 
 The module builds into a single ES module (`dist/module.js`) via Vite. Symlink `dist/` into Foundry's `Data/modules/foundry-api-bridge/` for local development.
 

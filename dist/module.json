@@ -21,5 +21,5 @@
   ],
   "url": "https://github.com/alexivenkov/foundry-api-bridge-module",
   "manifest": "https://raw.githubusercontent.com/alexivenkov/foundry-api-bridge-module/master/dist/module.json",
-  "download": "https://github.com/alexivenkov/foundry-api-bridge-module/releases/latest/download/foundry-api-bridge.zip"
+  "download": "https://github.com/alexivenkov/foundry-api-bridge-module/releases/download/v8.15.0/foundry-api-bridge.zip"
 }
