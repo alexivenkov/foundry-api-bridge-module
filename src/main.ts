@@ -38,6 +38,16 @@ import {
   dnd5eFilterCompendiumItemsHandler,
   pf2eFilterCompendiumActorsHandler,
   pf2eFilterCompendiumItemsHandler,
+  swadeRollAttributeHandler,
+  swadeRollSkillHandler,
+  swadeRollAttackHandler,
+  swadeRollDamageHandler,
+  swadeApplyDamageHandler,
+  swadeSoakHandler,
+  swadeBenniesHandler,
+  swadeSetStatusHandler,
+  swadeGetActorSummaryHandler,
+  swadeGetActionCardsHandler,
   getWorldInfoHandler,
   getJournalsHandler,
   getJournalHandler,
@@ -355,6 +365,16 @@ function initializeWebSocket(
   commandRouter.register('pf2e/use-consumable', pf2eUseConsumableHandler);
   commandRouter.register('pf2e/cast-spell', pf2eCastSpellHandler);
   commandRouter.register('pf2e/post-item', pf2ePostItemHandler);
+  commandRouter.register('swade/roll-attribute', swadeRollAttributeHandler);
+  commandRouter.register('swade/roll-skill', swadeRollSkillHandler);
+  commandRouter.register('swade/roll-attack', swadeRollAttackHandler);
+  commandRouter.register('swade/roll-damage', swadeRollDamageHandler);
+  commandRouter.register('swade/apply-damage', swadeApplyDamageHandler);
+  commandRouter.register('swade/soak', swadeSoakHandler);
+  commandRouter.register('swade/bennies', swadeBenniesHandler);
+  commandRouter.register('swade/set-status', swadeSetStatusHandler);
+  commandRouter.register('swade/get-actor-summary', swadeGetActorSummaryHandler);
+  commandRouter.register('swade/get-action-cards', swadeGetActionCardsHandler);
   commandRouter.register('dnd5e/roll-attack', rollAttackHandler);
   commandRouter.register('roll-attack', rollAttackHandler); // @deprecated alias of 'dnd5e/roll-attack'
   commandRouter.register('dnd5e/roll-damage', rollDamageHandler);

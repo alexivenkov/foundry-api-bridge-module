@@ -1,6 +1,6 @@
 # Supported commands
 
-168 wire commands in Foundry API Bridge 8.15.0. Names are what the server sends over the wire; MCP tools and REST routes map onto them. The list is taken from the handlers registered in `src/main.ts`.
+178 wire commands in Foundry API Bridge 8.16.0. Names are what the server sends over the wire; MCP tools and REST routes map onto them. The list is taken from the handlers registered in `src/main.ts`.
 
 Each command runs in the GM's browser session with GM permissions. Access follows the Patreon tier of the key (see [Tiers](../README.md#tiers) in the README).
 
@@ -116,9 +116,23 @@ Require the `pf2e` system in the world.
 
 `pf2e/filter-compendium-actors` and `pf2e/filter-compendium-items` search packs by Pathfinder 2e fields (level, traits, rarity, …); entries carry `level`, `packId` and `uuid`.
 
+## Savage Worlds Adventure Edition
+
+Require the `swade` system in the world (verified against swade 6.0.4 on Foundry v14).
+
+`swade/roll-attribute`, `swade/roll-skill`, `swade/roll-attack`, `swade/roll-damage`, `swade/apply-damage`, `swade/soak`, `swade/bennies`, `swade/set-status`, `swade/get-actor-summary`, `swade/get-action-cards`
+
+Every actor-bound command takes `actorId` or `tokenId` (+ optional `sceneId`). `swade/roll-attribute` `{ attribute, modifier?, modifierLabel?, targetNumber? (4), ignoreWounds?, showInChat? }` and `swade/roll-skill` `{ skill (item id or name), unskilled?, … }` answer the trait roll: `total`, `dice` (every die with explosions, `wild`, `kept`), `modifiers`, `modifierTotal`, `targetNumber`, `successes` (−1 critical failure, 0 failure, 1 success, 2+ raises), `outcome`, `raises`, `isCriticalFailure`, `wildDie`, plus the neutral `isCritical` / `isFumble` and `messageId` when `showInChat` posted the system's card.
+
+`swade/roll-attack` `{ itemId (weapon), targetTokenId?, targetNumber?, modifier?, modifierLabel?, showInChat? }` rolls the weapon's skill (`actions.trait`, unskilled when missing) with the system's default attack modifiers for the GM's current targets, uses a melee target's Parry as the target number and adds `weapon`, `target?` and `hit`. `swade/roll-damage` `{ itemId, raise?, modifier?, modifierLabel?, ap?, targetTokenId?, showInChat? }` rolls `item.rollDamage`; `raise` adds the weapon's bonus die, `targetTokenId` fills `versusTarget` with the Toughness rule's verdict without applying it. No ammo is consumed.
+
+`swade/apply-damage` `{ damage, ap? (0), isHeavyWeapon?, apply? (true) }` applies the Toughness rule (AP vs armor, Shaken, Wounds per raise, double Shaken unless Hardy, Wound Cap, Incapacitated past the maximum, vehicles never Shaken) and answers the preview (`toughness`, `armor`, `apApplied`, `effectiveToughness`, `excess`, `outcome`, `woundsInflicted`, `doubleShaken`, `wouldIncapacitate`) with `shakenBefore/After`, `woundsBefore/After/Max`, `incapacitated` and `canSoak`. `swade/soak` `{ wounds, spendBenny? (true), modifier?, clearIncapacitated?, showInChat? }` spends a benny, rolls Vigor with the soak bonus and answers `roll`, `woundsSoaked`, `woundsRemaining`, `woundsAfter`, `bennySpent`, `benniesLeft`, `shakenRemoved`; only Wild Cards can soak.
+
+`swade/bennies` `{ actorId | tokenId | gm: true, action: spend | give | refresh }` answers `{ owner, before, after, max? }`. `swade/set-status` `{ status (one of the 32 ids), active, overlay? }` answers all active status ids. `swade/get-actor-summary` answers the normalized sheet (attributes, skills, derived stats, bennies, wounds and fatigue with penalties, power points, statuses, conviction, rank, initiative edges, weapons, powers; `vehicle` for vehicles). `swade/get-action-cards` `{ combatId? }` lists the dealt cards (`cardValue`, `suitValue`, `cardString`, `hasJoker`, `roundHeld`, `turnLost`, `isGroupLeader`, `isDefeated`); `roll-initiative` draws cards in a SWADE world.
+
 ## System mismatch
 
-Calling a `dnd5e/*` or `pf2e/*` command in a world running another system returns:
+Calling a `dnd5e/*`, `pf2e/*` or `swade/*` command in a world running another system returns:
 
 ```
 Operation '<command>' is not supported by game system '<world system>'

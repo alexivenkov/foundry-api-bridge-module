@@ -45,6 +45,16 @@ export type CommandType =
   | 'pf2e/post-item'
   | 'pf2e/filter-compendium-actors'
   | 'pf2e/filter-compendium-items'
+  | 'swade/roll-attribute'
+  | 'swade/roll-skill'
+  | 'swade/roll-attack'
+  | 'swade/roll-damage'
+  | 'swade/apply-damage'
+  | 'swade/soak'
+  | 'swade/bennies'
+  | 'swade/set-status'
+  | 'swade/get-actor-summary'
+  | 'swade/get-action-cards'
   | 'get-world-info'
   | 'get-actors'
   | 'filter-actors'
@@ -393,6 +403,366 @@ export interface UpdateActorParams {
 
 export interface DeleteActorParams {
   actorId: string;
+}
+
+// Savage Worlds Adventure Edition (swade/*) — trait rolls with wild die and
+// raises, Toughness damage, soak, bennies, statuses, sheet summary and action
+// cards. Every actor-bound command addresses a world actor by `actorId` or one
+// token's actor by `tokenId` (+ optional `sceneId`).
+export type SwadeAttributeKeyWire = 'agility' | 'smarts' | 'spirit' | 'strength' | 'vigor';
+
+export interface SwadeActorTargetParams {
+  /** World actor id. Either this or `tokenId` is required. */
+  actorId?: string;
+  /** A token's actor instead: an unlinked token's synthetic actor takes the hit alone. */
+  tokenId?: string;
+  /** Scene the token is on; defaults to the active scene. */
+  sceneId?: string;
+}
+
+export interface SwadeRollAttributeParams extends SwadeActorTargetParams {
+  attribute: SwadeAttributeKeyWire;
+  modifier?: number;
+  modifierLabel?: string;
+  /** Target number, default 4. */
+  targetNumber?: number;
+  ignoreWounds?: boolean;
+  showInChat?: boolean;
+}
+
+export interface SwadeRollSkillParams extends SwadeActorTargetParams {
+  /** Skill item id or name (case-insensitive). */
+  skill: string;
+  modifier?: number;
+  modifierLabel?: string;
+  targetNumber?: number;
+  ignoreWounds?: boolean;
+  /** Roll d4−2 as an unskilled attempt when the actor lacks the skill. */
+  unskilled?: boolean;
+  showInChat?: boolean;
+}
+
+export interface SwadeDieResult {
+  type: string;
+  /** Every face rolled, explosions included. */
+  results: number[];
+  total: number;
+  wild: boolean;
+  /** The die `kh` kept. */
+  kept: boolean;
+}
+
+export interface SwadeRollModifier {
+  label: string;
+  value: number | string;
+}
+
+export interface SwadeTraitRollResult {
+  actorId: string;
+  tokenId?: string;
+  /** `'agility'` … `'vigor'`, a skill name, or `'Unskilled'`. */
+  trait: string;
+  /** Kept die plus modifiers (the system's `roll.total`). */
+  total: number;
+  formula: string;
+  dice: SwadeDieResult[];
+  modifiers: SwadeRollModifier[];
+  /** Exact: `total − kept die total`. */
+  modifierTotal: number;
+  targetNumber: number;
+  /** The system's `roll.successes`: −1 critical failure, 0 failure, 1 success, 2+ raises. */
+  successes: number;
+  outcome: 'critical-failure' | 'failure' | 'success' | 'raise';
+  raises: number;
+  isCriticalFailure: boolean;
+  /** A wild die was part of the pool. */
+  wildDie: boolean;
+  /** Neutral flag: `raises > 0`. */
+  isCritical: boolean;
+  /** Neutral flag: `isCriticalFailure`. */
+  isFumble: boolean;
+  messageId?: string;
+}
+
+export interface SwadeRollAttackParams extends SwadeActorTargetParams {
+  /** Weapon item id. */
+  itemId: string;
+  /** Melee attacks use the target's Parry as the target number. */
+  targetTokenId?: string;
+  targetNumber?: number;
+  modifier?: number;
+  modifierLabel?: string;
+  showInChat?: boolean;
+}
+
+export interface SwadeAttackWeaponWire {
+  id: string;
+  name: string;
+  damage: string;
+  ap: number;
+  range: string;
+  isMelee: boolean;
+}
+
+export interface SwadeAttackTargetWire {
+  tokenId: string;
+  actorId: string;
+  name: string;
+  parry: number;
+}
+
+export interface SwadeAttackRollResult extends SwadeTraitRollResult {
+  weapon: SwadeAttackWeaponWire;
+  target?: SwadeAttackTargetWire;
+  /** `successes >= 1`. */
+  hit: boolean;
+}
+
+export interface SwadeRollDamageParams extends SwadeActorTargetParams {
+  /** Weapon item id. */
+  itemId: string;
+  /** Add the weapon's raise damage die (default +1d6x). */
+  raise?: boolean;
+  modifier?: number | string;
+  modifierLabel?: string;
+  /** Overrides the weapon's AP. */
+  ap?: number;
+  /** Preview (never apply) the damage rule against this token in `versusTarget`. */
+  targetTokenId?: string;
+  showInChat?: boolean;
+}
+
+export interface SwadeDamagePreview {
+  toughness: number;
+  armor: number;
+  apApplied: number;
+  effectiveToughness: number;
+  /** `damage − effectiveToughness`; may be negative. */
+  excess: number;
+  outcome: 'none' | 'shaken' | 'wounded';
+  /** After the wound cap. */
+  woundsInflicted: number;
+  /** Already Shaken, so the second Shaken became a Wound. */
+  doubleShaken: boolean;
+  wouldIncapacitate: boolean;
+}
+
+export interface SwadeDamageRollResult {
+  actorId: string;
+  tokenId?: string;
+  weapon: { id: string; name: string };
+  total: number;
+  formula: string;
+  dice: SwadeDieResult[];
+  ap: number;
+  isHeavyWeapon: boolean;
+  raiseDamageIncluded: boolean;
+  versusTarget?: SwadeDamagePreview;
+  isCritical: false;
+  isFumble: false;
+  messageId?: string;
+}
+
+export interface SwadeApplyDamageParams extends SwadeActorTargetParams {
+  damage: number;
+  ap?: number;
+  isHeavyWeapon?: boolean;
+  /** `false` previews the rule without touching the actor. Default `true`. */
+  apply?: boolean;
+}
+
+export interface SwadeApplyDamageResult extends SwadeDamagePreview {
+  actorId: string;
+  tokenId?: string;
+  applied: boolean;
+  shakenBefore: boolean;
+  shakenAfter: boolean;
+  woundsBefore: number;
+  woundsAfter: number;
+  woundsMax: number;
+  incapacitated: boolean;
+  /** `applied && woundsInflicted > 0 && wild card && bennies > 0`. */
+  canSoak: boolean;
+}
+
+export interface SwadeSoakParams extends SwadeActorTargetParams {
+  /** The Wounds just inflicted. */
+  wounds: number;
+  /** Default `true`. */
+  spendBenny?: boolean;
+  modifier?: number;
+  modifierLabel?: string;
+  /** Also clear Incapacitated when every Wound is soaked. */
+  clearIncapacitated?: boolean;
+  showInChat?: boolean;
+}
+
+export interface SwadeSoakResult {
+  actorId: string;
+  tokenId?: string;
+  roll: SwadeTraitRollResult;
+  woundsSoaked: number;
+  woundsRemaining: number;
+  woundsAfter: number;
+  bennySpent: boolean;
+  benniesLeft: number;
+  shakenRemoved: boolean;
+}
+
+export type SwadeBennyActionWire = 'spend' | 'give' | 'refresh';
+
+export interface SwadeBenniesParams extends SwadeActorTargetParams {
+  /** The GM's own bennies on `game.user` instead of an actor's. */
+  gm?: true;
+  action: SwadeBennyActionWire;
+}
+
+export interface SwadeBenniesResult {
+  owner: 'actor' | 'gm';
+  actorId?: string;
+  tokenId?: string;
+  action: SwadeBennyActionWire;
+  before: number;
+  after: number;
+  max?: number;
+}
+
+export type SwadeStatusIdWire =
+  | 'shaken' | 'incapacitated' | 'dead' | 'aiming' | 'berserk' | 'wild-attack' | 'defending' | 'holding'
+  | 'bound' | 'entangled' | 'frightened' | 'distracted' | 'encumbered' | 'prone' | 'stunned' | 'vulnerable'
+  | 'bleeding-out' | 'diseased' | 'heart-attack' | 'on-fire' | 'poisoned' | 'cover-shield' | 'cover' | 'reach'
+  | 'torch' | 'burrowing' | 'flying' | 'invisible' | 'blind' | 'cold-bodied' | 'smite' | 'protection';
+
+export interface SwadeSetStatusParams extends SwadeActorTargetParams {
+  status: SwadeStatusIdWire;
+  active: boolean;
+  overlay?: boolean;
+}
+
+export interface SwadeSetStatusResult {
+  actorId: string;
+  tokenId?: string;
+  status: string;
+  active: boolean;
+  /** All active status ids after the call, linked statuses included. */
+  statuses: string[];
+}
+
+export type SwadeGetActorSummaryParams = SwadeActorTargetParams;
+
+export interface SwadeAttributeSummaryWire {
+  die: number;
+  modifier: number;
+  wildDie: number;
+}
+
+export interface SwadeSkillSummaryWire {
+  id: string;
+  name: string;
+  die: number;
+  modifier: number;
+  wildDie: number;
+  attribute: string;
+}
+
+export interface SwadeWeaponSummaryWire {
+  id: string;
+  name: string;
+  damage: string;
+  ap: number;
+  rof: number;
+  range: string;
+  parry: number;
+  minStr: string;
+  trait: string;
+  traitMod: string;
+  dmgMod: string;
+  equipStatus: number;
+  shots: number;
+  currentShots: number;
+  isMelee: boolean;
+  isHeavyWeapon: boolean;
+}
+
+export interface SwadePowerSummaryWire {
+  id: string;
+  name: string;
+  pp: number;
+  arcane: string;
+  rank: string;
+  range: string;
+  duration: string;
+  damage: string;
+}
+
+export interface SwadeActorSummary {
+  actorId: string;
+  tokenId?: string;
+  name: string;
+  type: 'character' | 'npc' | 'vehicle' | 'group';
+  wildcard: boolean;
+  attributes?: Record<SwadeAttributeKeyWire, SwadeAttributeSummaryWire>;
+  skills?: SwadeSkillSummaryWire[];
+  derived?: { parry: number; toughness: number; armor: number; size: number; pace: number; runningDie: string | null };
+  bennies?: { value: number; max: number };
+  /** `penalty` from the actor's `calcWoundPenalties()`. */
+  wounds?: { value: number; max: number; ignored: number; penalty: number };
+  /** `penalty` from `calcFatiguePenalties()`. */
+  fatigue?: { value: number; max: number; penalty: number };
+  powerPoints?: Record<string, { value: number; max: number }>;
+  status: {
+    shaken: boolean;
+    stunned: boolean;
+    distracted: boolean;
+    vulnerable: boolean;
+    entangled: boolean;
+    bound: boolean;
+    incapacitated: boolean;
+    active: string[];
+  };
+  conviction?: { value: number; active: boolean };
+  rank?: string;
+  initiative?: { levelHeaded: boolean; improvedLevelHeaded: boolean; quick: boolean; hesitant: boolean };
+  weapons: SwadeWeaponSummaryWire[];
+  powers: SwadePowerSummaryWire[];
+  vehicle?: {
+    toughness: number;
+    armor: number;
+    wounds: { value: number; max: number };
+    handling: number;
+    topSpeed: { value: number; unit: string };
+    outOfControl: boolean;
+    wrecked: boolean;
+  };
+}
+
+export interface SwadeGetActionCardsParams {
+  /** Defaults to the active combat. */
+  combatId?: string;
+}
+
+export interface SwadeActionCardCombatantWire {
+  combatantId: string;
+  name: string;
+  actorId: string | null;
+  tokenId: string | null;
+  /** `cardValue + suitValue / 10`. */
+  initiative: number | null;
+  cardValue: number | null;
+  suitValue: number | null;
+  cardString: string | null;
+  hasJoker: boolean;
+  roundHeld: number | null;
+  turnLost: boolean;
+  isGroupLeader: boolean;
+  isDefeated: boolean;
+}
+
+export interface SwadeActionCardsResult {
+  combatId: string;
+  round: number;
+  turn: number;
+  combatants: SwadeActionCardCombatantWire[];
 }
 
 // Hit points (dnd5e): damage and healing through Actor5e#applyDamage
@@ -2614,6 +2984,16 @@ export interface CommandParamsMap {
   'pf2e/post-item': PostItemParams;
   'pf2e/filter-compendium-actors': Pf2eFilterCompendiumActorsParams;
   'pf2e/filter-compendium-items': Pf2eFilterCompendiumItemsParams;
+  'swade/roll-attribute': SwadeRollAttributeParams;
+  'swade/roll-skill': SwadeRollSkillParams;
+  'swade/roll-attack': SwadeRollAttackParams;
+  'swade/roll-damage': SwadeRollDamageParams;
+  'swade/apply-damage': SwadeApplyDamageParams;
+  'swade/soak': SwadeSoakParams;
+  'swade/bennies': SwadeBenniesParams;
+  'swade/set-status': SwadeSetStatusParams;
+  'swade/get-actor-summary': SwadeGetActorSummaryParams;
+  'swade/get-action-cards': SwadeGetActionCardsParams;
   'get-world-info': GetWorldInfoParams;
   'get-actors': Record<string, never>;
   'filter-actors': FilterActorsParams;
@@ -2785,6 +3165,16 @@ export interface CommandResultMap {
   'pf2e/post-item': PostItemResult;
   'pf2e/filter-compendium-actors': Pf2eCompendiumSearchResult;
   'pf2e/filter-compendium-items': Pf2eCompendiumSearchResult;
+  'swade/roll-attribute': SwadeTraitRollResult;
+  'swade/roll-skill': SwadeTraitRollResult;
+  'swade/roll-attack': SwadeAttackRollResult;
+  'swade/roll-damage': SwadeDamageRollResult;
+  'swade/apply-damage': SwadeApplyDamageResult;
+  'swade/soak': SwadeSoakResult;
+  'swade/bennies': SwadeBenniesResult;
+  'swade/set-status': SwadeSetStatusResult;
+  'swade/get-actor-summary': SwadeActorSummary;
+  'swade/get-action-cards': SwadeActionCardsResult;
   'get-world-info': WorldInfoResult;
   'get-actors': ActorSummary[];
   'filter-actors': FilterActorsResult;

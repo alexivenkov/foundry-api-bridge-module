@@ -15,3 +15,4 @@ export { updateCombatantHandler } from './UpdateCombatantHandler';
 export { setCombatantDefeatedHandler } from './SetCombatantDefeatedHandler';
 export { toggleCombatantVisibilityHandler } from './ToggleCombatantVisibilityHandler';
 export { getCombatTurnContextHandler } from './GetCombatTurnContextHandler';
+export { swadeGetActionCardsHandler } from './SwadeGetActionCardsHandler';

@@ -25,7 +25,15 @@ export {
   dnd5eFilterCompendiumActorsHandler,
   createDnd5eFilterCompendiumActorsHandler,
   pf2eFilterCompendiumActorsHandler,
-  createPf2eFilterCompendiumActorsHandler
+  createPf2eFilterCompendiumActorsHandler,
+  swadeRollAttributeHandler,
+  swadeRollSkillHandler,
+  swadeRollAttackHandler,
+  swadeRollDamageHandler,
+  swadeApplyDamageHandler,
+  swadeSoakHandler,
+  swadeBenniesHandler,
+  swadeGetActorSummaryHandler
 } from '@/commands/handlers/actor';
 
 // Journal handlers
@@ -59,7 +67,8 @@ export {
   updateCombatantHandler,
   setCombatantDefeatedHandler,
   toggleCombatantVisibilityHandler,
-  getCombatTurnContextHandler
+  getCombatTurnContextHandler,
+  swadeGetActionCardsHandler
 } from '@/commands/handlers/combat';
 
 // Token handlers
@@ -227,6 +236,9 @@ export {
   pf2eDecreaseConditionHandler,
   pf2eGetConditionsHandler
 } from '@/commands/handlers/condition';
+
+// SWADE status handlers
+export { swadeSetStatusHandler } from '@/commands/handlers/condition';
 
 // PF2e strike handlers
 export {

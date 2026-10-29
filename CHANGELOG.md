@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.16.0] - 2026-10-29
+
+### Added
+
+- **Savage Worlds Adventure Edition (SWADE) support — 10 new `swade/*` commands.** Third game system, verified against the installed swade 6.0.4 (Foundry v14). Each command is a fully independent SWADE implementation (its own DDD slice under `src/systems/swade/`), and every actor-bound command addresses a world actor by `actorId` or one token's actor by `tokenId` (+ optional `sceneId`), like `dnd5e/apply-damage`:
+  - **Trait rolls** — `swade/roll-attribute` (agility, smarts, spirit, strength, vigor) and `swade/roll-skill` (skill item id or name; `unskilled: true` rolls the d4−2 unskilled attempt) through the system's own builders `actor.rollAttribute` / `rollSkill` / `makeUnskilledAttempt` with `suppressChat: true`, which return the `TraitRoll` without opening the RollDialog. The result carries every die of the pool with explosions (the wild die and the kept die marked), the modifiers the system applied (wounds, fatigue, Distracted, conviction, the caller's), `targetNumber`, the system's `successes`, `outcome` (`critical-failure` / `failure` / `success` / `raise`), `raises`, and the neutral `isCritical` / `isFumble` flags. `showInChat` posts the system's card via `roll.toMessage`.
+  - **Attack and damage** — `swade/roll-attack` resolves the skill from the weapon's `actions.trait`, hands the weapon to `rollSkill` so the system adds its default attack modifiers (range, cover, illumination, prone for the GM's current targets), uses a melee target's Parry as the target number and reports `hit`. `swade/roll-damage` goes through `item.rollDamage`: `raise` adds the weapon's bonus damage die (default +1d6x), `ap` overrides the weapon's, `targetTokenId` previews the damage rule in `versusTarget` without applying it. No ammo is consumed.
+  - **Damage and soak** — `swade/apply-damage` reimplements the Toughness rule of the system's `DamageApplicator.calcWounds` (AP eats armor, a hit without a raise Shakes, every raise is a Wound, a second Shaken becomes a Wound unless Hardy, the Wound Cap setting, Incapacitated past the maximum, vehicles are never Shaken) because the applicator itself only works through dialogs; it applies the verdict with the system's `toggleActiveEffect('shaken' | 'incapacitated')` and the same `system.wounds.value` update, and `apply: false` only previews. `swade/soak` spends a benny, rolls Vigor with the soak bonus (and Unarmored Hero when the setting rule is on) as `attemptSoak` does, removes the soaked Wounds and, on a full soak, Shaken.
+  - **Bennies** — `swade/bennies` spends, gives or refreshes bennies for an actor (`spendBenny` / `getBenny` / `refreshBennies`) or for the GM (`gm: true`, the same methods on `game.user`).
+  - **Statuses** — `swade/set-status` for the 32 status ids the system registers (`shaken` … `protection`) through `actor.toggleActiveEffect`; linked statuses (Stunned adds Distracted, Prone and Vulnerable; Bound adds Entangled and Distracted; Entangled adds Vulnerable) come from the system and are listed in `statuses`.
+  - **Sheet summary** — `swade/get-actor-summary` normalizes the sheet: attributes, skills, Parry / Toughness / armor / size / pace, bennies, wounds and fatigue with the penalties the actor computes, power points, statuses, conviction, rank, initiative edges, weapons and powers; vehicles get a `vehicle` section instead of attributes.
+  - **Action cards** — `swade/get-action-cards` lists the cards the combat dealt (`cardValue`, `suitValue`, `cardString`, joker, hold, lost turn, group leader, defeated). The neutral `roll-initiative` / `roll-all-initiative` already draw action cards in a SWADE world; `initiative` is `cardValue + suitValue / 10`.
+
+### Technical
+
+- 3125 tests passing (was 2994 in v8.15.0; +131 across the six SWADE slices, their schemas and handlers)
+- 10 `swade/*` commands added to `CommandType`, `CommandParamsMap`, `CommandResultMap` and registered in `main.ts`
+- No breaking wire-API changes — existing commands' params and results are unchanged; all additions are additive
+- SWADE API verified against the locally installed swade 6.0.4 (the bundle ships a source map with the TypeScript sources); the system's internal API drifts between releases
+
 ## [8.15.0] - 2026-10-24
 
 ### Fixed
