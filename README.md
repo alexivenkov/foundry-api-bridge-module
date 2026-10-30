@@ -11,7 +11,7 @@ Foundry VTT module that connects your world to [Foundry MCP](https://foundry-mcp
 ## What you get
 
 - **121 tools** over MCP: actors & inventory, dice & combat, journals & roll tables, scenes & tokens, compendium search & import, world time & UI.
-- **D&D 5e, Pathfinder 2e and SWADE aware.** The core works with any game system. `dnd5e/*` adds ability, skill, save, attack and damage rolls and item use; `pf2e/*` adds skills, saves, strikes, conditions, spells and consumables; `swade/*` adds trait rolls with the wild die and raises, attacks and damage, Toughness damage and soak, bennies, statuses, a sheet summary and action cards.
+- **D&D 5e, Pathfinder 2e, SWADE and Call of Cthulhu 7e aware.** The core works with any game system. `dnd5e/*` adds ability, skill, save, attack and damage rolls and item use; `pf2e/*` adds skills, saves, strikes, conditions, spells and consumables; `swade/*` adds trait rolls with the wild die and raises, attacks and damage, Toughness damage and soak, bennies, statuses, a sheet summary and action cards; `coc7/*` adds d100 checks with bonus and penalty dice, attacks and damage, hit points, Sanity loss and bouts of madness, Luck, conditions and a sheet summary.
 - **Public REST API** for bots, dashboards and your own scripts, with the same module and the same key: [api.foundry-mcp.com/docs](https://api.foundry-mcp.com/docs).
 - **Code mode (preview).** The assistant writes a short TypeScript script against a typed `foundry.*` API and runs it in a sandbox: one round trip instead of dozens of tool calls. See [Code mode](#code-mode-preview) and [foundry-mcp.com/code](https://foundry-mcp.com/code).
 
@@ -207,10 +207,13 @@ The module opens two outgoing WebSocket connections, one per server, authenticat
 | D&D 5e (`dnd5e/*`) | 12 | `dnd5e/roll-attack`, `dnd5e/activate-item`, `dnd5e/apply-damage`, `dnd5e/filter-compendium-actors` |
 | Pathfinder 2e (`pf2e/*`) | 16 | `pf2e/roll-strike`, `pf2e/set-condition`, `pf2e/cast-spell` |
 | SWADE (`swade/*`) | 10 | `swade/roll-skill`, `swade/apply-damage`, `swade/soak` |
+| Call of Cthulhu 7e (`coc7/*`) | 11 | `coc7/roll-skill`, `coc7/sanity-check`, `coc7/apply-damage` |
 
-The core command set is system-agnostic. `dnd5e/*`, `pf2e/*` and `swade/*` commands require the matching game system in the world; calling one in another system returns `Operation '<command>' is not supported by game system '<world>'`. The bare `roll-ability`, `roll-skill`, `roll-save`, `roll-attack`, `roll-damage`, `roll-perception`, `use-item` and `activate-item` are legacy aliases of the `dnd5e/*` commands; `apply-damage` and `apply-healing` are aliases of `dnd5e/apply-damage` and `dnd5e/apply-healing`.
+The core command set is system-agnostic. `dnd5e/*`, `pf2e/*`, `swade/*` and `coc7/*` commands require the matching game system in the world; calling one in another system returns `Operation '<command>' is not supported by game system '<world>'`. The bare `roll-ability`, `roll-skill`, `roll-save`, `roll-attack`, `roll-damage`, `roll-perception`, `use-item` and `activate-item` are legacy aliases of the `dnd5e/*` commands; `apply-damage` and `apply-healing` are aliases of `dnd5e/apply-damage` and `dnd5e/apply-healing`.
 
 **SWADE notes.** Every `swade/*` actor command takes `actorId` or `tokenId` (+ `sceneId`), so one unlinked token can be hit alone. Trait rolls return every die of the pool, the kept die, the wild die and the system's raises; `showInChat` posts the system's own card. `swade/set-status` knows the 32 status ids the system registers (shaken, incapacitated, dead, aiming, berserk, wild-attack, defending, holding, bound, entangled, frightened, distracted, encumbered, prone, stunned, vulnerable, bleeding-out, diseased, heart-attack, on-fire, poisoned, cover-shield, cover, reach, torch, burrowing, flying, invisible, blind, cold-bodied, smite, protection); linked statuses such as Vulnerable for Stunned are applied by the system itself. `roll-initiative` and `roll-all-initiative` draw action cards in a SWADE world (`initiative` is `cardValue + suitValue / 10`; a Level Headed combatant gets the system's card-pick dialog on the GM's screen) and `swade/get-action-cards` shows the cards. `swade/roll-attack` consumes no ammo, and the system's range, cover and illumination modifiers apply to the GM's current targets, so target first with `set-token-target`. Powers and power points are read-only in `swade/get-actor-summary`; casting, reloading, rate of fire above 1, vehicle critical hits, chases and dramatic tasks come later.
+
+**Call of Cthulhu 7e notes.** The world's system id is `CoC7`; the commands are `coc7/*`. Every actor command takes `actorId` or `tokenId` (+ `sceneId`). The system keeps its check classes internal, so the module rolls the d100 pool itself through Foundry's dice (bonus dice keep the lowest tens, penalty dice the highest; the success-level ranges, the Luck needed per level and the development tick follow the system's `CoC7DicePool` and `CoC7Check`) and `showInChat` posts the module's own card with the dice attached, not the system's card. Damage, hit points, Luck, conditions and bouts of madness go through the system's own Actor API (`dealDamage`, `setHp`, `spendLuck`, `conditionsSet`, `enterBoutOfMadness`); `coc7/sanity-check` applies the SAN loss as the system's `setSan` would, without the pulp spend-Luck dialog. `coc7/roll-attack` consumes no ammo and resolves no target; opposed and combined rolls, maneuvers, reloading, the development phase, chases and the system's own cards come later.
 
 ## Troubleshooting
 
@@ -233,7 +236,7 @@ The core command set is system-agnostic. `dnd5e/*`, `pf2e/*` and `swade/*` comma
 | v12 | Verified |
 | v11 | Minimum supported |
 
-Module version 8.16.0. The core command set works with any game system; `dnd5e/*`, `pf2e/*` and `swade/*` require the respective system.
+Module version 8.17.0. The core command set works with any game system; `dnd5e/*`, `pf2e/*`, `swade/*` and `coc7/*` require the respective system.
 
 ## Development
 

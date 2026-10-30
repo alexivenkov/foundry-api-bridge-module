@@ -30,10 +30,17 @@ export interface FoundryCollection<T> {
   forEach(fn: (item: T) => void): void;
 }
 
+export interface FoundryModule {
+  version: string | undefined;
+}
+
+export const MODULE_ID = 'foundry-api-bridge';
+
 export interface FoundryGame {
   world: FoundryWorld | undefined;
   system: FoundrySystem | undefined;
   version: string | undefined;
+  modules?: { get(id: string): FoundryModule | undefined } | undefined;
   journal: FoundryCollection<unknown> | undefined;
   actors: FoundryCollection<unknown> | undefined;
   items: FoundryCollection<unknown> | undefined;

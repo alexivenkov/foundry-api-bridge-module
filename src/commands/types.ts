@@ -55,6 +55,17 @@ export type CommandType =
   | 'swade/set-status'
   | 'swade/get-actor-summary'
   | 'swade/get-action-cards'
+  | 'coc7/roll-skill'
+  | 'coc7/roll-characteristic'
+  | 'coc7/roll-attribute'
+  | 'coc7/roll-attack'
+  | 'coc7/roll-damage'
+  | 'coc7/apply-damage'
+  | 'coc7/sanity-check'
+  | 'coc7/bout-of-madness'
+  | 'coc7/luck'
+  | 'coc7/set-condition'
+  | 'coc7/get-actor-summary'
   | 'get-world-info'
   | 'get-actors'
   | 'filter-actors'
@@ -763,6 +774,440 @@ export interface SwadeActionCardsResult {
   round: number;
   turn: number;
   combatants: SwadeActionCardCombatantWire[];
+}
+
+// Call of Cthulhu 7th edition (coc7/*) — d100 checks with bonus/penalty dice,
+// weapon attacks and damage, hit points, sanity loss and bouts of madness,
+// Luck, conditions and the sheet summary. The world's system id is `CoC7`;
+// the wire prefix is lowercase. Every actor-bound command addresses a world
+// actor by `actorId` or one token's actor by `tokenId` (+ optional `sceneId`).
+export type Coc7CharacteristicKeyWire = 'str' | 'con' | 'siz' | 'dex' | 'app' | 'int' | 'pow' | 'edu';
+export type Coc7CharacteristicCheckWire = Coc7CharacteristicKeyWire | 'idea' | 'know';
+export type Coc7AttributeKeyWire = 'luck' | 'sanity';
+export type Coc7DifficultyWire = 'unknown' | 'regular' | 'hard' | 'extreme' | 'critical';
+export type Coc7OutcomeWire = 'fumble' | 'failure' | 'regular' | 'hard' | 'extreme' | 'critical';
+export type Coc7ConditionWire = 'criticalWounds' | 'unconscious' | 'dying' | 'dead' | 'prone' | 'tempoInsane' | 'indefInsane';
+export type Coc7RangeBandWire = 'normal' | 'long' | 'extreme';
+export type Coc7LuckActionWire = 'spend' | 'set' | 'add';
+export type Coc7CheckKindWire = 'skill' | 'characteristic' | 'attribute' | 'weapon';
+
+export interface Coc7ActorTargetParams {
+  /** World actor id. Either this or `tokenId` is required. */
+  actorId?: string;
+  /** A token's actor instead: an unlinked token's synthetic actor takes the hit alone. */
+  tokenId?: string;
+  /** Scene the token is on; defaults to the active scene. */
+  sceneId?: string;
+}
+
+export interface Coc7CheckOptions {
+  /** Default: the world setting `defaultCheckDifficulty`. */
+  difficulty?: Coc7DifficultyWire;
+  /** 0–2; exclusive with `penaltyDice`. */
+  bonusDice?: number;
+  /** 0–2; exclusive with `bonusDice`. */
+  penaltyDice?: number;
+  /** Added to the rolled number (house rule). */
+  flatDiceModifier?: number;
+  /** Added to the threshold (house rule). */
+  flatThresholdModifier?: number;
+  /** Whisper the card to GMs. */
+  blind?: boolean;
+  /** Post the module's card; default false. */
+  showInChat?: boolean;
+}
+
+export interface Coc7RollSkillParams extends Coc7ActorTargetParams, Coc7CheckOptions {
+  /** Skill item id, name (`Spot Hidden`, `Fighting (Brawl)`) or CoC ID (`i.skill.dodge`). */
+  skill: string;
+}
+
+export interface Coc7RollCharacteristicParams extends Coc7ActorTargetParams, Coc7CheckOptions {
+  /** `idea` rolls INT, `know` rolls EDU. */
+  characteristic: Coc7CharacteristicCheckWire;
+}
+
+export interface Coc7RollAttributeParams extends Coc7ActorTargetParams, Coc7CheckOptions {
+  attribute: Coc7AttributeKeyWire;
+}
+
+export interface Coc7TensDie {
+  /** 0, 10, … 90 (0 = the 00 face). */
+  value: number;
+  /** The die the roll kept (lowest with bonus dice, highest with penalty dice). */
+  kept: boolean;
+}
+
+export interface Coc7CheckDice {
+  tens: Coc7TensDie[];
+  /** 0–9. */
+  unit: number;
+  bonusDice: number;
+  penaltyDice: number;
+}
+
+export interface Coc7Thresholds {
+  /** Upper bound of each success level after `flatThresholdModifier`; 0 when the level does not exist. */
+  regular: number;
+  hard: number;
+  extreme: number;
+  /** Lowest fumble: 96 or 100. */
+  fumbleFrom: number;
+}
+
+export interface Coc7LuckRequired {
+  regular: number;
+  hard: number;
+  extreme: number;
+}
+
+export interface Coc7CheckResult {
+  actorId: string;
+  tokenId?: string;
+  kind: Coc7CheckKindWire;
+  /** Skill name, `STR` … `EDU`, `Idea`, `Know`, `Luck`, `Sanity`. */
+  name: string;
+  /** The value rolled against, before `flatThresholdModifier`. */
+  threshold: number;
+  /** Effective difficulty. */
+  difficulty: Coc7DifficultyWire;
+  thresholds: Coc7Thresholds;
+  dice: Coc7CheckDice;
+  /** 1–100 after `flatDiceModifier`. */
+  total: number;
+  /** −99 fumble, 0 failure, 1 regular, 2 hard, 3 extreme, 4 critical. */
+  successLevel: number;
+  outcome: Coc7OutcomeWire;
+  /** `successLevel >= difficulty`; null when the difficulty is unknown. */
+  isSuccess: boolean | null;
+  isCritical: boolean;
+  isFumble: boolean;
+  /** Luck points that would raise the roll to each level (0 = already there or the level does not exist). */
+  luckRequired: Coc7LuckRequired;
+  /** A failed, pushable roll: call again for the pushed roll. */
+  canPush: boolean;
+  /** The skill got its development tick. */
+  markedForDevelopment: boolean;
+  messageId?: string;
+}
+
+export interface Coc7RollAttackParams extends Coc7ActorTargetParams, Coc7CheckOptions {
+  /** Weapon item id or name. */
+  itemId: string;
+  /** Roll the weapon's alternative skill (burst, auto, thrown). */
+  alternativeSkill?: boolean;
+}
+
+export interface Coc7WeaponDamageFormulas {
+  /** Damage bonus already applied (`1d6+1d4`). */
+  normal: string;
+  long?: string;
+  extreme?: string;
+}
+
+export interface Coc7SkillRef {
+  id: string;
+  name: string;
+  value: number;
+}
+
+export interface Coc7AttackWeapon {
+  id: string;
+  name: string;
+  skill: Coc7SkillRef;
+  ranged: boolean;
+  malfunction?: number;
+  impaling: boolean;
+  damage: Coc7WeaponDamageFormulas;
+}
+
+export interface Coc7AttackRollResult extends Coc7CheckResult {
+  weapon: Coc7AttackWeapon;
+  /** `total >= weapon.malfunction`. */
+  isMalfunction: boolean;
+  /** Extreme or critical success with an impaling weapon. */
+  impale: boolean;
+}
+
+export interface Coc7RollDamageParams extends Coc7ActorTargetParams {
+  itemId: string;
+  /** Default `normal`. */
+  range?: Coc7RangeBandWire;
+  /** `extreme` maximizes the damage (impaling weapons add a normal roll on top). */
+  successLevel?: 'regular' | 'hard' | 'extreme';
+  /** Preview against this token's armor; nothing is applied. */
+  targetTokenId?: string;
+  showInChat?: boolean;
+}
+
+export interface Coc7DieRoll {
+  formula: string;
+  results: number[];
+  total: number;
+}
+
+export interface Coc7DamageTarget {
+  tokenId: string;
+  name: string;
+  armor: number;
+  /** When the target's armor is a formula, the formula that was rolled. */
+  armorFormula?: string;
+  wouldInflict: number;
+}
+
+export interface Coc7DamageRollResult {
+  actorId: string;
+  tokenId?: string;
+  weapon: { id: string; name: string };
+  range: Coc7RangeBandWire;
+  formula: string;
+  /** The damage bonus term appended (`+1d4`, `+1d2`, `-1`, or empty). */
+  damageBonus: string;
+  impale: boolean;
+  maximized: boolean;
+  dice: Coc7DieRoll[];
+  total: number;
+  versusTarget?: Coc7DamageTarget;
+  messageId?: string;
+}
+
+export interface Coc7ApplyDamageParams extends Coc7ActorTargetParams {
+  /** Damage before armor (≥ 1). Exclusive with `heal`. */
+  damage?: number;
+  /** Hit points to restore (≥ 1), capped at the maximum. */
+  heal?: number;
+  ignoreArmor?: boolean;
+  /** Override the target's armor (number or formula). */
+  armor?: string | number;
+}
+
+export interface Coc7Conditions {
+  criticalWounds: boolean;
+  unconscious: boolean;
+  dying: boolean;
+  dead: boolean;
+  prone: boolean;
+  tempoInsane: boolean;
+  indefInsane: boolean;
+}
+
+export interface Coc7ApplyDamageResult {
+  actorId: string;
+  tokenId?: string;
+  applied: number;
+  armorAbsorbed: number;
+  healed: number;
+  hpBefore: number;
+  hpAfter: number;
+  hpMax: number;
+  majorWound: boolean;
+  unconscious: boolean;
+  dying: boolean;
+  dead: boolean;
+  conditions: Coc7Conditions;
+}
+
+export interface Coc7SanityCheckParams extends Coc7ActorTargetParams {
+  /** Loss on a passed check: number or formula (`0`, `1`, `1d4`). */
+  lossPassed: string | number;
+  /** Loss on a failed check (`1d6`, `1d10`); a fumble takes its maximum. */
+  lossFailed: string | number;
+  /** The source (a creature name): caps the total loss to it at the maximum of `lossFailed`. */
+  reason?: string;
+  difficulty?: Coc7DifficultyWire;
+  bonusDice?: number;
+  penaltyDice?: number;
+  /** Default true; false only reports. */
+  apply?: boolean;
+  showInChat?: boolean;
+}
+
+export interface Coc7SanityCheckResult {
+  actorId: string;
+  tokenId?: string;
+  roll: Coc7CheckResult;
+  immune: 'none' | 'bout' | 'reason';
+  lossFormula: string;
+  lossRolled: number;
+  /** After the per-reason cap and Mythos hardening. */
+  lossApplied: number;
+  limitedByReason: boolean;
+  mythosHardened: boolean;
+  applied: boolean;
+  sanBefore: number;
+  sanAfter: number;
+  sanMax: number;
+  dailyLoss: number;
+  dailyLimit: number;
+  /** Lost 5+ at once: an INT roll decides the bout of madness. */
+  temporaryInsanity: boolean;
+  indefiniteInsanity: boolean;
+  permanentInsanity: boolean;
+  /** The pulp rule "Luck halves SAN loss" is on and was not offered. */
+  luckOfferSkipped: boolean;
+  messageId?: string;
+}
+
+export interface Coc7BoutOfMadnessParams extends Coc7ActorTargetParams {
+  /** true (default): rounds; false: hours (summary bout). */
+  realTime?: boolean;
+  /** Default 1. */
+  duration?: number;
+}
+
+export interface Coc7BoutOfMadnessResult {
+  actorId: string;
+  tokenId?: string;
+  name: string;
+  description: string;
+  phobia: boolean;
+  mania: boolean;
+  realTime: boolean;
+  duration: number;
+  tempoInsane: boolean;
+}
+
+export interface Coc7LuckParams extends Coc7ActorTargetParams {
+  action: Coc7LuckActionWire;
+  amount: number;
+}
+
+export interface Coc7LuckResult {
+  actorId: string;
+  tokenId?: string;
+  action: Coc7LuckActionWire;
+  before: number;
+  after: number;
+}
+
+export interface Coc7SetConditionParams extends Coc7ActorTargetParams {
+  condition: Coc7ConditionWire;
+  active: boolean;
+  /** `tempoInsane` only: rounds (true) or hours (false). */
+  realTime?: boolean;
+  duration?: number;
+}
+
+export interface Coc7StatusSummary {
+  id: string;
+  name: string;
+  phobia: boolean;
+  mania: boolean;
+}
+
+export interface Coc7SetConditionResult {
+  actorId: string;
+  tokenId?: string;
+  conditions: Coc7Conditions;
+  statuses: Coc7StatusSummary[];
+}
+
+export type Coc7GetActorSummaryParams = Coc7ActorTargetParams;
+
+export interface Coc7CharacteristicSummary {
+  key: Coc7CharacteristicKeyWire;
+  label: string;
+  value: number;
+  half: number;
+  fifth: number;
+}
+
+export interface Coc7PoolSummary {
+  value: number;
+  max: number;
+}
+
+export interface Coc7SanitySummary {
+  value: number;
+  max: number;
+  dailyLoss: number;
+  dailyLimit: number;
+  mythosHardened: boolean;
+}
+
+export interface Coc7AttributesSummary {
+  hp: Coc7PoolSummary;
+  mp: Coc7PoolSummary;
+  sanity: Coc7SanitySummary;
+  luck: number;
+  mov: number;
+  /** Damage bonus formula (`1d4`, `0`, `-1`). */
+  db: string;
+  build: number;
+  /** Number or formula as the sheet stores it. */
+  armor: string;
+}
+
+export interface Coc7SkillSummary {
+  id: string;
+  name: string;
+  value: number;
+  half: number;
+  fifth: number;
+  base: string;
+  specialization?: string;
+  push: boolean;
+  fighting: boolean;
+  firearm: boolean;
+  special: boolean;
+  rare: boolean;
+  /** Ticked for development. */
+  development: boolean;
+}
+
+export interface Coc7WeaponSummary {
+  id: string;
+  name: string;
+  skill?: Coc7SkillRef;
+  alternativeSkill?: Coc7SkillRef;
+  ranged: boolean;
+  damage: Coc7WeaponDamageFormulas;
+  range: { normal: string; long?: string; extreme?: string };
+  usesPerRound: string;
+  bullets?: number;
+  ammo?: number;
+  malfunction?: number;
+  impaling: boolean;
+  /** The weapon property keys that are on (`rngd`, `impl`, `auto`, …). */
+  properties: string[];
+}
+
+export interface Coc7SpellSummary {
+  id: string;
+  name: string;
+  costs: { hitPoints: string; magicPoints: string; sanity: string; power: string; others: string };
+}
+
+export interface Coc7CreatureSummary {
+  sanLoss: { passed: string; failed: string };
+  attacksPerRound: string;
+}
+
+export interface Coc7VehicleSummary {
+  hp?: number;
+  mov?: number;
+  build?: number;
+  armor?: number;
+  crew: string;
+  armed: boolean;
+}
+
+export interface Coc7ActorSummary {
+  id: string;
+  name: string;
+  type: string;
+  characteristics: Coc7CharacteristicSummary[];
+  /** Absent for vehicles. */
+  attributes?: Coc7AttributesSummary;
+  conditions: Coc7Conditions;
+  statuses: Coc7StatusSummary[];
+  skills: Coc7SkillSummary[];
+  weapons: Coc7WeaponSummary[];
+  spells: Coc7SpellSummary[];
+  infos: { occupation: string; age: string; archetype?: string; organization?: string };
+  creditRating?: number;
+  creature?: Coc7CreatureSummary;
+  vehicle?: Coc7VehicleSummary;
 }
 
 // Hit points (dnd5e): damage and healing through Actor5e#applyDamage
@@ -2095,6 +2540,8 @@ export interface WorldInfoData {
   system: string;
   systemVersion: string;
   foundryVersion: string;
+  /** The module's own manifest version (since 8.17.0). */
+  moduleVersion: string;
 }
 
 export interface WorldCounts {
@@ -2994,6 +3441,17 @@ export interface CommandParamsMap {
   'swade/set-status': SwadeSetStatusParams;
   'swade/get-actor-summary': SwadeGetActorSummaryParams;
   'swade/get-action-cards': SwadeGetActionCardsParams;
+  'coc7/roll-skill': Coc7RollSkillParams;
+  'coc7/roll-characteristic': Coc7RollCharacteristicParams;
+  'coc7/roll-attribute': Coc7RollAttributeParams;
+  'coc7/roll-attack': Coc7RollAttackParams;
+  'coc7/roll-damage': Coc7RollDamageParams;
+  'coc7/apply-damage': Coc7ApplyDamageParams;
+  'coc7/sanity-check': Coc7SanityCheckParams;
+  'coc7/bout-of-madness': Coc7BoutOfMadnessParams;
+  'coc7/luck': Coc7LuckParams;
+  'coc7/set-condition': Coc7SetConditionParams;
+  'coc7/get-actor-summary': Coc7GetActorSummaryParams;
   'get-world-info': GetWorldInfoParams;
   'get-actors': Record<string, never>;
   'filter-actors': FilterActorsParams;
@@ -3175,6 +3633,17 @@ export interface CommandResultMap {
   'swade/set-status': SwadeSetStatusResult;
   'swade/get-actor-summary': SwadeActorSummary;
   'swade/get-action-cards': SwadeActionCardsResult;
+  'coc7/roll-skill': Coc7CheckResult;
+  'coc7/roll-characteristic': Coc7CheckResult;
+  'coc7/roll-attribute': Coc7CheckResult;
+  'coc7/roll-attack': Coc7AttackRollResult;
+  'coc7/roll-damage': Coc7DamageRollResult;
+  'coc7/apply-damage': Coc7ApplyDamageResult;
+  'coc7/sanity-check': Coc7SanityCheckResult;
+  'coc7/bout-of-madness': Coc7BoutOfMadnessResult;
+  'coc7/luck': Coc7LuckResult;
+  'coc7/set-condition': Coc7SetConditionResult;
+  'coc7/get-actor-summary': Coc7ActorSummary;
   'get-world-info': WorldInfoResult;
   'get-actors': ActorSummary[];
   'filter-actors': FilterActorsResult;

@@ -48,6 +48,17 @@ import {
   swadeSetStatusHandler,
   swadeGetActorSummaryHandler,
   swadeGetActionCardsHandler,
+  coc7RollSkillHandler,
+  coc7RollCharacteristicHandler,
+  coc7RollAttributeHandler,
+  coc7RollAttackHandler,
+  coc7RollDamageHandler,
+  coc7ApplyDamageHandler,
+  coc7SanityCheckHandler,
+  coc7BoutOfMadnessHandler,
+  coc7LuckHandler,
+  coc7SetConditionHandler,
+  coc7GetActorSummaryHandler,
   getWorldInfoHandler,
   getJournalsHandler,
   getJournalHandler,
@@ -375,6 +386,17 @@ function initializeWebSocket(
   commandRouter.register('swade/set-status', swadeSetStatusHandler);
   commandRouter.register('swade/get-actor-summary', swadeGetActorSummaryHandler);
   commandRouter.register('swade/get-action-cards', swadeGetActionCardsHandler);
+  commandRouter.register('coc7/roll-skill', coc7RollSkillHandler);
+  commandRouter.register('coc7/roll-characteristic', coc7RollCharacteristicHandler);
+  commandRouter.register('coc7/roll-attribute', coc7RollAttributeHandler);
+  commandRouter.register('coc7/roll-attack', coc7RollAttackHandler);
+  commandRouter.register('coc7/roll-damage', coc7RollDamageHandler);
+  commandRouter.register('coc7/apply-damage', coc7ApplyDamageHandler);
+  commandRouter.register('coc7/sanity-check', coc7SanityCheckHandler);
+  commandRouter.register('coc7/bout-of-madness', coc7BoutOfMadnessHandler);
+  commandRouter.register('coc7/luck', coc7LuckHandler);
+  commandRouter.register('coc7/set-condition', coc7SetConditionHandler);
+  commandRouter.register('coc7/get-actor-summary', coc7GetActorSummaryHandler);
   commandRouter.register('dnd5e/roll-attack', rollAttackHandler);
   commandRouter.register('roll-attack', rollAttackHandler); // @deprecated alias of 'dnd5e/roll-attack'
   commandRouter.register('dnd5e/roll-damage', rollDamageHandler);

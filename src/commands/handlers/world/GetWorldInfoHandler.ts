@@ -1,5 +1,5 @@
 import type { GetWorldInfoParams, WorldInfoResult, CompendiumMetaSummary } from '@/commands/types';
-import { getGame } from './worldTypes';
+import { getGame, MODULE_ID } from './worldTypes';
 
 export function getWorldInfoHandler(_params: GetWorldInfoParams): Promise<WorldInfoResult> {
   const game = getGame();
@@ -21,7 +21,8 @@ export function getWorldInfoHandler(_params: GetWorldInfoParams): Promise<WorldI
       title: game.world?.title ?? '',
       system: game.system?.id ?? '',
       systemVersion: game.system?.version ?? '',
-      foundryVersion: game.version ?? ''
+      foundryVersion: game.version ?? '',
+      moduleVersion: game.modules?.get(MODULE_ID)?.version ?? ''
     },
     counts: {
       journals: game.journal?.size ?? 0,

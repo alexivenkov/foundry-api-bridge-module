@@ -33,7 +33,17 @@ export {
   swadeApplyDamageHandler,
   swadeSoakHandler,
   swadeBenniesHandler,
-  swadeGetActorSummaryHandler
+  swadeGetActorSummaryHandler,
+  coc7RollSkillHandler,
+  coc7RollCharacteristicHandler,
+  coc7RollAttributeHandler,
+  coc7RollAttackHandler,
+  coc7RollDamageHandler,
+  coc7ApplyDamageHandler,
+  coc7SanityCheckHandler,
+  coc7BoutOfMadnessHandler,
+  coc7LuckHandler,
+  coc7GetActorSummaryHandler
 } from '@/commands/handlers/actor';
 
 // Journal handlers
@@ -239,6 +249,9 @@ export {
 
 // SWADE status handlers
 export { swadeSetStatusHandler } from '@/commands/handlers/condition';
+
+// CoC7 condition handlers
+export { coc7SetConditionHandler } from '@/commands/handlers/condition';
 
 // PF2e strike handlers
 export {

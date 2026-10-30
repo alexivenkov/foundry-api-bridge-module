@@ -1,6 +1,6 @@
 # Supported commands
 
-178 wire commands in Foundry API Bridge 8.16.0. Names are what the server sends over the wire; MCP tools and REST routes map onto them. The list is taken from the handlers registered in `src/main.ts`.
+189 wire commands in Foundry API Bridge 8.17.0. Names are what the server sends over the wire; MCP tools and REST routes map onto them. The list is taken from the handlers registered in `src/main.ts`.
 
 Each command runs in the GM's browser session with GM permissions. Access follows the Patreon tier of the key (see [Tiers](../README.md#tiers) in the README).
 
@@ -130,9 +130,27 @@ Every actor-bound command takes `actorId` or `tokenId` (+ optional `sceneId`). `
 
 `swade/bennies` `{ actorId | tokenId | gm: true, action: spend | give | refresh }` answers `{ owner, before, after, max? }`. `swade/set-status` `{ status (one of the 32 ids), active, overlay? }` answers all active status ids. `swade/get-actor-summary` answers the normalized sheet (attributes, skills, derived stats, bennies, wounds and fatigue with penalties, power points, statuses, conviction, rank, initiative edges, weapons, powers; `vehicle` for vehicles). `swade/get-action-cards` `{ combatId? }` lists the dealt cards (`cardValue`, `suitValue`, `cardString`, `hasJoker`, `roundHeld`, `turnLost`, `isGroupLeader`, `isDefeated`); `roll-initiative` draws cards in a SWADE world.
 
+## Call of Cthulhu 7e
+
+Require the `CoC7` system in the world (verified against CoC7 8.16 on Foundry 12–14; the system id is `CoC7`, the wire prefix is lowercase `coc7/`).
+
+`coc7/roll-skill`, `coc7/roll-characteristic`, `coc7/roll-attribute`, `coc7/roll-attack`, `coc7/roll-damage`, `coc7/apply-damage`, `coc7/sanity-check`, `coc7/bout-of-madness`, `coc7/luck`, `coc7/set-condition`, `coc7/get-actor-summary`
+
+Every actor-bound command takes `actorId` or `tokenId` (+ optional `sceneId`). The three checks share `{ difficulty? (world default), bonusDice? (0–2), penaltyDice? (0–2, exclusive with bonus), flatDiceModifier?, flatThresholdModifier?, blind?, showInChat? }`. `coc7/roll-skill` `{ skill (item id, a name such as `Fighting (Brawl)`, or a CoC ID such as `i.skill.dodge`) }`, `coc7/roll-characteristic` `{ characteristic: str | con | siz | dex | app | int | pow | edu | idea | know }` and `coc7/roll-attribute` `{ attribute: luck | sanity }` answer the check: `threshold`, the effective `difficulty`, `thresholds` (the regular / hard / extreme upper bounds and `fumbleFrom`), `dice` (every tens die with the kept one, the unit, the bonus / penalty counts), `total`, `successLevel` (−99 fumble … 4 critical), `outcome`, `isSuccess` (null at unknown difficulty), `isCritical` / `isFumble`, `luckRequired` per level, `canPush`, `markedForDevelopment` (the system's development tick on a rolled success when `xpEnabled`), and `messageId` when `showInChat` posted a card. The system does not export its check classes, so the module rolls the d10s through Foundry and resolves them with a port of `CoC7DicePool`; the card is the module's own (plain HTML with the dice attached, whispered to GMs when `blind`), not the system's.
+
+`coc7/roll-attack` `{ itemId (weapon id or name), alternativeSkill?, …check options }` rolls the weapon's main or alternative skill and adds `weapon` (skill, ranged, malfunction, impaling, damage formulas per band with the damage bonus applied), `isMalfunction` and `impale`. `coc7/roll-damage` `{ itemId, range? (normal), successLevel? (regular | hard | extreme), targetTokenId?, showInChat? }` rolls one band's formula; `extreme` maximizes it and an impaling weapon adds a normal roll on top (without the damage bonus, as the system's `CoC7ChatDamage` does); `targetTokenId` fills `versusTarget` with the target's armor (a number or its rolled formula) and `wouldInflict`; `showInChat` posts the Foundry roll. No ammo is consumed.
+
+`coc7/apply-damage` `{ damage | heal, ignoreArmor?, armor? }` goes through the system's `dealDamage` / `setHp` and answers `applied`, `armorAbsorbed`, `healed`, `hpBefore/After/Max`, `majorWound`, `unconscious`, `dying`, `dead` and all `conditions`; the system adds Prone to a Major Wound and posts its CON check card itself. `coc7/sanity-check` `{ lossPassed, lossFailed, reason?, difficulty?, bonusDice?, penaltyDice?, apply? (true), showInChat? }` answers the SAN `roll`, `immune` (`bout` during Temporary Insanity, `reason` once the source is exhausted), `lossFormula`, `lossRolled`, `lossApplied` (after the per-reason cap and Mythos hardening), `sanBefore/After/Max`, `dailyLoss/Limit`, `temporaryInsanity` (5+ in one go: the Keeper follows with `coc7/roll-characteristic int` and `coc7/bout-of-madness`), `indefiniteInsanity`, `permanentInsanity`, `luckOfferSkipped`; `apply: false` only reports (the `sanAfter` / `dailyLoss` it answers are projections). `coc7/bout-of-madness` `{ realTime? (true), duration? (1) }` draws from the configured table (`Bout of Madness table is not configured` otherwise) and answers `name`, `description`, `phobia`, `mania`, `tempoInsane`.
+
+`coc7/luck` `{ action: spend | set | add, amount }` answers `before` / `after` (`Not enough Luck: has <n>, needs <amount>`). `coc7/set-condition` `{ condition (one of the seven), active, realTime?, duration? }` answers all seven conditions plus `statuses` (phobias and manias). `coc7/get-actor-summary` answers the normalized sheet (characteristics with half and fifth, attributes, conditions, statuses, skills, weapons, spells, infos, `creditRating`; `creature` for NPCs and creatures, `vehicle` for vehicles; containers are refused).
+
+Where the installed CoC7 8.16 differs from the platform spec, the system wins: an impaling extreme success rolls the weapon damage without the damage bonus on top of the maximized formula; `halfDB` writes its halved dice with an uppercase `D` (`+1D2`) and the sheet's auto damage bonus is `1D4`; a check at unknown difficulty still names its level (the system hides it); conditions are read as the sheet flag or the status effect, because with status icons enabled the system sets the flag from the effect hook without awaiting it; `coc7/bout-of-madness` reports `tempoInsane: true` for a real-time bout (the system sets the condition without awaiting); Indefinite Insanity is only flagged when the daily limit is above 0 (the system's `setSan` compares against 0 and would trigger on any loss); the development tick and `canPush` follow `CoC7Check`, Sanity checks are never pushable and Luck checks are.
+
+Out of scope: opposed and combined rolls, melee defense resolution, maneuvers, multiple-target or automatic fire, reload and ammunition, pushing as a system state (the agent re-rolls; `canPush` says when), the development phase, chases, the spend-Luck offer of the pulp SAN rule, Idea-roll clue handling, the system's own chat cards.
+
 ## System mismatch
 
-Calling a `dnd5e/*`, `pf2e/*` or `swade/*` command in a world running another system returns:
+Calling a `dnd5e/*`, `pf2e/*`, `swade/*` or `coc7/*` command in a world running another system returns:
 
 ```
 Operation '<command>' is not supported by game system '<world system>'

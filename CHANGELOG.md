@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.17.0] - 2026-10-30
+
+### Added
+
+- **Call of Cthulhu 7th edition (CoC7) support — 11 new `coc7/*` commands.** Fourth game system, verified against the installed CoC7 8.16 (Foundry 12–14; the world's system id is `CoC7`, the wire prefix stays lowercase). Each command is a fully independent CoC7 implementation (its own DDD slice under `src/systems/coc7/`), and every actor-bound command addresses a world actor by `actorId` or one token's actor by `tokenId` (+ optional `sceneId`), like `swade/*`:
+  - **d100 checks** — `coc7/roll-skill` (skill item id, a name such as `Fighting (Brawl)`, or a CoC ID such as `i.skill.dodge`), `coc7/roll-characteristic` (`str` … `edu`, plus `idea` = INT and `know` = EDU) and `coc7/roll-attribute` (`luck`, `sanity`). The system does not export its check classes, so the module rolls the pool itself through Foundry `Roll` (`1d10` unit, one `d10` per tens die) and resolves it with a port of `CoC7DicePool`: bonus dice keep the lowest tens and penalty dice the highest, `flatDiceModifier` / `flatThresholdModifier` as house rules, the success-level ranges (critical 1, extreme ⌊x/5⌋, hard ⌊x/2⌋, regular x, fumble from 96 or 100), `isSuccess` against the difficulty (default: the world's `defaultCheckDifficulty`), the Luck needed to reach each level, `canPush`, and the development tick (`system.flags.developement`) on a rolled success when `xpEnabled`. `showInChat` posts the module's own card with the dice attached (the system's cards cannot be built from outside); `blind` whispers it to the GMs.
+  - **Attacks and damage** — `coc7/roll-attack` rolls the weapon's main or alternative skill (`alternativeSkill` for bursts, automatic fire and thrown weapons), reports `isMalfunction` (`total >= malfunction`) and `impale` (an extreme success with an impaling weapon), and lists the weapon's damage formulas per range band with the damage bonus applied (`addb` full, `ahdb` half through a port of `CoC7Utilities.halfDB`). `coc7/roll-damage` rolls one band; `successLevel: 'extreme'` maximizes it and impaling weapons add a normal damage roll on top, as `CoC7ChatDamage` does; `targetTokenId` previews the roll against the target's armor (a number or its rolled formula). No ammo is consumed.
+  - **Hit points** — `coc7/apply-damage` goes through the system's `actor.dealDamage` (armor, Major Wound at half the maximum with Prone, Unconscious / Dying at 0, Dead at the maximum, or the pulp CON check) and `setHp` for `heal`, and answers the conditions afterwards.
+  - **Sanity** — `coc7/sanity-check` rolls the SAN check and the loss (`lossPassed` / `lossFailed` as numbers or formulas; a fumble takes the maximum), honours immunity during a Bout of Madness and the per-reason cap (`maxLossToSanReason`), halves the loss for Mythos hardened investigators, and applies what the system's `setSan` would without its spend-Luck dialog: SAN, `dailyLoss`, the reason's running total, Temporary Insanity at 5+ in one go, Indefinite Insanity at the daily limit (guarded: the system also triggers it when the limit is 0). `coc7/bout-of-madness` calls `actor.enterBoutOfMadness` once the configured table resolves and answers the drawn phobia or mania.
+  - **Luck** — `coc7/luck` spends (`spendLuck`, refused when short), sets (`setLuck`, capped at 99) or adds Luck.
+  - **Conditions** — `coc7/set-condition` for the seven conditions (`criticalWounds`, `unconscious`, `dying`, `dead`, `prone`, `tempoInsane` with `realTime` / `duration`, `indefInsane`) through `conditionsSet` / `conditionsUnset`; answers all seven plus the actor's phobias and manias.
+  - **Sheet summary** — `coc7/get-actor-summary` normalizes the sheet: characteristics with half and fifth, HP / MP / SAN (daily loss and limit, Mythos hardened) / Luck / MOV / damage bonus / build / armor, conditions, statuses, skills with their flags and development tick, weapons with their skills, damage formulas and properties, spells with their costs, infos and Credit Rating; NPCs and creatures add `creature` (SAN loss, attacks per round), vehicles add `vehicle`.
+- **`moduleVersion` in `get-world-info`** — the module's own manifest version next to `system` / `systemVersion`, so the platform can tell what the world runs instead of guessing from the command set.
+
+### Technical
+
+- 3300 tests passing (was 3125 in v8.16.0; +175 across the seven CoC7 slices, the d100 engine table, their schemas and handlers)
+- 11 `coc7/*` commands added to `CommandType`, `CommandParamsMap`, `CommandResultMap` and registered in `main.ts`; 189 wire commands in total
+- The module computes the d100 pool itself because the system does not export its check classes (`CoC7Check`, `CoC7DicePool` and `CoC7SanCheckCard` are internal; `game.CoC7` carries macro helpers only); every other step goes through the system's public Actor API (`dealDamage`, `setHp`, `spendLuck`, `setLuck`, `conditionsSet`, `conditionsUnset`, `enterBoutOfMadness`, `maxLossToSanReason`, `setReasonSanLoss`)
+- No breaking wire-API changes — existing commands' params and results are unchanged; all additions are additive
+- CoC7 API verified against the installed CoC7 8.16 (sources read from the matching tag of the system's repository, since the release bundle ships without a source map)
+
 ## [8.16.0] - 2026-10-29
 
 ### Added

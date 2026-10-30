@@ -29,6 +29,7 @@ function createMockGame(overrides?: Partial<FoundryGame>): FoundryGame {
     world: { id: 'test-world', title: 'Test Campaign' },
     system: { id: 'dnd5e', version: '4.3.0' },
     version: '12.331',
+    modules: { get: (id: string) => (id === 'foundry-api-bridge' ? { version: '8.17.0' } : undefined) },
     journal: createMockCollection(),
     actors: createMockCollection(),
     items: createMockCollection(),
@@ -66,7 +67,8 @@ describe('getWorldInfoHandler', () => {
       title: 'Test Campaign',
       system: 'dnd5e',
       systemVersion: '4.3.0',
-      foundryVersion: '12.331'
+      foundryVersion: '12.331',
+      moduleVersion: '8.17.0'
     });
     expect(result.counts).toEqual({
       journals: 3,
@@ -230,7 +232,8 @@ describe('getWorldInfoHandler', () => {
       title: '',
       system: '',
       systemVersion: '',
-      foundryVersion: ''
+      foundryVersion: '',
+      moduleVersion: ''
     });
     expect(result.counts).toEqual({
       journals: 0,
