@@ -12,7 +12,7 @@ export interface FoundryMacroDoc {
   author: { id: string; name: string } | null | undefined;
   update(data: Record<string, unknown>): Promise<unknown>;
   delete(): Promise<FoundryMacroDoc>;
-  execute(scope?: { actor?: object; token?: object }): Promise<unknown>;
+  execute(scope?: Record<string, unknown>): Promise<unknown>;
 }
 
 export interface FoundryMacrosCollection {

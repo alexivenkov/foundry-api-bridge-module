@@ -3200,6 +3200,11 @@ export interface ExecuteMacroParams {
   macroId: string;
   actorId?: string;
   tokenId?: string;
+  /**
+   * Since 8.18.0. Any JSON object. A script macro reads it as the variable `args`
+   * (also `scope.args`); a chat macro ignores it.
+   */
+  args?: Record<string, unknown>;
 }
 
 export interface ExecuteMacroResult {
@@ -3207,6 +3212,16 @@ export interface ExecuteMacroResult {
   macroId: string;
   macroName: string;
   macroType: MacroType;
+  /**
+   * Since 8.18.0. The macro's return value made JSON-safe (Documents reduced to
+   * { documentName, id, uuid, name }, cycles as "[Circular]"). Absent when the
+   * macro returned undefined or when the value was truncated.
+   */
+  result?: unknown;
+  /** Since 8.18.0. Present only when the serialized result exceeded 256 KB; `result` is then absent. */
+  resultTruncated?: true;
+  /** Since 8.18.0. UTF-8 size of the serialized result; present only with resultTruncated. */
+  resultBytes?: number;
 }
 
 // Playlist Commands

@@ -200,7 +200,7 @@ The module opens two outgoing WebSocket connections, one per server, authenticat
 | Journals | 9 | `get-journals`, `create-journal-page`, `show-journal` |
 | Folders | 5 | `get-folders`, `create-folder` |
 | Roll tables | 7 | `roll-on-table`, `create-roll-table` |
-| Macros | 6 | `execute-macro` (script macros need **Allow Script Macros**) |
+| Macros | 6 | `execute-macro` (script macros need **Allow Script Macros**; since 8.18.0 takes `args` and returns the macro's value) |
 | Playlists & sounds | 8 | `play-playlist`, `play-sound-once` |
 | Compendiums | 9 | `search-compendiums`, `import-from-compendium`, `resolve-uuid` |
 | World, time & UI | 10 | `get-world-info`, `advance-time`, `pause-game`, `ping-location` |
@@ -236,7 +236,7 @@ The core command set is system-agnostic. `dnd5e/*`, `pf2e/*`, `swade/*` and `coc
 | v12 | Verified |
 | v11 | Minimum supported |
 
-Module version 8.17.0. The core command set works with any game system; `dnd5e/*`, `pf2e/*`, `swade/*` and `coc7/*` require the respective system.
+Module version 8.18.0. The core command set works with any game system; `dnd5e/*`, `pf2e/*`, `swade/*` and `coc7/*` require the respective system.
 
 ## Development
 

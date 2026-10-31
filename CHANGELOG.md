@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.18.0] - 2026-10-30
+
+### Added
+
+- **`execute-macro` takes arguments.** `args` — any JSON object — reaches a script macro as the variable `args` (and as `scope.args`), so one macro call can carry the target, the item, advantage, cover, whatever the GM's automation needs; until now the only context was `actorId` / `tokenId`. The keys of `args` are not spread into the macro's own variables, so the one reserved name cannot collide with `speaker`, `actor`, `token`, `character` or `scope`; without `args` the macro sees exactly the scope 8.17 sent, so existing macros notice nothing. A chat macro accepts `args` and ignores it, as the core ignores the scope for chat macros. Anything but a JSON object (`null`, an array, a string, a number) fails with `args must be a JSON object` before the macro runs.
+- **`execute-macro` returns the macro's value.** The macro's `return` comes back as `result`, made JSON-safe and capped at 256 KB; until now the result only said that the macro ran and the caller had to read the chat and parse a card. Foundry Documents are reduced to `{ documentName, id, uuid, name }` and never expanded, `Map` / `Collection` / `Set` become arrays of their values, `Roll` and any other object with `toJSON()` use it, `Date` becomes its ISO string, `Error` `{ name, message }`, a cycle `"[Circular]"`, nesting past 32 levels `"[MaxDepth]"`, `NaN` / `±Infinity` `null`, bigints their decimal string; `undefined`, functions and symbols are dropped as `JSON.stringify` would drop them. Over 256 KB (262 144 UTF-8 bytes) the result carries `resultTruncated: true` and `resultBytes` instead of a cut text. A macro that returns nothing gets no `result`; a chat macro's result is the created message's reference or absent. With both, one call per turn: `execute-macro { macroId, args: { actorId, itemId, targetTokenId, advantage } }` → `{ hit, roll, ac, damage, hpBefore, hpAfter }`, whatever the macro author decided to return.
+
+### Changed
+
+- **Macro errors reach the caller with one text per cause.** A script macro that does not compile is caught before anything runs and answers `Macro "<name>" has a syntax error: <message>` (on Foundry 13 / 14 the raw engine message used to come back; on older cores the API answered `executed: true` while Foundry showed a notification). A runtime error inside the macro answers `Macro "<name>" failed: <message>`. The checks run before anything is resolved or executed: macro → script permission → `args` → syntax → `actorId` / `tokenId` → run, so a bad call never half-executes.
+
+### Technical
+
+- 3371 tests passing (was 3300 in v8.17.0; +71: the result serializer's conversion table, cycles, depth and the cap, the handler's `args`, syntax pre-check and return-value paths)
+- New pure module `src/commands/handlers/macro/serializeMacroResult.ts` with `MACRO_RESULT_MAX_BYTES = 262 144`, the same figure as the platform's per-call result limit in code mode, so a result that fits here fits there; the size is the UTF-8 length of the JSON text
+- The syntax pre-check builds the macro body with the intrinsic `AsyncFunction` constructor exactly as the core does (`{<command>\n}`) and never calls it, so top-level `await` and `return` compile and side effects do not run twice
+- `Macro#execute` verified against the installed Foundry 13.351 and 14.368 (`client/documents/macro.mjs`): a script macro's promise resolves to its `return` value and a rejection reaches the caller; a chat macro resolves to the created `ChatMessage` or `undefined`; every extra scope key becomes a named variable and a property of `scope`. In both cores the `AsyncFunction` constructor runs outside the core's try/catch, so a syntax error throws synchronously rather than being swallowed as the spec expected, and `event` is a scope key rather than a fixed parameter; neither changes the module's behaviour. v11 / v12 are not installed locally and were not re-verified.
+- No breaking wire-API changes — `execute-macro` params and result only gain optional fields (`args`; `result`, `resultTruncated`, `resultBytes`); `allowScriptMacros` stays the only gate on script macros
+
 ## [8.17.0] - 2026-10-30
 
 ### Added

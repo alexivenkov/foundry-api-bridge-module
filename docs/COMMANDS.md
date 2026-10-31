@@ -1,6 +1,6 @@
 # Supported commands
 
-189 wire commands in Foundry API Bridge 8.17.0. Names are what the server sends over the wire; MCP tools and REST routes map onto them. The list is taken from the handlers registered in `src/main.ts`.
+189 wire commands in Foundry API Bridge 8.18.0. Names are what the server sends over the wire; MCP tools and REST routes map onto them. The list is taken from the handlers registered in `src/main.ts`.
 
 Each command runs in the GM's browser session with GM permissions. Access follows the Patreon tier of the key (see [Tiers](../README.md#tiers) in the README).
 
@@ -75,6 +75,16 @@ Token results carry `actorLink` (whether the token shares its actor's data or is
 `get-macros`, `get-macro`, `create-macro`, `update-macro`, `delete-macro`, `execute-macro`
 
 Script macros require **Allow Script Macros** in the module settings; it is off by default.
+
+`execute-macro` takes `macroId`, optional `actorId` / `tokenId` (the token must be on the active scene) and, since 8.18.0, optional `args`: any JSON object. A script macro reads it as the variable `args` and as `scope.args`. The keys of `args` are not spread into the macro's own variables, so the one reserved name cannot collide with `speaker`, `actor`, `token`, `character` or `scope`; without `args` the macro sees exactly the scope 8.17 sent. A chat macro accepts `args` and ignores it, as the core ignores the scope for chat macros. Anything but a JSON object (`null`, an array, a string, a number) fails with `args must be a JSON object` before the macro runs.
+
+Since 8.18.0 the result also carries the macro's `return` value as `result`, made JSON-safe: `undefined`, functions and symbols are dropped (absent at the root, omitted from objects, `null` inside arrays), `NaN` / `±Infinity` become `null`, bigints their decimal string, `Date` its ISO string, `Error` `{ name, message }`; a Foundry Document (anything with a string `documentName` and `uuid`) is reduced to `{ documentName, id, uuid, name }` and never expanded; `Map` / `Collection` / `Set` become arrays of their values; any other object with `toJSON()` (a `Roll`) uses it; a value already on the current path becomes `"[Circular]"` and nesting deeper than 32 levels `"[MaxDepth]"`. When the serialized JSON exceeds 256 KB (262 144 UTF-8 bytes) `result` is absent and the result carries `resultTruncated: true` and `resultBytes` instead; the macro author sees the size and trims the return value. A macro that returns nothing gets no `result` key. A chat macro's result is the created message's reference (`{ documentName: 'ChatMessage', id, uuid }`) or absent.
+
+Before a script macro runs, the module compiles its text without executing it and answers `Macro "<name>" has a syntax error: <message>`. A runtime error inside the macro answers `Macro "<name>" failed: <message>`. The checks run in this order: macro exists → script permission → `args` shape → syntax → `actorId` / `tokenId` → execution, so a bad call never half-executes.
+
+A macro that waits for a dialog or a long-running promise does not answer in time for the API: the platform waits 30 s and reports a timeout while the macro keeps running in Foundry. Return from the macro instead of waiting on the user.
+
+Verified against the installed Foundry 13.351 and 14.368 (v11 / v12 are not installed here). Deviation from the 8.18.0 spec, which does not change the wire contract: in both cores the `AsyncFunction` constructor runs outside the core's try/catch, so a syntax error already reaches the caller as a synchronous throw with the raw engine message; the module's pre-check runs first on every core so the error text is the same everywhere. In both cores `event` is not a fixed parameter of the generated function either; it reaches the macro through the scope like any other key.
 
 ## Playlists & sounds
 
