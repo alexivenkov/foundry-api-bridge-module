@@ -181,7 +181,7 @@ describe('combat handlers with injected providers', () => {
 
     await handler({ npcsOnly } as unknown as { npcsOnly?: boolean });
 
-    expect(combat.rollNPC).toHaveBeenCalledWith({});
+    expect(combat.rollNPC).toHaveBeenCalledWith({ skipDialog: true });
     expect(combat.rollAll).not.toHaveBeenCalled();
   });
 });

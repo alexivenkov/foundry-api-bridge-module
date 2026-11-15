@@ -674,7 +674,7 @@ describe('Combat Handlers', () => {
 
       expect(mockCombat.rollInitiative).toHaveBeenCalledWith(
         ['combatant-123'],
-        {}
+        { skipDialog: true }
       );
       expect(result.results).toHaveLength(1);
       expect(result.results[0]).toEqual({
@@ -697,7 +697,7 @@ describe('Combat Handlers', () => {
 
       expect(mockCombat.rollInitiative).toHaveBeenCalledWith(
         ['combatant-123'],
-        { formula: '2d6+5' }
+        { formula: '2d6+5', skipDialog: true }
       );
     });
 
@@ -830,7 +830,7 @@ describe('Combat Handlers', () => {
 
       const result = await rollAllInitiativeHandler({});
 
-      expect(mockCombat.rollAll).toHaveBeenCalledWith({});
+      expect(mockCombat.rollAll).toHaveBeenCalledWith({ skipDialog: true });
       expect(result.results).toHaveLength(2);
       expect(result.results[0]?.name).toBe('Fighter');
       expect(result.results[1]?.name).toBe('Wizard');
@@ -844,7 +844,7 @@ describe('Combat Handlers', () => {
 
       await rollAllInitiativeHandler({ formula: '2d6+5' });
 
-      expect(mockCombat.rollAll).toHaveBeenCalledWith({ formula: '2d6+5' });
+      expect(mockCombat.rollAll).toHaveBeenCalledWith({ formula: '2d6+5', skipDialog: true });
     });
 
     it('rolls initiative for NPCs only', async () => {
@@ -855,7 +855,7 @@ describe('Combat Handlers', () => {
 
       await rollAllInitiativeHandler({ npcsOnly: true });
 
-      expect(mockCombat.rollNPC).toHaveBeenCalledWith({});
+      expect(mockCombat.rollNPC).toHaveBeenCalledWith({ skipDialog: true });
       expect(mockCombat.rollAll).not.toHaveBeenCalled();
     });
 

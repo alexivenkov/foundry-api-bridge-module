@@ -5,3 +5,4 @@ export { pf2eDecreaseConditionHandler } from './Pf2eDecreaseConditionHandler';
 export { pf2eGetConditionsHandler } from './Pf2eGetConditionsHandler';
 export { swadeSetStatusHandler } from './SwadeSetStatusHandler';
 export { coc7SetConditionHandler } from './Coc7SetConditionHandler';
+export { pf1SetConditionHandler } from './Pf1SetConditionHandler';

@@ -61,6 +61,15 @@ import {
   coc7LuckHandler,
   coc7SetConditionHandler,
   coc7GetActorSummaryHandler,
+  pf1RollAbilityHandler,
+  pf1RollSkillHandler,
+  pf1RollSaveHandler,
+  pf1RollCasterLevelHandler,
+  pf1RollConcentrationHandler,
+  pf1UseItemHandler,
+  pf1ApplyDamageHandler,
+  pf1SetConditionHandler,
+  pf1GetActorSummaryHandler,
   getWorldInfoHandler,
   getJournalsHandler,
   getJournalHandler,
@@ -564,6 +573,15 @@ function initializeWebSocket(
   commandRouter.register('coc7/luck', coc7LuckHandler);
   commandRouter.register('coc7/set-condition', coc7SetConditionHandler);
   commandRouter.register('coc7/get-actor-summary', coc7GetActorSummaryHandler);
+  commandRouter.register('pf1/roll-ability', pf1RollAbilityHandler);
+  commandRouter.register('pf1/roll-skill', pf1RollSkillHandler);
+  commandRouter.register('pf1/roll-save', pf1RollSaveHandler);
+  commandRouter.register('pf1/roll-caster-level', pf1RollCasterLevelHandler);
+  commandRouter.register('pf1/roll-concentration', pf1RollConcentrationHandler);
+  commandRouter.register('pf1/use-item', pf1UseItemHandler);
+  commandRouter.register('pf1/apply-damage', pf1ApplyDamageHandler);
+  commandRouter.register('pf1/set-condition', pf1SetConditionHandler);
+  commandRouter.register('pf1/get-actor-summary', pf1GetActorSummaryHandler);
   commandRouter.register('dnd5e/roll-attack', rollAttackHandler);
   commandRouter.register('roll-attack', rollAttackHandler); // @deprecated alias of 'dnd5e/roll-attack'
   commandRouter.register('dnd5e/roll-damage', rollDamageHandler);

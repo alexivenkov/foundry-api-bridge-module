@@ -112,6 +112,11 @@ export function toFoundryCombatantChanges(changes: CombatantChanges): Record<str
   return data;
 }
 
+/**
+ * `skipDialog` keeps systems that prompt before rolling initiative headless:
+ * pf1's `CombatPF#rollInitiative` otherwise opens its bonus dialog on the GM's
+ * client and the command waits for a click. Core Foundry ignores the key.
+ */
 export function toFoundryInitiativeOptions(options: InitiativeRollOptions): FoundryInitiativeOptions {
-  return options.formula !== undefined ? { formula: options.formula } : {};
+  return options.formula !== undefined ? { formula: options.formula, skipDialog: true } : { skipDialog: true };
 }

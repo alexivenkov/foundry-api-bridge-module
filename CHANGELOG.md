@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- **Pathfinder 1e (`pf1/*`)**, verified against the pf1 11.11 sources and live on Foundry 13.351, supports Foundry 12–13: `pf1/roll-ability`, `pf1/roll-skill` (id or sheet name, sub-skills included), `pf1/roll-save` (natural 1 / 20 rule on saves), `pf1/roll-caster-level`, `pf1/roll-concentration`, `pf1/use-item` (attacks with damage types, critical confirmation and critical damage, spells with their save DC, consumables; charges, slots and ammo spent by the system), `pf1/apply-damage` (temporary HP, nonlethal, ratio and reduction, Wounds & Vigor), `pf1/set-condition` (any `pf1.registry.conditions` id, tracks and immunities handled by the system) and `pf1/get-actor-summary`. Every check skips the system dialog; `showInChat` posts the system's own card. pf1 12 / Foundry 14 worlds are refused with a clear error (the system's roll API changed). Damage, conditions and item use run one at a time per actor, so parallel calls on the same actor no longer lose HP, charge or ammunition updates.
+
+### Fixed
+
+- `roll-initiative` and `roll-all-initiative` pass `skipDialog`, so a system that prompts before rolling initiative (pf1) no longer waits for a click on the GM's screen. Core Foundry ignores the option.
+- `filter-actors` reads the pf1 forms of CR (`details.cr.total`), AC (`attributes.ac.normal.total`) and level (`details.level.value`), which were null before; compendium NPCs fall back to `details.cr.base`.
+
 ## [8.19.0] - 2026-11-15
 
 ### Added
