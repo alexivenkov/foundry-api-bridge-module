@@ -20,7 +20,7 @@ const makeMockNote = (overrides: Partial<FoundryNoteDocument> = {}): FoundryNote
     entryId: 'entry-1',
     pageId: 'page-1',
     text: 'Initial',
-    icon: { src: 'icons/svg/book.svg', tint: null },
+    texture: { src: 'icons/svg/book.svg', tint: null },
     iconSize: 40,
     fontSize: 32,
     textAnchor: 1,
@@ -94,7 +94,7 @@ describe('updateNoteHandler', () => {
     });
 
     expect(note.update).toHaveBeenCalledWith({
-      icon: { src: 'icons/skull.svg', tint: '#660000' }
+      texture: { src: 'icons/skull.svg', tint: '#660000' }
     });
     expect(result.iconSrc).toBe('icons/skull.svg');
     expect(result.iconTint).toBe('#660000');
@@ -103,14 +103,14 @@ describe('updateNoteHandler', () => {
   it('updates icon tint to null to clear', async () => {
     const note = makeMockNote({ id: 'n1', _id: 'n1' });
     (note.update as jest.Mock).mockImplementation(async () => {
-      note.icon = { src: 'icons/svg/book.svg', tint: null };
+      note.texture = { src: 'icons/svg/book.svg', tint: null };
       return undefined;
     });
     mockGame.scenes.active = makeMockScene('active', note);
 
     await updateNoteHandler({ noteId: 'n1', iconTint: null });
 
-    expect(note.update).toHaveBeenCalledWith({ icon: { tint: null } });
+    expect(note.update).toHaveBeenCalledWith({ texture: { tint: null } });
   });
 
   it.each([
@@ -197,6 +197,7 @@ describe('updateNoteHandler', () => {
     const callArg = (note.update as jest.Mock).mock.calls[0]?.[0] as Record<string, unknown>;
     expect(callArg).not.toHaveProperty('x');
     expect(callArg).not.toHaveProperty('y');
+    expect(callArg).not.toHaveProperty('texture');
     expect(callArg).not.toHaveProperty('icon');
     expect(callArg).not.toHaveProperty('global');
   });

@@ -1,42 +1,21 @@
-import type { CreateJournalPageParams, JournalPageResult } from '@/commands/types';
+import type { CreateJournalPageParams, JournalPageDetailResult } from '@/commands/types';
 import {
-  mapPageToResult,
-  type FoundryGame,
-  type FoundryPageCreateData
-} from './journalTypes';
+  createFoundryJournalService,
+  createJournalPageRequestSchema,
+  toCreateJournalPageCommand
+} from '@/core/journals';
+import { parseRequest } from '@/core/shared';
+import { toWireJournalPageDetail, type JournalHandlerDependencies } from './journalWireMappers';
 
-declare const game: FoundryGame;
+export function createCreateJournalPageHandler(
+  deps: JournalHandlerDependencies = {}
+): (params: CreateJournalPageParams) => Promise<JournalPageDetailResult> {
+  const service = createFoundryJournalService(deps.globals, deps.generation);
 
-export async function createJournalPageHandler(
-  params: CreateJournalPageParams
-): Promise<JournalPageResult> {
-  const journal = game.journal.get(params.journalId);
-
-  if (!journal) {
-    throw new Error(`Journal not found: ${params.journalId}`);
-  }
-
-  const pageType = params.type ?? 'text';
-  const pageData: FoundryPageCreateData = {
-    name: params.name,
-    type: pageType
+  return async function createJournalPageHandler(params: CreateJournalPageParams): Promise<JournalPageDetailResult> {
+    const command = toCreateJournalPageCommand(parseRequest(createJournalPageRequestSchema, params));
+    return toWireJournalPageDetail(await service.createPage(command));
   };
-
-  if (pageType === 'text' && params.content !== undefined) {
-    pageData.text = { content: params.content };
-  }
-
-  if (params.src !== undefined) {
-    pageData.src = params.src;
-  }
-
-  const pages = await journal.createEmbeddedDocuments('JournalEntryPage', [pageData]);
-
-  const createdPage = pages[0];
-
-  if (!createdPage) {
-    throw new Error('Failed to create journal page');
-  }
-
-  return mapPageToResult(createdPage);
 }
+
+export const createJournalPageHandler = createCreateJournalPageHandler();

@@ -594,3 +594,71 @@ describe('tokenId addressing', () => {
     await expect(toggleActorStatusHandler({ tokenId: 'token-3', statusId: 'prone' })).rejects.toThrow('No active scene');
   });
 });
+
+describe('getActorEffectsHandler on the Foundry 14 effect model', () => {
+  const PERMANENT = { value: Infinity, units: 'seconds', expiry: null, expired: false, seconds: Infinity };
+
+  const v14Effect = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
+    _id: 'effect-v14',
+    name: 'Effect',
+    img: 'icons/effect.png',
+    disabled: false,
+    origin: null,
+    transfer: false,
+    statuses: new Set<string>(),
+    changes: [],
+    duration: PERMANENT,
+    flags: {},
+    update: jest.fn(),
+    delete: jest.fn(),
+    ...overrides
+  });
+
+  const summarize = async (effect: Record<string, unknown>) => {
+    mockGame.actors.get.mockReturnValue({ ...mockActor, effects: { contents: [effect], get: jest.fn() } });
+    const result = await getActorEffectsHandler({ actorId: 'actor-123' });
+    return result.effects[0];
+  };
+
+  it('reports an effect without a duration as permanent', async () => {
+    const summary = await summarize(v14Effect());
+
+    expect(summary?.isTemporary).toBe(false);
+    expect(summary).not.toHaveProperty('duration');
+  });
+
+  it.each([
+    ['rounds', { value: 3, units: 'rounds', seconds: 18 }, { rounds: 3 }],
+    ['turns', { value: 2, units: 'turns', seconds: null }, { turns: 2 }],
+    ['seconds', { value: 60, units: 'seconds', seconds: 60 }, { seconds: 60 }],
+    ['minutes, converted by the core', { value: 10, units: 'minutes', seconds: 600 }, { seconds: 600 }]
+  ])('maps a duration in %s back to the wire shape', async (_units, duration, expected) => {
+    const summary = await summarize(v14Effect({ duration: { ...PERMANENT, ...duration } }));
+
+    expect(summary?.isTemporary).toBe(true);
+    expect(summary?.duration).toEqual(expected);
+  });
+
+  it('keeps an effect temporary when its calendar duration has no seconds value', async () => {
+    const summary = await summarize(v14Effect({ duration: { ...PERMANENT, value: 2, units: 'months', seconds: null } }));
+
+    expect(summary?.isTemporary).toBe(true);
+    expect(summary?.duration).toEqual({});
+  });
+
+  it('returns change values as strings, as the wire type promises', async () => {
+    const summary = await summarize(v14Effect({
+      changes: [
+        { key: 'system.a', value: 1, mode: 2, type: 'add' },
+        { key: 'system.b', value: '1d4', mode: 2, type: 'add' },
+        { key: 'system.c', value: { bonus: 2 }, mode: 5, type: 'override' }
+      ]
+    }));
+
+    expect(summary?.changes).toEqual([
+      { key: 'system.a', value: '1', mode: 2 },
+      { key: 'system.b', value: '1d4', mode: 2 },
+      { key: 'system.c', value: '{"bonus":2}', mode: 5 }
+    ]);
+  });
+});

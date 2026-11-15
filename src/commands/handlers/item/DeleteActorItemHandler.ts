@@ -1,46 +1,24 @@
 import type { DeleteActorItemParams, DeleteResult } from '@/commands/types';
+import {
+  createFoundryActorItemService,
+  deleteActorItemRequestSchema,
+  deleteTokenActorItemRequestSchema,
+  parseActorItemRequest,
+  toRemoveActorItemCommand
+} from '@/core/items';
+import type { ItemHandlerDependencies } from './itemWireMappers';
 
-interface FoundryItem {
-  id: string;
-}
+export function createDeleteActorItemHandler(
+  deps: ItemHandlerDependencies = {}
+): (params: DeleteActorItemParams) => Promise<DeleteResult> {
+  const service = createFoundryActorItemService(deps.gameProvider);
 
-interface FoundryItemsCollection {
-  get(id: string): FoundryItem | undefined;
-}
-
-interface FoundryActor {
-  id: string;
-  name: string;
-  items: FoundryItemsCollection;
-  deleteEmbeddedDocuments(embeddedName: string, ids: string[]): Promise<FoundryItem[]>;
-}
-
-interface ActorsCollection {
-  get(id: string): FoundryActor | undefined;
-}
-
-interface FoundryGame {
-  actors: ActorsCollection;
-}
-
-declare const game: FoundryGame;
-
-export async function deleteActorItemHandler(params: DeleteActorItemParams): Promise<DeleteResult> {
-  const actor = game.actors.get(params.actorId);
-
-  if (!actor) {
-    throw new Error(`Actor not found: ${params.actorId}`);
-  }
-
-  const item = actor.items.get(params.itemId);
-
-  if (!item) {
-    throw new Error(`Item not found: ${params.itemId}`);
-  }
-
-  await actor.deleteEmbeddedDocuments('Item', [params.itemId]);
-
-  return {
-    deleted: true
+  return async function deleteActorItemHandler(params: DeleteActorItemParams): Promise<DeleteResult> {
+    await service.removeItem(toRemoveActorItemCommand(
+      parseActorItemRequest(deleteActorItemRequestSchema, deleteTokenActorItemRequestSchema, params)
+    ));
+    return { deleted: true };
   };
 }
+
+export const deleteActorItemHandler = createDeleteActorItemHandler();

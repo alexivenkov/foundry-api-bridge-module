@@ -1,38 +1,22 @@
-import type { RollAllInitiativeParams, InitiativeRollResult } from '@/commands/types';
+import type { InitiativeRollResult, RollAllInitiativeParams } from '@/commands/types';
+import { parseRequest } from '@/core/shared';
 import {
-  getActiveCombat,
-  type FoundryGame,
-  type RollInitiativeOptions
-} from './combatTypes';
+  createFoundryCombatantService,
+  rollAllInitiativeRequestSchema,
+  toRollAllInitiativeCommand,
+  type CombatWiring
+} from '@/core/combat';
+import { toWireInitiativeRolls } from './combatWireMappers';
 
-declare const game: FoundryGame;
+export function createRollAllInitiativeHandler(
+  wiring: CombatWiring = {}
+): (params: RollAllInitiativeParams) => Promise<InitiativeRollResult> {
+  const service = createFoundryCombatantService(wiring);
 
-export async function rollAllInitiativeHandler(params: RollAllInitiativeParams): Promise<InitiativeRollResult> {
-  const combat = getActiveCombat(game, params.combatId);
-
-  if (combat.combatants.contents.length === 0) {
-    return { results: [] };
-  }
-
-  const options: RollInitiativeOptions = {};
-  if (params.formula !== undefined) {
-    options.formula = params.formula;
-  }
-
-  if (params.npcsOnly) {
-    await combat.rollNPC(options);
-  } else {
-    await combat.rollAll(options);
-  }
-
-  // Collect results for all combatants with initiative
-  const results = combat.combatants.contents
-    .filter(c => c.initiative !== null)
-    .map(combatant => ({
-      combatantId: combatant.id,
-      name: combatant.name,
-      initiative: combatant.initiative ?? 0
-    }));
-
-  return { results };
+  return async function rollAllInitiativeHandler(params: RollAllInitiativeParams): Promise<InitiativeRollResult> {
+    const command = toRollAllInitiativeCommand(parseRequest(rollAllInitiativeRequestSchema, params));
+    return toWireInitiativeRolls(await service.rollAllInitiative(command));
+  };
 }
+
+export const rollAllInitiativeHandler = createRollAllInitiativeHandler();

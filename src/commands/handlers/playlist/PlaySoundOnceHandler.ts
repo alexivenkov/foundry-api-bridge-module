@@ -1,23 +1,26 @@
 import type { PlaySoundOnceParams, PlaySoundOnceResult } from '@/commands/types';
-import { getAudioHelper } from './playlistTypes';
+import { parseRequest } from '@/core/shared';
+import {
+  createFoundrySoundPlaybackService,
+  playSoundOnceRequestSchema,
+  toPlaySoundOnceCommand,
+  type AudioGlobalsProvider
+} from '@/core/playlists';
 
-export async function playSoundOnceHandler(
-  params: PlaySoundOnceParams
-): Promise<PlaySoundOnceResult> {
-  const helper = getAudioHelper();
-  const broadcast = params.broadcast ?? true;
-  const data = {
-    src: params.src,
-    volume: params.volume ?? 0.8,
-    autoplay: true,
-    loop: params.loop ?? false
-  };
+export interface PlaySoundOnceHandlerDependencies {
+  globals?: AudioGlobalsProvider;
+}
 
-  await helper.play(data, broadcast);
+export function createPlaySoundOnceHandler(
+  deps: PlaySoundOnceHandlerDependencies = {}
+): (params: PlaySoundOnceParams) => Promise<PlaySoundOnceResult> {
+  const service = createFoundrySoundPlaybackService(deps.globals);
 
-  return {
-    playing: true,
-    src: params.src,
-    broadcast
+  return async function playSoundOnceHandler(params: PlaySoundOnceParams): Promise<PlaySoundOnceResult> {
+    const command = toPlaySoundOnceCommand(parseRequest(playSoundOnceRequestSchema, params));
+    await service.playOnce(command);
+    return { playing: true, src: command.sound.src, broadcast: command.broadcast };
   };
 }
+
+export const playSoundOnceHandler = createPlaySoundOnceHandler();

@@ -1,36 +1,23 @@
 import type { AddSoundToPlaylistParams, AddSoundToPlaylistResult } from '@/commands/types';
-import { getGame, mapSoundToSummary } from './playlistTypes';
+import { parseRequest } from '@/core/shared';
+import {
+  addSoundToPlaylistRequestSchema,
+  createFoundryPlaylistService,
+  toAddPlaylistSoundCommand
+} from '@/core/playlists';
+import { toWirePlaylistSound, type PlaylistHandlerDependencies } from './playlistWireMappers';
 
-export async function addSoundToPlaylistHandler(
-  params: AddSoundToPlaylistParams
-): Promise<AddSoundToPlaylistResult> {
-  const playlist = getGame().playlists.get(params.playlistId);
-  if (!playlist) {
-    throw new Error(`Playlist not found: ${params.playlistId}`);
-  }
+export function createAddSoundToPlaylistHandler(
+  deps: PlaylistHandlerDependencies = {}
+): (params: AddSoundToPlaylistParams) => Promise<AddSoundToPlaylistResult> {
+  const service = createFoundryPlaylistService(deps.gameProvider);
 
-  const data: Record<string, unknown> = {
-    name: params.name,
-    path: params.path
+  return async function addSoundToPlaylistHandler(
+    params: AddSoundToPlaylistParams
+  ): Promise<AddSoundToPlaylistResult> {
+    const command = toAddPlaylistSoundCommand(parseRequest(addSoundToPlaylistRequestSchema, params));
+    return toWirePlaylistSound(await service.addSound(command));
   };
-
-  if (params.volume !== undefined) {
-    data['volume'] = params.volume;
-  }
-
-  if (params.repeat !== undefined) {
-    data['repeat'] = params.repeat;
-  }
-
-  if (params.description !== undefined) {
-    data['description'] = params.description;
-  }
-
-  const created = await playlist.createEmbeddedDocuments('PlaylistSound', [data]);
-  const first = created[0];
-  if (!first) {
-    throw new Error('Sound creation returned no document');
-  }
-
-  return mapSoundToSummary(first);
 }
+
+export const addSoundToPlaylistHandler = createAddSoundToPlaylistHandler();

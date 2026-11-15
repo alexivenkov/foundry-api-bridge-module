@@ -1,10 +1,6 @@
-import { getAllowScriptMacros } from '@/settings/SettingsManager';
+import { defaultScriptMacroPolicy, requireScriptMacrosAllowed, type MacroType } from '@/core/macros';
 
-export function ensureScriptMacroAllowed(macroType: 'chat' | 'script'): void {
-  if (macroType !== 'script') return;
-  if (!getAllowScriptMacros()) {
-    throw new Error(
-      'Script macros are disabled. Enable "Allow Script Macros" in module settings to manage script-type macros via API.'
-    );
-  }
+/** The script gate of the macros context over the module setting, under the name its contract test knows. */
+export function ensureScriptMacroAllowed(macroType: MacroType): void {
+  requireScriptMacrosAllowed(macroType, defaultScriptMacroPolicy);
 }

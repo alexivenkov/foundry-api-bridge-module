@@ -1,24 +1,18 @@
 import type { DeleteFolderParams, DeleteFolderResult } from '@/commands/types';
-import { getGame } from './folderTypes';
+import { parseRequest } from '@/core/shared';
+import { createFoundryFolderService, deleteFolderRequestSchema, toDeleteFolderCommand } from '@/core/folders';
+import type { FolderHandlerDependencies } from './folderWireMappers';
 
-export async function deleteFolderHandler(params: DeleteFolderParams): Promise<DeleteFolderResult> {
-  const folder = getGame().folders.get(params.folderId);
-  if (!folder) {
-    throw new Error(`Folder not found: ${params.folderId}`);
-  }
+export function createDeleteFolderHandler(
+  deps: FolderHandlerDependencies = {}
+): (params: DeleteFolderParams) => Promise<DeleteFolderResult> {
+  const service = createFoundryFolderService(deps.globals);
 
-  const options: { deleteSubfolders?: boolean; deleteContents?: boolean } = {};
-  if (params.deleteSubfolders !== undefined) {
-    options.deleteSubfolders = params.deleteSubfolders;
-  }
-  if (params.deleteContents !== undefined) {
-    options.deleteContents = params.deleteContents;
-  }
-
-  await folder.delete(options);
-
-  return {
-    deleted: true,
-    folderId: params.folderId
+  return async function deleteFolderHandler(params: DeleteFolderParams): Promise<DeleteFolderResult> {
+    const command = toDeleteFolderCommand(parseRequest(deleteFolderRequestSchema, params));
+    await service.deleteFolder(command);
+    return { deleted: true, folderId: command.folderId };
   };
 }
+
+export const deleteFolderHandler = createDeleteFolderHandler();

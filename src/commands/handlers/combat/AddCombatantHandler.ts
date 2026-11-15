@@ -1,39 +1,22 @@
 import type { AddCombatantParams, CombatantResult } from '@/commands/types';
+import { parseRequest } from '@/core/shared';
 import {
-  getActiveCombat,
-  mapCombatantToResult,
-  type FoundryGame,
-  type FoundryCombatantCreateData
-} from './combatTypes';
+  addCombatantRequestSchema,
+  createFoundryCombatantService,
+  toAddCombatantCommand,
+  type CombatWiring
+} from '@/core/combat';
+import { toWireCombatant } from './combatWireMappers';
 
-declare const game: FoundryGame;
+export function createAddCombatantHandler(
+  wiring: CombatWiring = {}
+): (params: AddCombatantParams) => Promise<CombatantResult> {
+  const service = createFoundryCombatantService(wiring);
 
-export async function addCombatantHandler(params: AddCombatantParams): Promise<CombatantResult> {
-  const combat = getActiveCombat(game, params.combatId);
-
-  const combatantData: FoundryCombatantCreateData = {
-    actorId: params.actorId
+  return async function addCombatantHandler(params: AddCombatantParams): Promise<CombatantResult> {
+    const command = toAddCombatantCommand(parseRequest(addCombatantRequestSchema, params));
+    return toWireCombatant(await service.addCombatant(command));
   };
-
-  if (params.tokenId !== undefined) {
-    combatantData.tokenId = params.tokenId;
-  }
-
-  if (params.initiative !== undefined) {
-    combatantData.initiative = params.initiative;
-  }
-
-  if (params.hidden !== undefined) {
-    combatantData.hidden = params.hidden;
-  }
-
-  const combatants = await combat.createEmbeddedDocuments('Combatant', [combatantData]);
-
-  const createdCombatant = combatants[0];
-
-  if (!createdCombatant) {
-    throw new Error('Failed to create combatant');
-  }
-
-  return mapCombatantToResult(createdCombatant);
 }
+
+export const addCombatantHandler = createAddCombatantHandler();

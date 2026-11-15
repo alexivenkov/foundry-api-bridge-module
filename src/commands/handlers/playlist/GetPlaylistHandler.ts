@@ -1,10 +1,22 @@
 import type { GetPlaylistParams, GetPlaylistResult } from '@/commands/types';
-import { getGame, mapPlaylistToDetail } from './playlistTypes';
+import { asError } from '@/commands/handlers/legacyWire';
+import { parseRequest } from '@/core/shared';
+import { createFoundryPlaylistService, getPlaylistRequestSchema, toGetPlaylistQuery } from '@/core/playlists';
+import { toWirePlaylistDetail, type PlaylistHandlerDependencies } from './playlistWireMappers';
 
-export function getPlaylistHandler(params: GetPlaylistParams): Promise<GetPlaylistResult> {
-  const playlist = getGame().playlists.get(params.playlistId);
-  if (!playlist) {
-    return Promise.reject(new Error(`Playlist not found: ${params.playlistId}`));
-  }
-  return Promise.resolve(mapPlaylistToDetail(playlist));
+export function createGetPlaylistHandler(
+  deps: PlaylistHandlerDependencies = {}
+): (params: GetPlaylistParams) => Promise<GetPlaylistResult> {
+  const service = createFoundryPlaylistService(deps.gameProvider);
+
+  return function getPlaylistHandler(params: GetPlaylistParams): Promise<GetPlaylistResult> {
+    try {
+      const query = toGetPlaylistQuery(parseRequest(getPlaylistRequestSchema, params));
+      return Promise.resolve(toWirePlaylistDetail(service.getPlaylist(query)));
+    } catch (error) {
+      return Promise.reject(asError(error));
+    }
+  };
 }
+
+export const getPlaylistHandler = createGetPlaylistHandler();

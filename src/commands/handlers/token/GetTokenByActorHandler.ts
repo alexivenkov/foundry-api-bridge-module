@@ -1,29 +1,34 @@
 import type { GetTokenByActorParams, GetTokenByActorResult } from '@/commands/types';
+import { asError, withShortNoActiveScene } from '@/commands/handlers/legacyWire';
+import { parseRequest } from '@/core/shared';
 import {
-  getActiveScene,
-  mapTokenToDetail,
-  type FoundryGame,
-  type FoundryToken
-} from './tokenTypes';
+  createFoundryTokenAppearanceService,
+  createFoundryTokenService,
+  getTokenByActorRequestSchema,
+  toGetTokenByActorQuery
+} from '@/core/tokens';
+import { toWireTokenDetail, withWireAppearance, type TokenAppearanceHandlerDependencies } from './tokenWireMappers';
 
-declare const game: FoundryGame;
+export function createGetTokenByActorHandler(
+  deps: TokenAppearanceHandlerDependencies = {}
+): (params: GetTokenByActorParams) => Promise<GetTokenByActorResult> {
+  const service = createFoundryTokenService(deps.gameProvider);
+  const appearance = createFoundryTokenAppearanceService(deps);
 
-function tokenActorId(token: FoundryToken): string | null {
-  if (token.actorId !== undefined) return token.actorId;
-  return token.actor?.id ?? null;
-}
-
-export function getTokenByActorHandler(
-  params: GetTokenByActorParams
-): Promise<GetTokenByActorResult> {
-  try {
-    const scene = getActiveScene(game, params.sceneId);
-    const token = scene.tokens.contents.find(t => tokenActorId(t) === params.actorId);
-    if (!token) {
-      throw new Error(`No token for actor ${params.actorId} on scene ${scene.id}`);
+  return function getTokenByActorHandler(params: GetTokenByActorParams): Promise<GetTokenByActorResult> {
+    try {
+      const request = parseRequest(getTokenByActorRequestSchema, params);
+      const { token, sceneId } = service.getTokenByActor(toGetTokenByActorQuery(request));
+      const detail = toWireTokenDetail(token, sceneId);
+      return Promise.resolve(
+        request.includeAppearance === true
+          ? withWireAppearance(detail, appearance.getAppearance({ sceneId, tokenId: token.id }))
+          : detail
+      );
+    } catch (error) {
+      return Promise.reject(asError(withShortNoActiveScene(error)));
     }
-    return Promise.resolve(mapTokenToDetail(token, scene));
-  } catch (error) {
-    return Promise.reject(error instanceof Error ? error : new Error(String(error)));
-  }
+  };
 }
+
+export const getTokenByActorHandler = createGetTokenByActorHandler();

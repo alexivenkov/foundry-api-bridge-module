@@ -83,7 +83,7 @@ describe('notifyHandler', () => {
     const result = await notifyHandler({ message: 'yay', type: 'success' });
 
     expect(mockUi.notifications.info).toHaveBeenCalledWith('yay', {});
-    expect(result.type).toBe('success');
+    expect(result.type).toBe('info');
   });
 
   it('passes permanent flag through', async () => {

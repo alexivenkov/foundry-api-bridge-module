@@ -43,23 +43,47 @@ function setGame(opts: SetGameOpts): void {
   };
 }
 
-function setCanvas(tokens: { id: string }[] | null): void {
+interface TokenPlaceable {
+  id: string;
+  document: { id: string; parent: { id: string }; actor: { id: string } | null };
+  actor: { id: string } | null;
+}
+
+function createPlaceable(id: string, actor: { id: string } | null = null): TokenPlaceable {
+  return { id, document: { id, parent: { id: 'scene-1' }, actor }, actor };
+}
+
+function setCanvas(tokens: TokenPlaceable[] | null): void {
   if (tokens === null) {
     (globalThis as Record<string, unknown>)['canvas'] = { scene: null };
     return;
   }
   (globalThis as Record<string, unknown>)['canvas'] = {
-    scene: {
-      tokens: {
-        get: jest.fn((id: string) => tokens.find(t => t.id === id))
-      }
+    tokens: {
+      get: jest.fn((id: string) => tokens.find(t => t.id === id))
     }
   };
+}
+
+interface SpeakerSource {
+  actor?: { id: string } | null;
+  token?: TokenPlaceable['document'];
+}
+
+const mockGetSpeaker = jest.fn(({ actor, token }: SpeakerSource) =>
+  token
+    ? { scene: token.parent.id, actor: token.actor?.id ?? null, token: token.id }
+    : { scene: null, actor: actor?.id ?? null, token: null }
+);
+
+function setChatMessage(): void {
+  (globalThis as Record<string, unknown>)['ChatMessage'] = { implementation: { getSpeaker: mockGetSpeaker } };
 }
 
 function clearGlobals(): void {
   delete (globalThis as Record<string, unknown>)['game'];
   delete (globalThis as Record<string, unknown>)['canvas'];
+  delete (globalThis as Record<string, unknown>)['ChatMessage'];
 }
 
 function scopeOf(macro: FoundryMacroDoc): Record<string, unknown> {
@@ -74,6 +98,7 @@ function withArgs(args: unknown): ExecuteMacroParams {
 describe('executeMacroHandler', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    setChatMessage();
   });
 
   afterEach(clearGlobals);
@@ -145,26 +170,36 @@ describe('executeMacroHandler', () => {
 
     await executeMacroHandler({ macroId: 'm1', actorId: 'actor-1' });
 
-    expect(macro.execute).toHaveBeenCalledWith({ actor });
+    expect(mockGetSpeaker).toHaveBeenCalledWith({ actor, token: undefined });
+    expect(macro.execute).toHaveBeenCalledWith({
+      actor,
+      speaker: { scene: null, actor: 'actor-1', token: null }
+    });
   });
 
   it('should pass token in scope when tokenId provided (resolved from canvas)', async () => {
     mockGetAllowScriptMacros.mockReturnValue(false);
     const macro = createMockMacro({ id: 'm1', type: 'chat' });
-    const token = { id: 'token-1' };
+    const token = createPlaceable('token-1', { id: 'token-actor' });
     setGame({ macros: [macro] });
     setCanvas([token]);
 
     await executeMacroHandler({ macroId: 'm1', tokenId: 'token-1' });
 
-    expect(macro.execute).toHaveBeenCalledWith({ token });
+    expect(mockGetSpeaker).toHaveBeenCalledWith({ actor: token.actor, token: token.document });
+    expect(macro.execute).toHaveBeenCalledWith({
+      actor: token.actor,
+      token,
+      speaker: { scene: 'scene-1', actor: 'token-actor', token: 'token-1' }
+    });
+    expect(scopeOf(macro)['token']).toBe(token);
   });
 
   it('should pass both actor and token when both ids provided', async () => {
     mockGetAllowScriptMacros.mockReturnValue(false);
     const macro = createMockMacro({ id: 'm1', type: 'chat' });
     const actor = { id: 'actor-1' };
-    const token = { id: 'token-1' };
+    const token = createPlaceable('token-1', { id: 'token-actor' });
     setGame({ macros: [macro], actors: [actor] });
     setCanvas([token]);
 
@@ -174,7 +209,12 @@ describe('executeMacroHandler', () => {
       tokenId: 'token-1'
     });
 
-    expect(macro.execute).toHaveBeenCalledWith({ actor, token });
+    expect(mockGetSpeaker).toHaveBeenCalledWith({ actor, token: token.document });
+    expect(macro.execute).toHaveBeenCalledWith({
+      actor,
+      token,
+      speaker: { scene: 'scene-1', actor: 'token-actor', token: 'token-1' }
+    });
   });
 
   it('should throw when macro not found', async () => {
@@ -239,15 +279,20 @@ describe('executeMacroHandler', () => {
     it('passes args next to actor and token', async () => {
       const macro = createMockMacro({ id: 'm1', type: 'script', command: 'return 1' });
       const actor = { id: 'actor-1' };
-      const token = { id: 'token-1' };
+      const token = createPlaceable('token-1');
       setGame({ macros: [macro], actors: [actor] });
       setCanvas([token]);
       const args = { targetTokenId: 't2' };
 
       await executeMacroHandler({ macroId: 'm1', actorId: 'actor-1', tokenId: 'token-1', args });
 
-      expect(macro.execute).toHaveBeenCalledWith({ actor, token, args });
-      expect(Object.keys(scopeOf(macro)).sort()).toEqual(['actor', 'args', 'token']);
+      expect(macro.execute).toHaveBeenCalledWith({
+        actor,
+        token,
+        speaker: { scene: 'scene-1', actor: null, token: 'token-1' },
+        args
+      });
+      expect(Object.keys(scopeOf(macro)).sort()).toEqual(['actor', 'args', 'speaker', 'token']);
     });
 
     it('accepts an empty object', async () => {

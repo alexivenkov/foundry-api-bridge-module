@@ -1,3 +1,6 @@
+// The shapes the world-info and compendium handler tests build their fake
+// `game` from. The handlers read `game` through their own contexts.
+
 export interface FoundryWorld {
   id: string;
   title: string;
@@ -34,8 +37,6 @@ export interface FoundryModule {
   version: string | undefined;
 }
 
-export const MODULE_ID = 'foundry-api-bridge';
-
 export interface FoundryGame {
   world: FoundryWorld | undefined;
   system: FoundrySystem | undefined;
@@ -46,8 +47,4 @@ export interface FoundryGame {
   items: FoundryCollection<unknown> | undefined;
   scenes: FoundryCollection<unknown> | undefined;
   packs: FoundryCollection<FoundryPack> | undefined;
-}
-
-export function getGame(): FoundryGame {
-  return (globalThis as unknown as { game: FoundryGame }).game;
 }

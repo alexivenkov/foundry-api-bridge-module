@@ -1,75 +1,33 @@
-import type {
-  GetTokensInRangeParams,
-  GetTokensInRangeResult,
-  TokenInRangeEntry
-} from '@/commands/types';
+import type { GetTokensInRangeParams, GetTokensInRangeResult } from '@/commands/types';
+import { asError, withShortNoActiveScene } from '@/commands/handlers/legacyWire';
+import { parseRequest } from '@/core/shared';
 import {
-  getActiveScene,
-  dispositionFromNumber,
-  type FoundryGame,
-  type FoundryToken
-} from './tokenTypes';
-import { chebyshevDistanceFromPoint } from './geometry';
+  createFoundryTokenService,
+  getTokensInRangeRequestSchema,
+  toTokensInRangeQuery
+} from '@/core/tokens';
+import { toWireTokenInRange, type TokenHandlerDependencies } from './tokenWireMappers';
 
-declare const game: FoundryGame;
+export function createGetTokensInRangeHandler(
+  deps: TokenHandlerDependencies = {}
+): (params: GetTokensInRangeParams) => Promise<GetTokensInRangeResult> {
+  const service = createFoundryTokenService(deps.gameProvider);
 
-const DEFAULT_GRID_SIZE = 100;
-const DEFAULT_GRID_DISTANCE = 5;
-const DEFAULT_GRID_UNITS = 'ft';
-
-function tokenActorId(token: FoundryToken): string | null {
-  if (token.actorId !== undefined) return token.actorId;
-  return token.actor?.id ?? null;
-}
-
-export function getTokensInRangeHandler(
-  params: GetTokensInRangeParams
-): Promise<GetTokensInRangeResult> {
-  try {
-    const scene = getActiveScene(game, params.sceneId);
-    const grid = scene.grid;
-    const gridSize = grid?.size ?? DEFAULT_GRID_SIZE;
-    const gridDistance = grid?.distance ?? DEFAULT_GRID_DISTANCE;
-    const units = grid?.units ?? DEFAULT_GRID_UNITS;
-
-    const tokens: TokenInRangeEntry[] = [];
-
-    for (const token of scene.tokens.contents) {
-      if (params.excludeTokenId !== undefined && token.id === params.excludeTokenId) {
-        continue;
-      }
-
-      const distance = chebyshevDistanceFromPoint(
-        params.originX,
-        params.originY,
-        token,
-        gridSize,
-        gridDistance
-      );
-
-      if (distance <= params.range) {
-        tokens.push({
-          id: token.id,
-          name: token.name,
-          x: token.x,
-          y: token.y,
-          distance,
-          actorId: tokenActorId(token),
-          disposition: dispositionFromNumber(token.disposition)
-        });
-      }
+  return function getTokensInRangeHandler(params: GetTokensInRangeParams): Promise<GetTokensInRangeResult> {
+    try {
+      const query = toTokensInRangeQuery(parseRequest(getTokensInRangeRequestSchema, params));
+      const result = service.tokensInRange(query);
+      return Promise.resolve({
+        sceneId: result.sceneId,
+        origin: { x: query.originX, y: query.originY },
+        range: query.range,
+        units: result.units,
+        tokens: result.tokens.map(toWireTokenInRange)
+      });
+    } catch (error) {
+      return Promise.reject(asError(withShortNoActiveScene(error)));
     }
-
-    tokens.sort((a, b) => a.distance - b.distance);
-
-    return Promise.resolve({
-      sceneId: scene.id,
-      origin: { x: params.originX, y: params.originY },
-      range: params.range,
-      units,
-      tokens
-    });
-  } catch (error) {
-    return Promise.reject(error instanceof Error ? error : new Error(String(error)));
-  }
+  };
 }
+
+export const getTokensInRangeHandler = createGetTokensInRangeHandler();

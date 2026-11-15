@@ -1,18 +1,18 @@
 import type { PlayPlaylistParams, PlayPlaylistResult } from '@/commands/types';
-import { getGame } from './playlistTypes';
+import { parseRequest } from '@/core/shared';
+import { createFoundryPlaylistService, playPlaylistRequestSchema, toPlayPlaylistCommand } from '@/core/playlists';
+import type { PlaylistHandlerDependencies } from './playlistWireMappers';
 
-export async function playPlaylistHandler(params: PlayPlaylistParams): Promise<PlayPlaylistResult> {
-  const playlist = getGame().playlists.get(params.playlistId);
-  if (!playlist) {
-    throw new Error(`Playlist not found: ${params.playlistId}`);
-  }
+export function createPlayPlaylistHandler(
+  deps: PlaylistHandlerDependencies = {}
+): (params: PlayPlaylistParams) => Promise<PlayPlaylistResult> {
+  const service = createFoundryPlaylistService(deps.gameProvider);
 
-  const updated = await playlist.playAll();
-  const playingSounds = updated.sounds.contents.filter(s => s.playing).length;
-
-  return {
-    playing: true,
-    playlistId: params.playlistId,
-    soundCount: playingSounds
+  return async function playPlaylistHandler(params: PlayPlaylistParams): Promise<PlayPlaylistResult> {
+    const command = toPlayPlaylistCommand(parseRequest(playPlaylistRequestSchema, params));
+    const { playingSounds } = await service.playPlaylist(command);
+    return { playing: true, playlistId: command.playlistId, soundCount: playingSounds };
   };
 }
+
+export const playPlaylistHandler = createPlayPlaylistHandler();

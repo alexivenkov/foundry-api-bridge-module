@@ -1,32 +1,22 @@
-import type { CreateCombatParams, CombatResult } from '@/commands/types';
+import type { CombatResult, CreateCombatParams } from '@/commands/types';
+import { parseRequest } from '@/core/shared';
 import {
-  mapCombatToResult,
-  type CombatConstructor,
-  type FoundryGame,
-  type FoundryCombatCreateData
-} from './combatTypes';
+  createCombatRequestSchema,
+  createFoundryCombatService,
+  toCreateCombatCommand,
+  type CombatWiring
+} from '@/core/combat';
+import { toWireCombat } from './combatWireMappers';
 
-declare const game: FoundryGame;
-declare const Combat: CombatConstructor;
+export function createCreateCombatHandler(
+  wiring: CombatWiring = {}
+): (params: CreateCombatParams) => Promise<CombatResult> {
+  const service = createFoundryCombatService(wiring);
 
-export async function createCombatHandler(params: CreateCombatParams): Promise<CombatResult> {
-  const createData: FoundryCombatCreateData = {};
-
-  if (params.sceneId !== undefined) {
-    createData.scene = params.sceneId;
-  } else if (game.scenes.active) {
-    createData.scene = game.scenes.active.id;
-  }
-
-  const combat = await Combat.create(createData);
-
-  if (!combat) {
-    throw new Error('Combat creation was cancelled by Foundry (a module hook may have vetoed it)');
-  }
-
-  if (params.activate) {
-    await combat.activate();
-  }
-
-  return mapCombatToResult(combat);
+  return async function createCombatHandler(params: CreateCombatParams): Promise<CombatResult> {
+    const command = toCreateCombatCommand(parseRequest(createCombatRequestSchema, params));
+    return toWireCombat(await service.createCombat(command));
+  };
 }
+
+export const createCombatHandler = createCreateCombatHandler();

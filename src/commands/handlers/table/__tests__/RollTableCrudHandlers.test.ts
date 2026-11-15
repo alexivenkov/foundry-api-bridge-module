@@ -40,14 +40,26 @@ function createMockTable(results: FoundryTableResult[] = [], overrides?: Partial
 
 const mockCreate = jest.fn();
 
-function setGameForCreate(): void {
+function setGameForCreate(generation?: number): void {
   (globalThis as Record<string, unknown>)['game'] = {
+    ...(generation === undefined ? {} : { release: { generation } }),
     tables: {
       documentClass: { create: mockCreate },
       get: jest.fn(),
       forEach: jest.fn()
     }
   };
+}
+
+const MIXED_RESULTS = [
+  { text: 'Goblin', range: [1, 3] as [number, number] },
+  { text: 'Dragon', range: [4, 5] as [number, number], type: 1, documentCollection: 'Actor', documentId: 'actor-1' },
+  { text: 'Sword', range: [6, 6] as [number, number], type: 2, documentCollection: 'dnd5e.items', documentId: 'item-1' }
+];
+
+function sentResults(): Record<string, unknown>[] {
+  const payload = mockCreate.mock.calls[0]?.[0] as { results: Record<string, unknown>[] };
+  return payload.results;
 }
 
 function setGameForGetById(tables: Map<string, FoundryRollTable>): void {
@@ -124,6 +136,26 @@ describe('createRollTableHandler', () => {
       ]
     });
     expect(result.results).toHaveLength(2);
+  });
+
+  it('sends result types as strings on Foundry 14, which rejects numeric types', async () => {
+    mockCreate.mockResolvedValue(createMockTable());
+    setGameForCreate(14);
+
+    await createRollTableHandler({ name: 'Encounters', results: MIXED_RESULTS });
+
+    expect(sentResults().map(r => r['type'])).toEqual(['text', 'document', 'document']);
+    expect(sentResults()[1]).toMatchObject({ text: 'Dragon', documentCollection: 'Actor', documentId: 'actor-1' });
+    expect(sentResults()[2]).toMatchObject({ text: 'Sword', documentCollection: 'dnd5e.items', documentId: 'item-1' });
+  });
+
+  it('keeps numeric result types before Foundry 14', async () => {
+    mockCreate.mockResolvedValue(createMockTable());
+    setGameForCreate(13);
+
+    await createRollTableHandler({ name: 'Encounters', results: MIXED_RESULTS });
+
+    expect(sentResults().map(r => r['type'])).toEqual([0, 1, 2]);
   });
 
   it('should apply defaults for formula, replacement, displayRoll', async () => {

@@ -1,43 +1,27 @@
 import type { CreateTokenParams, TokenResult } from '@/commands/types';
+import { withShortNoActiveScene } from '@/commands/handlers/legacyWire';
+import { parseRequest } from '@/core/shared';
 import {
-  getActiveScene,
-  mapTokenToResult,
-  type FoundryGame,
-  type TokenCreateData
-} from './tokenTypes';
+  createFoundryTokenAppearanceService,
+  createTokenRequestSchema,
+  toCreateTokenWithAppearanceCommand
+} from '@/core/tokens';
+import { toWireTokenResult, withWireAppearance, type TokenAppearanceHandlerDependencies } from './tokenWireMappers';
 
-declare const game: FoundryGame;
+export function createCreateTokenHandler(
+  deps: TokenAppearanceHandlerDependencies = {}
+): (params: CreateTokenParams) => Promise<TokenResult> {
+  const service = createFoundryTokenAppearanceService(deps);
 
-export async function createTokenHandler(params: CreateTokenParams): Promise<TokenResult> {
-  const scene = getActiveScene(game, params.sceneId);
-
-  const tokenData: TokenCreateData = {
-    actorId: params.actorId,
-    x: params.x,
-    y: params.y
+  return async function createTokenHandler(params: CreateTokenParams): Promise<TokenResult> {
+    const command = toCreateTokenWithAppearanceCommand(parseRequest(createTokenRequestSchema, params));
+    try {
+      const { token, appearance } = await service.createToken(command);
+      return withWireAppearance(toWireTokenResult(token), appearance);
+    } catch (error) {
+      throw withShortNoActiveScene(error);
+    }
   };
-
-  if (params.hidden !== undefined) {
-    tokenData.hidden = params.hidden;
-  }
-  if (params.elevation !== undefined) {
-    tokenData.elevation = params.elevation;
-  }
-  if (params.rotation !== undefined) {
-    tokenData.rotation = params.rotation;
-  }
-  if (params.scale !== undefined) {
-    tokenData.scale = params.scale;
-  }
-  if (params.actorLink !== undefined) {
-    tokenData.actorLink = params.actorLink;
-  }
-
-  const [token] = await scene.createEmbeddedDocuments('Token', [tokenData]);
-
-  if (!token) {
-    throw new Error('Failed to create token');
-  }
-
-  return mapTokenToResult(token);
 }
+
+export const createTokenHandler = createCreateTokenHandler();

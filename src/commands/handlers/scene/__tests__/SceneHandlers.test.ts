@@ -14,7 +14,7 @@ interface MockWall {
   _id: string;
   c: number[];
   move: number;
-  sense: number;
+  sight: number;
   door: number;
   ds: number;
 }
@@ -105,7 +105,7 @@ const createMockWall = (overrides: Partial<MockWall> = {}): MockWall => ({
   _id: 'wall-001',
   c: [0, 0, 100, 100],
   move: 20,
-  sense: 20,
+  sight: 20,
   door: 0,
   ds: 0,
   ...overrides
@@ -492,9 +492,9 @@ describe('Scene Handlers', () => {
       const mockScene = createMockScene({
         walls: {
           contents: [
-            createMockWall({ move: 20, sense: 20 }),
-            createMockWall({ move: 0, sense: 20 }),
-            createMockWall({ move: 20, sense: 0 })
+            createMockWall({ move: 20, sight: 20 }),
+            createMockWall({ move: 0, sight: 20 }),
+            createMockWall({ move: 20, sight: 0 })
           ]
         }
       });

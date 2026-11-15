@@ -1,10 +1,22 @@
 import type { GetMacroParams, GetMacroResult } from '@/commands/types';
-import { getGame, mapMacroToDetail } from './macroTypes';
+import { asError } from '@/commands/handlers/legacyWire';
+import { createFoundryMacroService, getMacroRequestSchema, toGetMacroQuery, type MacroWiring } from '@/core/macros';
+import { parseRequest } from '@/core/shared';
+import { toWireMacroDetail } from './macroWireMappers';
 
-export function getMacroHandler(params: GetMacroParams): Promise<GetMacroResult> {
-  const macro = getGame().macros.get(params.macroId);
-  if (!macro) {
-    return Promise.reject(new Error(`Macro not found: ${params.macroId}`));
-  }
-  return Promise.resolve(mapMacroToDetail(macro));
+export function createGetMacroHandler(
+  wiring: MacroWiring = {}
+): (params: GetMacroParams) => Promise<GetMacroResult> {
+  const service = createFoundryMacroService(wiring);
+
+  return function getMacroHandler(params: GetMacroParams): Promise<GetMacroResult> {
+    try {
+      const macro = service.getMacro(toGetMacroQuery(parseRequest(getMacroRequestSchema, params)));
+      return Promise.resolve(toWireMacroDetail(macro));
+    } catch (error) {
+      return Promise.reject(asError(error));
+    }
+  };
 }
+
+export const getMacroHandler = createGetMacroHandler();

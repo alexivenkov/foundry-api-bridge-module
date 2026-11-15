@@ -1,17 +1,28 @@
 import type { GetSceneTokensParams, SceneTokensResult } from '@/commands/types';
-import { getActiveScene, mapTokenToResult, type FoundryGame } from './tokenTypes';
+import { asError, withShortNoActiveScene } from '@/commands/handlers/legacyWire';
+import { parseRequest } from '@/core/shared';
+import { createFoundryTokenService, getSceneTokensRequestSchema, toListTokensQuery } from '@/core/tokens';
+import { toWireTokenResult, type TokenHandlerDependencies } from './tokenWireMappers';
 
-declare const game: FoundryGame;
+export function createGetSceneTokensHandler(
+  deps: TokenHandlerDependencies = {}
+): (params: GetSceneTokensParams) => Promise<SceneTokensResult> {
+  const service = createFoundryTokenService(deps.gameProvider);
 
-export function getSceneTokensHandler(params: GetSceneTokensParams): Promise<SceneTokensResult> {
-  try {
-    const scene = getActiveScene(game, params.sceneId);
-    return Promise.resolve({
-      sceneId: scene.id,
-      sceneName: scene.name,
-      tokens: scene.tokens.contents.map(mapTokenToResult)
-    });
-  } catch (error) {
-    return Promise.reject(error instanceof Error ? error : new Error(String(error)));
-  }
+  return function getSceneTokensHandler(params: GetSceneTokensParams): Promise<SceneTokensResult> {
+    try {
+      const { scene, tokens } = service.listTokens(
+        toListTokensQuery(parseRequest(getSceneTokensRequestSchema, params))
+      );
+      return Promise.resolve({
+        sceneId: scene.id,
+        sceneName: scene.name,
+        tokens: tokens.map(toWireTokenResult)
+      });
+    } catch (error) {
+      return Promise.reject(asError(withShortNoActiveScene(error)));
+    }
+  };
 }
+
+export const getSceneTokensHandler = createGetSceneTokensHandler();

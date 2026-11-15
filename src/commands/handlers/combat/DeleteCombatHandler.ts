@@ -1,12 +1,21 @@
 import type { CombatIdParams, DeleteResult } from '@/commands/types';
-import { getActiveCombat, type FoundryGame } from './combatTypes';
+import { parseRequest } from '@/core/shared';
+import {
+  combatAddressRequestSchema,
+  createFoundryCombatService,
+  toCombatAddress,
+  type CombatWiring
+} from '@/core/combat';
 
-declare const game: FoundryGame;
+export function createDeleteCombatHandler(
+  wiring: CombatWiring = {}
+): (params: CombatIdParams) => Promise<DeleteResult> {
+  const service = createFoundryCombatService(wiring);
 
-export async function deleteCombatHandler(params: CombatIdParams): Promise<DeleteResult> {
-  const combat = getActiveCombat(game, params.combatId);
-
-  await combat.delete();
-
-  return { deleted: true };
+  return async function deleteCombatHandler(params: CombatIdParams): Promise<DeleteResult> {
+    await service.deleteCombat(toCombatAddress(parseRequest(combatAddressRequestSchema, params)));
+    return { deleted: true };
+  };
 }
+
+export const deleteCombatHandler = createDeleteCombatHandler();

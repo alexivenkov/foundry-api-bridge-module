@@ -1,19 +1,18 @@
 import type { ResetTableParams, ResetTableResult } from '@/commands/types';
-import { getGame } from './tableTypes';
+import { parseRequest } from '@/core/shared';
+import { createFoundryRollTableService, resetTableRequestSchema, toResetTableCommand } from '@/core/tables';
+import type { RollTableHandlerDependencies } from './tableWireMappers';
 
-export async function resetTableHandler(params: ResetTableParams): Promise<ResetTableResult> {
-  const table = getGame().tables.get(params.tableId);
+export function createResetTableHandler(
+  deps: RollTableHandlerDependencies = {}
+): (params: ResetTableParams) => Promise<ResetTableResult> {
+  const service = createFoundryRollTableService(deps.gameProvider);
 
-  if (!table) {
-    throw new Error(`Roll table not found: ${params.tableId}`);
-  }
-
-  const drawnCount = table.results.contents.filter(r => r.drawn).length;
-  await table.resetResults();
-
-  return {
-    tableId: table.id,
-    tableName: table.name,
-    resetCount: drawnCount
+  return async function resetTableHandler(params: ResetTableParams): Promise<ResetTableResult> {
+    const command = toResetTableCommand(parseRequest(resetTableRequestSchema, params));
+    const { table, resetCount } = await service.resetTable(command);
+    return { tableId: table.id, tableName: table.name, resetCount };
   };
 }
+
+export const resetTableHandler = createResetTableHandler();

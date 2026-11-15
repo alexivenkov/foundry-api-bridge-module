@@ -16,6 +16,8 @@ interface MockToken {
   hidden: boolean;
   texture: {
     src: string;
+    scaleX?: number;
+    scaleY?: number;
   };
   disposition: number;
   actor: {
@@ -189,7 +191,7 @@ describe('Token Handlers', () => {
         hidden: true,
         elevation: 10,
         rotation: 45,
-        scale: 1.5
+        texture: { scaleX: 1.5, scaleY: 1.5 }
       }]);
     });
 
@@ -906,12 +908,34 @@ describe('Token Handlers', () => {
         hidden: true,
         elevation: 15,
         rotation: 180,
-        scale: 2,
+        texture: { scaleX: 2, scaleY: 2 },
         name: 'New Name',
         displayName: 50,
         disposition: -1,
         lockRotation: true
       });
+    });
+
+    it('writes scale to texture.scaleX/scaleY, never to a top-level scale', async () => {
+      const mockToken = createMockToken();
+      const mockScene = createMockScene();
+      mockScene.tokens.get.mockReturnValue(mockToken);
+      mockGame.scenes.active = mockScene;
+
+      await updateTokenHandler({ tokenId: 'token-123', scale: 0.5 });
+
+      expect(mockToken.update).toHaveBeenCalledWith({ texture: { scaleX: 0.5, scaleY: 0.5 } });
+    });
+
+    it('keeps a mirrored token mirrored when its scale changes', async () => {
+      const mockToken = createMockToken({ texture: { src: 'icons/token.png', scaleX: -1, scaleY: 1 } });
+      const mockScene = createMockScene();
+      mockScene.tokens.get.mockReturnValue(mockToken);
+      mockGame.scenes.active = mockScene;
+
+      await updateTokenHandler({ tokenId: 'token-123', scale: 2 });
+
+      expect(mockToken.update).toHaveBeenCalledWith({ texture: { scaleX: -2, scaleY: 2 } });
     });
 
     it('no-op update — update() resolves undefined without mutating', async () => {

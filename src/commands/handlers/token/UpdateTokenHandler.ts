@@ -1,53 +1,27 @@
 import type { UpdateTokenParams, TokenResult } from '@/commands/types';
+import { withShortNoActiveScene } from '@/commands/handlers/legacyWire';
+import { parseRequest } from '@/core/shared';
 import {
-  getActiveScene,
-  getToken,
-  mapTokenToResult,
-  type FoundryGame,
-  type TokenUpdateData
-} from './tokenTypes';
+  createFoundryTokenAppearanceService,
+  toUpdateTokenWithAppearanceCommand,
+  updateTokenRequestSchema
+} from '@/core/tokens';
+import { toWireTokenResult, withWireAppearance, type TokenAppearanceHandlerDependencies } from './tokenWireMappers';
 
-declare const game: FoundryGame;
+export function createUpdateTokenHandler(
+  deps: TokenAppearanceHandlerDependencies = {}
+): (params: UpdateTokenParams) => Promise<TokenResult> {
+  const service = createFoundryTokenAppearanceService(deps);
 
-export async function updateTokenHandler(params: UpdateTokenParams): Promise<TokenResult> {
-  const scene = getActiveScene(game, params.sceneId);
-  const token = getToken(scene, params.tokenId);
-
-  const updateData: TokenUpdateData = {};
-
-  if (params.hidden !== undefined) {
-    updateData.hidden = params.hidden;
-  }
-  if (params.elevation !== undefined) {
-    updateData.elevation = params.elevation;
-  }
-  if (params.rotation !== undefined) {
-    updateData.rotation = params.rotation;
-  }
-  if (params.scale !== undefined) {
-    updateData.scale = params.scale;
-  }
-  if (params.name !== undefined) {
-    updateData.name = params.name;
-  }
-  if (params.displayName !== undefined) {
-    updateData.displayName = params.displayName;
-  }
-  if (params.disposition !== undefined) {
-    updateData.disposition = params.disposition;
-  }
-  if (params.lockRotation !== undefined) {
-    updateData.lockRotation = params.lockRotation;
-  }
-  if (params.actorLink !== undefined) {
-    updateData.actorLink = params.actorLink;
-  }
-
-  if (Object.keys(updateData).length === 0) {
-    return mapTokenToResult(token);
-  }
-
-  await token.update(updateData);
-
-  return mapTokenToResult(token);
+  return async function updateTokenHandler(params: UpdateTokenParams): Promise<TokenResult> {
+    const command = toUpdateTokenWithAppearanceCommand(parseRequest(updateTokenRequestSchema, params));
+    try {
+      const { token, appearance } = await service.updateToken(command);
+      return withWireAppearance(toWireTokenResult(token), appearance);
+    } catch (error) {
+      throw withShortNoActiveScene(error);
+    }
+  };
 }
+
+export const updateTokenHandler = createUpdateTokenHandler();

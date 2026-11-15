@@ -4,3 +4,7 @@ export { createMacroHandler } from './CreateMacroHandler';
 export { updateMacroHandler } from './UpdateMacroHandler';
 export { deleteMacroHandler } from './DeleteMacroHandler';
 export { executeMacroHandler } from './ExecuteMacroHandler';
+export { getHotbarHandler } from './GetHotbarHandler';
+export { assignHotbarSlotHandler } from './AssignHotbarSlotHandler';
+export { moveHotbarSlotHandler } from './MoveHotbarSlotHandler';
+export { clearHotbarSlotHandler } from './ClearHotbarSlotHandler';

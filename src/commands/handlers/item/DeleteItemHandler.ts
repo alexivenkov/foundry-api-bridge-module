@@ -1,31 +1,18 @@
 import type { DeleteItemParams, DeleteItemResult } from '@/commands/types';
+import { createFoundryWorldItemService, deleteItemRequestSchema, toDeleteItemCommand } from '@/core/items';
+import { parseRequest } from '@/core/shared';
+import type { ItemHandlerDependencies } from './itemWireMappers';
 
-interface FoundryItem {
-  id: string;
-  delete(): Promise<FoundryItem>;
-}
+export function createDeleteItemHandler(
+  deps: ItemHandlerDependencies = {}
+): (params: DeleteItemParams) => Promise<DeleteItemResult> {
+  const service = createFoundryWorldItemService(deps.gameProvider);
 
-interface ItemsCollection {
-  get(id: string): FoundryItem | undefined;
-}
-
-interface FoundryGame {
-  items: ItemsCollection | undefined;
-}
-
-declare const game: FoundryGame;
-
-export async function deleteItemHandler(params: DeleteItemParams): Promise<DeleteItemResult> {
-  const item = game.items?.get(params.itemId);
-
-  if (!item) {
-    throw new Error(`Item not found: ${params.itemId}`);
-  }
-
-  await item.delete();
-
-  return {
-    deleted: true,
-    itemId: params.itemId
+  return async function deleteItemHandler(params: DeleteItemParams): Promise<DeleteItemResult> {
+    const command = toDeleteItemCommand(parseRequest(deleteItemRequestSchema, params));
+    await service.deleteItem(command);
+    return { deleted: true, itemId: command.itemId };
   };
 }
+
+export const deleteItemHandler = createDeleteItemHandler();

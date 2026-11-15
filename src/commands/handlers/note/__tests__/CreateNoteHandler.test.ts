@@ -19,7 +19,7 @@ const makeMockNote = (overrides: Partial<FoundryNoteDocument> = {}): FoundryNote
   entryId: null,
   pageId: null,
   text: null,
-  icon: { src: 'icons/svg/book.svg', tint: null },
+  texture: { src: 'icons/svg/book.svg', tint: null },
   iconSize: 40,
   fontSize: 32,
   textAnchor: 0,
@@ -90,34 +90,34 @@ describe('createNoteHandler', () => {
     expect(payload[0]?.['text']).toBe('Custom label');
   });
 
-  it('creates a note with both icon fields → icon: { src, tint }', async () => {
-    const created = makeMockNote({ icon: { src: 'icons/x.svg', tint: '#ff0000' } });
+  it('creates a note with both icon fields → texture: { src, tint }', async () => {
+    const created = makeMockNote({ texture: { src: 'icons/x.svg', tint: '#ff0000' } });
     mockGame.scenes.active!.createEmbeddedDocuments.mockResolvedValue([created]);
 
     await createNoteHandler({ x: 1, y: 2, iconSrc: 'icons/x.svg', iconTint: '#ff0000' });
 
     const payload = mockGame.scenes.active!.createEmbeddedDocuments.mock.calls[0]?.[1] as Record<string, unknown>[];
-    expect(payload[0]?.['icon']).toEqual({ src: 'icons/x.svg', tint: '#ff0000' });
+    expect(payload[0]?.['texture']).toEqual({ src: 'icons/x.svg', tint: '#ff0000' });
   });
 
-  it('creates a note with iconSrc only → icon: { src }', async () => {
-    const created = makeMockNote({ icon: { src: 'icons/y.svg' } });
+  it('creates a note with iconSrc only → texture: { src }', async () => {
+    const created = makeMockNote({ texture: { src: 'icons/y.svg' } });
     mockGame.scenes.active!.createEmbeddedDocuments.mockResolvedValue([created]);
 
     await createNoteHandler({ x: 1, y: 2, iconSrc: 'icons/y.svg' });
 
     const payload = mockGame.scenes.active!.createEmbeddedDocuments.mock.calls[0]?.[1] as Record<string, unknown>[];
-    expect(payload[0]?.['icon']).toEqual({ src: 'icons/y.svg' });
+    expect(payload[0]?.['texture']).toEqual({ src: 'icons/y.svg' });
   });
 
-  it('creates a note with iconTint only → icon: { tint }', async () => {
-    const created = makeMockNote({ icon: { tint: '#00ff00' } });
+  it('creates a note with iconTint only → texture: { tint }', async () => {
+    const created = makeMockNote({ texture: { tint: '#00ff00' } });
     mockGame.scenes.active!.createEmbeddedDocuments.mockResolvedValue([created]);
 
     await createNoteHandler({ x: 1, y: 2, iconTint: '#00ff00' });
 
     const payload = mockGame.scenes.active!.createEmbeddedDocuments.mock.calls[0]?.[1] as Record<string, unknown>[];
-    expect(payload[0]?.['icon']).toEqual({ tint: '#00ff00' });
+    expect(payload[0]?.['texture']).toEqual({ tint: '#00ff00' });
   });
 
   it('omits icon entirely when neither iconSrc nor iconTint provided', async () => {
@@ -127,6 +127,7 @@ describe('createNoteHandler', () => {
     await createNoteHandler({ x: 1, y: 2 });
 
     const payload = mockGame.scenes.active!.createEmbeddedDocuments.mock.calls[0]?.[1] as Record<string, unknown>[];
+    expect(payload[0]).not.toHaveProperty('texture');
     expect(payload[0]).not.toHaveProperty('icon');
   });
 

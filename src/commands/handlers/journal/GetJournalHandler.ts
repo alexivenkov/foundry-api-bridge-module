@@ -1,25 +1,17 @@
-import type { JournalData } from '@/types/foundry';
-import type { GetJournalParams } from '@/commands/types';
-import { mapJournalToData, type FoundryJournal } from './GetJournalsHandler';
+import type { GetJournalParams, JournalDetailData } from '@/commands/types';
+import { createFoundryJournalService, getJournalRequestSchema, toGetJournalQuery } from '@/core/journals';
+import { parseRequest } from '@/core/shared';
+import { toWireJournalDetailData, type JournalHandlerDependencies } from './journalWireMappers';
 
-interface FoundryJournalCollection {
-  get(id: string): FoundryJournal | undefined;
+export function createGetJournalHandler(
+  deps: JournalHandlerDependencies = {}
+): (params: GetJournalParams) => Promise<JournalDetailData> {
+  const service = createFoundryJournalService(deps.globals, deps.generation);
+
+  return async function getJournalHandler(params: GetJournalParams): Promise<JournalDetailData> {
+    const query = toGetJournalQuery(parseRequest(getJournalRequestSchema, params));
+    return toWireJournalDetailData(await service.getJournal(query));
+  };
 }
 
-interface FoundryGame {
-  journal: FoundryJournalCollection;
-}
-
-function getGame(): FoundryGame {
-  return (globalThis as unknown as { game: FoundryGame }).game;
-}
-
-export async function getJournalHandler(params: GetJournalParams): Promise<JournalData> {
-  const journal = getGame().journal.get(params.journalId);
-
-  if (!journal) {
-    throw new Error(`Journal not found: ${params.journalId}`);
-  }
-
-  return mapJournalToData(journal);
-}
+export const getJournalHandler = createGetJournalHandler();

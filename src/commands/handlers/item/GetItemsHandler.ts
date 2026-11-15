@@ -1,49 +1,22 @@
-import type { ItemData } from '@/types/foundry';
 import type { GetItemsParams } from '@/commands/types';
+import { asError } from '@/commands/handlers/legacyWire';
+import { createFoundryWorldItemService } from '@/core/items';
+import type { ItemData } from '@/types/foundry';
+import { toWireItemData, type ItemHandlerDependencies } from './itemWireMappers';
 
-interface FoundryWorldItem {
-  id: string;
-  uuid: string;
-  name: string;
-  type: string;
-  img: string | undefined;
-  folder: { name: string } | null;
-  toObject(source: boolean): { system: Record<string, unknown> };
-}
+export function createGetItemsHandler(
+  deps: ItemHandlerDependencies = {}
+): (params: GetItemsParams) => Promise<ItemData[]> {
+  const service = createFoundryWorldItemService(deps.gameProvider);
 
-interface FoundryWorldItemsCollection {
-  forEach(fn: (item: FoundryWorldItem) => void): void;
-}
-
-interface FoundryGame {
-  items: FoundryWorldItemsCollection | undefined;
-}
-
-function getGame(): FoundryGame {
-  return (globalThis as unknown as { game: FoundryGame }).game;
-}
-
-function mapWorldItemToData(item: FoundryWorldItem): ItemData {
-  return {
-    id: item.id,
-    uuid: item.uuid,
-    name: item.name,
-    type: item.type,
-    img: item.img ?? '',
-    folder: item.folder?.name ?? null,
-    system: item.toObject(false).system
+  // The command takes no parameters, so there is nothing to validate.
+  return function getItemsHandler(_params: GetItemsParams): Promise<ItemData[]> {
+    try {
+      return Promise.resolve(service.listItems().map(toWireItemData));
+    } catch (error) {
+      return Promise.reject(asError(error));
+    }
   };
 }
 
-export { mapWorldItemToData, type FoundryWorldItem };
-
-export function getItemsHandler(_params: GetItemsParams): Promise<ItemData[]> {
-  const game = getGame();
-  const items: ItemData[] = [];
-
-  game.items?.forEach(item => {
-    items.push(mapWorldItemToData(item));
-  });
-
-  return Promise.resolve(items);
-}
+export const getItemsHandler = createGetItemsHandler();

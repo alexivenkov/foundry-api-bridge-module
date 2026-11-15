@@ -1,4 +1,4 @@
-import type { Command, CommandResponse } from '@/commands';
+import type { Command, CommandResponse, EventMessage } from '@/commands';
 
 export interface WebSocketClientConfig {
   url: string;
@@ -150,6 +150,19 @@ export class WebSocketClient {
     }
 
     this.socket.send(JSON.stringify(response));
+  }
+
+  /**
+   * Push a game event. Unlike `send`, a closed socket is not worth a warning:
+   * events are frequent, and the caller learns from the result that nothing went out.
+   */
+  sendEvent(message: EventMessage): boolean {
+    if (this.socket?.readyState !== WS_OPEN) {
+      return false;
+    }
+
+    this.socket.send(JSON.stringify(message));
+    return true;
   }
 
   onMessage(handler: MessageHandler): void {

@@ -1,23 +1,28 @@
 import type { RollOnTableParams, RollOnTableResult } from '@/commands/types';
-import { getGame, mapTableResultToData } from './tableTypes';
+import { parseRequest } from '@/core/shared';
+import { createFoundryRollTableManagementService, rollOnTableRequestSchema, toRollOnTableCommand } from '@/core/tables';
+import {
+  toWireTableResult,
+  toWireTableRolls,
+  type RollTableManagementHandlerDependencies
+} from './tableWireMappers';
 
-export async function rollOnTableHandler(params: RollOnTableParams): Promise<RollOnTableResult> {
-  const table = getGame().tables.get(params.tableId);
+export function createRollOnTableHandler(
+  deps: RollTableManagementHandlerDependencies = {}
+): (params: RollOnTableParams) => Promise<RollOnTableResult> {
+  const service = createFoundryRollTableManagementService(deps.gameProvider, deps.rollGlobals);
 
-  if (!table) {
-    throw new Error(`Roll table not found: ${params.tableId}`);
-  }
-
-  const displayChat = params.displayChat ?? true;
-  const { roll, results } = await table.draw({ displayChat });
-
-  return {
-    tableId: table.id,
-    tableName: table.name,
-    roll: {
-      formula: roll.formula,
-      total: roll.total
-    },
-    results: results.map(mapTableResultToData)
+  return async function rollOnTableHandler(params: RollOnTableParams): Promise<RollOnTableResult> {
+    const command = toRollOnTableCommand(parseRequest(rollOnTableRequestSchema, params));
+    const { table, draw } = await service.rollOnTable(command);
+    return {
+      tableId: table.id,
+      tableName: table.name,
+      roll: { formula: draw.formula, total: draw.total },
+      results: draw.results.map(toWireTableResult),
+      rolls: toWireTableRolls(draw)
+    };
   };
 }
+
+export const rollOnTableHandler = createRollOnTableHandler();

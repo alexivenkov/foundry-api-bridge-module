@@ -1,8 +1,7 @@
 import type { ModuleConfig } from '@/config/types';
 import { DEFAULT_CONFIG } from '@/config/defaults';
+import { MODULE_ID } from '@/config/moduleId';
 import { validateApiKey, type InvalidApiKey } from '@/settings/apiKeyFormat';
-
-const MODULE_ID = 'foundry-api-bridge';
 
 export const INVALID_API_KEY_MESSAGE =
   'Foundry API Bridge | The API key in Module Settings is not a Foundry MCP key (expected pk_… from foundry-mcp.com). Fix it in Module Settings and reload.';

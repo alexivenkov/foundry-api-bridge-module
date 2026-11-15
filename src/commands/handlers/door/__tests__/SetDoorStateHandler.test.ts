@@ -6,7 +6,7 @@ interface MockWall {
   door: number;
   ds: number;
   move: number;
-  sense: number;
+  sight: number;
   update: jest.Mock;
 }
 
@@ -26,7 +26,7 @@ const createMockWall = (overrides: Partial<MockWall> = {}): MockWall => {
     door: 1,
     ds: 0,
     move: 20,
-    sense: 20,
+    sight: 20,
     update: jest.fn(),
     ...overrides
   };

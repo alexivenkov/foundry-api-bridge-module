@@ -1,22 +1,26 @@
 import type { RemoveActorEffectParams, RemoveEffectResult } from '@/commands/types';
-import { resolveEffectActor } from './effectTypes';
+import { withShortNoActiveScene } from '@/commands/handlers/legacyWire';
+import {
+  createFoundryEffectService,
+  removeActorEffectRequestSchema,
+  toRemoveEffectCommand
+} from '@/core/effects';
+import { parseRequest } from '@/core/shared';
+import { toWireEffectRemoval, type EffectHandlerDependencies } from './effectWireMappers';
 
-export async function removeActorEffectHandler(
-  params: RemoveActorEffectParams
-): Promise<RemoveEffectResult> {
-  const actor = resolveEffectActor(params);
+export function createRemoveActorEffectHandler(
+  deps: EffectHandlerDependencies = {}
+): (params: RemoveActorEffectParams) => Promise<RemoveEffectResult> {
+  const service = createFoundryEffectService(deps.gameProvider, deps);
 
-  const effect = actor.effects.get(params.effectId);
-
-  if (!effect) {
-    throw new Error(`Effect not found: ${params.effectId}`);
-  }
-
-  await effect.delete();
-
-  return {
-    actorId: actor.id,
-    effectId: params.effectId,
-    removed: true
+  return async function removeActorEffectHandler(params: RemoveActorEffectParams): Promise<RemoveEffectResult> {
+    const command = toRemoveEffectCommand(parseRequest(removeActorEffectRequestSchema, params));
+    try {
+      return toWireEffectRemoval(await service.removeEffect(command));
+    } catch (error) {
+      throw withShortNoActiveScene(error);
+    }
   };
 }
+
+export const removeActorEffectHandler = createRemoveActorEffectHandler();

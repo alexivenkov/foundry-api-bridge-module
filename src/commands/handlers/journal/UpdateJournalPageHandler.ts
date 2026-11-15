@@ -1,42 +1,21 @@
-import type { UpdateJournalPageParams, JournalPageResult } from '@/commands/types';
+import type { UpdateJournalPageParams, JournalPageDetailResult } from '@/commands/types';
 import {
-  mapPageToResult,
-  type FoundryGame,
-  type FoundryPageUpdateData
-} from './journalTypes';
+  createFoundryJournalService,
+  toUpdateJournalPageCommand,
+  updateJournalPageRequestSchema
+} from '@/core/journals';
+import { parseRequest } from '@/core/shared';
+import { toWireJournalPageDetail, type JournalHandlerDependencies } from './journalWireMappers';
 
-declare const game: FoundryGame;
+export function createUpdateJournalPageHandler(
+  deps: JournalHandlerDependencies = {}
+): (params: UpdateJournalPageParams) => Promise<JournalPageDetailResult> {
+  const service = createFoundryJournalService(deps.globals, deps.generation);
 
-export async function updateJournalPageHandler(
-  params: UpdateJournalPageParams
-): Promise<JournalPageResult> {
-  const journal = game.journal.get(params.journalId);
-
-  if (!journal) {
-    throw new Error(`Journal not found: ${params.journalId}`);
-  }
-
-  const page = journal.pages.get(params.pageId);
-
-  if (!page) {
-    throw new Error(`Page not found: ${params.pageId}`);
-  }
-
-  const updateData: FoundryPageUpdateData = {};
-
-  if (params.name !== undefined) {
-    updateData.name = params.name;
-  }
-
-  if (params.content !== undefined) {
-    updateData.text = { content: params.content };
-  }
-
-  if (params.src !== undefined) {
-    updateData.src = params.src;
-  }
-
-  await page.update(updateData);
-
-  return mapPageToResult(page);
+  return async function updateJournalPageHandler(params: UpdateJournalPageParams): Promise<JournalPageDetailResult> {
+    const command = toUpdateJournalPageCommand(parseRequest(updateJournalPageRequestSchema, params));
+    return toWireJournalPageDetail(await service.updatePage(command));
+  };
 }
+
+export const updateJournalPageHandler = createUpdateJournalPageHandler();

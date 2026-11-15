@@ -1,0 +1,55 @@
+export type {
+  ElevatedPoint,
+  Region,
+  RegionChanges,
+  RegionDraft,
+  RegionElevation,
+  RegionElevationChanges,
+  RegionExtensions,
+  RegionRestriction,
+  RegionRestrictionChanges,
+  RegionTokenRef
+} from './Region';
+export type {
+  CircleShape,
+  ConeShape,
+  EllipseShape,
+  EmanationBaseShape,
+  EmanationShape,
+  GridCell,
+  GridShape,
+  LineShape,
+  PolygonShape,
+  RectangleShape,
+  RegionPoint,
+  RegionShape,
+  RingShape,
+  TokenFootprintShape
+} from './RegionShape';
+export { isCoreBehaviorConfig } from './RegionBehavior';
+export type {
+  AdjustDarknessLevelSettings,
+  ApplyActiveEffectSettings,
+  ChangeLevelSettings,
+  CoreBehaviorConfig,
+  CoreBehaviorConfigInput,
+  CoreBehaviorSettingsMap,
+  DefineSurfaceSettings,
+  DisplayScrollingTextSettings,
+  ExecuteMacroSettings,
+  ExecuteScriptSettings,
+  ModifyMovementCostSettings,
+  OpaqueBehaviorConfig,
+  PauseGameSettings,
+  RegionBehavior,
+  RegionBehaviorChanges,
+  RegionBehaviorConfig,
+  RegionBehaviorConfigInput,
+  RegionBehaviorDraft,
+  SettingsInput,
+  SuppressWeatherSettings,
+  TeleportDialogTexts,
+  TeleportTokenSettings,
+  TeleportTransition,
+  ToggleBehaviorSettings
+} from './RegionBehavior';

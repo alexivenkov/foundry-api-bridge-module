@@ -1,33 +1,22 @@
 import type { CreateMacroParams, CreateMacroResult } from '@/commands/types';
-import { getMacroClass, mapMacroToDetail } from './macroTypes';
-import { ensureScriptMacroAllowed } from './permissions';
+import {
+  createFoundryMacroService,
+  createMacroRequestSchema,
+  toCreateMacroCommand,
+  type MacroWiring
+} from '@/core/macros';
+import { parseRequest } from '@/core/shared';
+import { toWireMacroDetail } from './macroWireMappers';
 
-export async function createMacroHandler(params: CreateMacroParams): Promise<CreateMacroResult> {
-  ensureScriptMacroAllowed(params.type);
+export function createCreateMacroHandler(
+  wiring: MacroWiring = {}
+): (params: CreateMacroParams) => Promise<CreateMacroResult> {
+  const service = createFoundryMacroService(wiring);
 
-  const data: Record<string, unknown> = {
-    name: params.name,
-    type: params.type,
-    command: params.command
+  return async function createMacroHandler(params: CreateMacroParams): Promise<CreateMacroResult> {
+    const command = toCreateMacroCommand(parseRequest(createMacroRequestSchema, params));
+    return toWireMacroDetail(await service.createMacro(command));
   };
-
-  if (params.scope !== undefined) {
-    data['scope'] = params.scope;
-  }
-
-  if (params.img !== undefined) {
-    data['img'] = params.img;
-  }
-
-  if (params.folder !== undefined) {
-    data['folder'] = params.folder;
-  }
-
-  const macro = await getMacroClass().create(data);
-
-  if (!macro) {
-    throw new Error('Macro creation was cancelled by Foundry (a module hook may have vetoed it)');
-  }
-
-  return mapMacroToDetail(macro);
 }
+
+export const createMacroHandler = createCreateMacroHandler();

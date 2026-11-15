@@ -19,7 +19,7 @@ const makeMockNote = (overrides: Partial<FoundryNoteDocument> = {}): FoundryNote
   entryId: 'entry-1',
   pageId: 'page-1',
   text: 'Note label',
-  icon: { src: 'icons/svg/book.svg', tint: '#ffffff' } as FoundryNoteIcon,
+  texture: { src: 'icons/svg/book.svg', tint: '#ffffff' } as FoundryNoteIcon,
   iconSize: 40,
   fontSize: 32,
   textAnchor: 1,
@@ -126,7 +126,7 @@ describe('getNotesHandler', () => {
     const note = makeMockNote({
       id: 'n-obj',
       _id: 'n-obj',
-      icon: { src: 'icons/svg/sword.svg', tint: '#ff0000' }
+      texture: { src: 'icons/svg/sword.svg', tint: '#ff0000' }
     });
     mockGame.scenes.active = makeMockScene('s', [note]);
 
@@ -136,22 +136,19 @@ describe('getNotesHandler', () => {
     expect(result.notes[0]?.iconTint).toBe('#ff0000');
   });
 
-  it('normalizes icon when given as plain string', async () => {
-    const note = makeMockNote({
-      id: 'n-str',
-      _id: 'n-str',
-      icon: 'icons/svg/scroll.svg'
-    });
+  it('reads the icon from texture, ignoring a stray icon property', async () => {
+    const note = makeMockNote({ id: 'n-stray', _id: 'n-stray', texture: { src: 'icons/svg/anchor.svg', tint: '#00ff00' } });
+    (note as unknown as Record<string, unknown>)['icon'] = { src: 'icons/svg/wrong.svg', tint: '#000000' };
     mockGame.scenes.active = makeMockScene('s', [note]);
 
     const result = await getNotesHandler({});
 
-    expect(result.notes[0]?.iconSrc).toBe('icons/svg/scroll.svg');
-    expect(result.notes[0]?.iconTint).toBeNull();
+    expect(result.notes[0]?.iconSrc).toBe('icons/svg/anchor.svg');
+    expect(result.notes[0]?.iconTint).toBe('#00ff00');
   });
 
   it('normalizes icon when undefined', async () => {
-    const note = makeMockNote({ id: 'n-u', _id: 'n-u', icon: undefined });
+    const note = makeMockNote({ id: 'n-u', _id: 'n-u', texture: undefined });
     mockGame.scenes.active = makeMockScene('s', [note]);
 
     const result = await getNotesHandler({});
@@ -161,7 +158,7 @@ describe('getNotesHandler', () => {
   });
 
   it('normalizes icon object missing src/tint to defaults', async () => {
-    const note = makeMockNote({ id: 'n-empty', _id: 'n-empty', icon: {} });
+    const note = makeMockNote({ id: 'n-empty', _id: 'n-empty', texture: {} });
     mockGame.scenes.active = makeMockScene('s', [note]);
 
     const result = await getNotesHandler({});

@@ -1,33 +1,34 @@
 import type { NotifyParams, NotifyResult } from '@/commands/types';
-import { getUi } from './systemTypes';
+import { asError } from '@/commands/handlers/legacyWire';
+import { parseRequest } from '@/core/shared';
+import {
+  createFoundryNotificationCenterService,
+  notifyRequestSchema,
+  toNotifyCommand,
+  type UiProvider
+} from '@/core/ui';
 
-export function notifyHandler(params: NotifyParams): Promise<NotifyResult> {
-  const ui = getUi();
-  const type = params.type ?? 'info';
-  const opts: { permanent?: boolean } = {};
-  if (params.permanent !== undefined) {
-    opts.permanent = params.permanent;
-  }
-
-  switch (type) {
-    case 'success':
-      if (ui.notifications.success) {
-        ui.notifications.success(params.message, opts);
-      } else {
-        ui.notifications.info(params.message, opts);
-      }
-      break;
-    case 'warn':
-      ui.notifications.warn(params.message, opts);
-      break;
-    case 'error':
-      ui.notifications.error(params.message, opts);
-      break;
-    case 'info':
-    default:
-      ui.notifications.info(params.message, opts);
-      break;
-  }
-
-  return Promise.resolve({ shown: true, type });
+export interface NotifyHandlerDependencies {
+  ui?: UiProvider;
 }
+
+export function createNotifyHandler(
+  deps: NotifyHandlerDependencies = {}
+): (params: NotifyParams) => Promise<NotifyResult> {
+  const service = createFoundryNotificationCenterService(deps.ui);
+
+  return function notifyHandler(params: NotifyParams): Promise<NotifyResult> {
+    try {
+      const shown = service.show(toNotifyCommand(parseRequest(notifyRequestSchema, params)));
+      const result: NotifyResult = { shown: true, type: shown.level };
+      if (shown.id !== null) {
+        result.notificationId = shown.id;
+      }
+      return Promise.resolve(result);
+    } catch (error) {
+      return Promise.reject(asError(error));
+    }
+  };
+}
+
+export const notifyHandler = createNotifyHandler();

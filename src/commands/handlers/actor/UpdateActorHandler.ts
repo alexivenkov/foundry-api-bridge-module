@@ -1,53 +1,22 @@
-import type { UpdateActorParams, ActorResult } from '@/commands/types';
-import { resolveActorTarget, type ActorTargetGame } from '@/commands/handlers/actorTarget';
+import type { ActorResult, UpdateActorParams } from '@/commands/types';
+import { withShortNoActiveScene } from '@/commands/handlers/legacyWire';
+import { createFoundryActorService, toUpdateActorCommand, updateActorRequestSchema } from '@/core/actors';
+import { parseRequest } from '@/core/shared';
+import { toWireActorUpdateResult, type ActorHandlerDependencies } from './actorWireMappers';
 
-interface FoundryActor {
-  id: string;
-  uuid: string;
-  name: string;
-  type: string;
-  img: string;
-  folder: { name: string } | null;
-  update(data: Record<string, unknown>): Promise<unknown>;
-}
+export function createUpdateActorHandler(
+  deps: ActorHandlerDependencies = {}
+): (params: UpdateActorParams) => Promise<ActorResult> {
+  const service = createFoundryActorService(deps.gameProvider, deps);
 
-type FoundryGame = ActorTargetGame<FoundryActor>;
-
-declare const game: FoundryGame;
-
-export async function updateActorHandler(params: UpdateActorParams): Promise<ActorResult> {
-  const { actor, tokenId } = resolveActorTarget(game, params);
-
-  const updateData: Record<string, unknown> = {};
-
-  if (params.name !== undefined) {
-    updateData['name'] = params.name;
-  }
-
-  if (params.img !== undefined) {
-    updateData['img'] = params.img;
-  }
-
-  if (params.folder !== undefined) {
-    updateData['folder'] = params.folder;
-  }
-
-  if (params.system !== undefined) {
-    updateData['system'] = params.system;
-  }
-
-  await actor.update(updateData);
-
-  const result: ActorResult = {
-    id: actor.id,
-    uuid: actor.uuid,
-    name: actor.name,
-    type: actor.type,
-    img: actor.img,
-    folder: actor.folder?.name ?? null
+  return async function updateActorHandler(params: UpdateActorParams): Promise<ActorResult> {
+    const command = toUpdateActorCommand(parseRequest(updateActorRequestSchema, params));
+    try {
+      return toWireActorUpdateResult(await service.updateActor(command));
+    } catch (error) {
+      throw withShortNoActiveScene(error);
+    }
   };
-  if (tokenId !== undefined) {
-    result.tokenId = tokenId;
-  }
-  return result;
 }
+
+export const updateActorHandler = createUpdateActorHandler();

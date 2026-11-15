@@ -1,16 +1,22 @@
 import type { CombatIdParams, CombatResult } from '@/commands/types';
-import { getActiveCombat, mapCombatToResult, type FoundryGame } from './combatTypes';
+import { parseRequest } from '@/core/shared';
+import {
+  combatAddressRequestSchema,
+  createFoundryCombatService,
+  toCombatAddress,
+  type CombatWiring
+} from '@/core/combat';
+import { toWireCombat } from './combatWireMappers';
 
-declare const game: FoundryGame;
+export function createPreviousTurnHandler(
+  wiring: CombatWiring = {}
+): (params: CombatIdParams) => Promise<CombatResult> {
+  const service = createFoundryCombatService(wiring);
 
-export async function previousTurnHandler(params: CombatIdParams): Promise<CombatResult> {
-  const combat = getActiveCombat(game, params.combatId);
-
-  if (!combat.started) {
-    throw new Error('Combat not started');
-  }
-
-  const updatedCombat = await combat.previousTurn();
-
-  return mapCombatToResult(updatedCombat);
+  return async function previousTurnHandler(params: CombatIdParams): Promise<CombatResult> {
+    const command = toCombatAddress(parseRequest(combatAddressRequestSchema, params));
+    return toWireCombat(await service.previousTurn(command));
+  };
 }
+
+export const previousTurnHandler = createPreviousTurnHandler();

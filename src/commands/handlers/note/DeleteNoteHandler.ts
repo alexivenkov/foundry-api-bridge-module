@@ -1,15 +1,18 @@
 import type { DeleteNoteParams, DeleteNoteResult } from '@/commands/types';
-import { getSceneById, getNote } from './noteTypes';
+import { parseRequest } from '@/core/shared';
+import { createFoundryNoteService, deleteNoteRequestSchema, toDeleteNoteCommand } from '@/core/notes';
+import type { NoteHandlerDependencies } from './GetNotesHandler';
 
-export async function deleteNoteHandler(params: DeleteNoteParams): Promise<DeleteNoteResult> {
-  const scene = getSceneById(params.sceneId);
-  getNote(scene, params.noteId);
+export function createDeleteNoteHandler(
+  deps: NoteHandlerDependencies = {}
+): (params: DeleteNoteParams) => Promise<DeleteNoteResult> {
+  const service = createFoundryNoteService(deps.gameProvider);
 
-  await scene.deleteEmbeddedDocuments('Note', [params.noteId]);
-
-  return {
-    deleted: true,
-    noteId: params.noteId,
-    sceneId: scene.id
+  return async function deleteNoteHandler(params: DeleteNoteParams): Promise<DeleteNoteResult> {
+    const command = toDeleteNoteCommand(parseRequest(deleteNoteRequestSchema, params));
+    const result = await service.deleteNote(command);
+    return { deleted: true, noteId: result.noteId, sceneId: result.sceneId };
   };
 }
+
+export const deleteNoteHandler = createDeleteNoteHandler();

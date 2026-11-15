@@ -1,27 +1,42 @@
 import type { SetDoorStateParams, SetDoorStateResult } from '@/commands/types';
-import { getDoorScene, getWall, type DoorGame } from './doorTypes';
+import { NoActiveSceneError, parseRequest } from '@/core/shared';
+import {
+  createFoundryWallService,
+  doorStateToWireCode,
+  doorTypeToWireCode,
+  setDoorStateRequestSchema,
+  toSetDoorStateCommand,
+  type WallGameProvider
+} from '@/core/walls';
 
-declare const game: DoorGame;
+export interface SetDoorStateHandlerDependencies {
+  gameProvider?: WallGameProvider;
+}
 
-export async function setDoorStateHandler(params: SetDoorStateParams): Promise<SetDoorStateResult> {
-  const scene = getDoorScene(game, params.sceneId);
-  const wall = getWall(scene, params.wallId);
+export function createSetDoorStateHandler(
+  deps: SetDoorStateHandlerDependencies = {}
+): (params: SetDoorStateParams) => Promise<SetDoorStateResult> {
+  const service = createFoundryWallService(deps.gameProvider);
 
-  if (wall.door === 0) {
-    throw new Error(`Wall ${params.wallId} is not a door`);
-  }
+  return async function setDoorStateHandler(params: SetDoorStateParams): Promise<SetDoorStateResult> {
+    const command = toSetDoorStateCommand(parseRequest(setDoorStateRequestSchema, params));
 
-  if (params.state < 0 || params.state > 2) {
-    throw new Error(`Invalid door state: ${String(params.state)}. Must be 0 (closed), 1 (open), or 2 (locked)`);
-  }
-
-  const previousState = wall.ds ?? 0;
-  await wall.update({ ds: params.state });
-
-  return {
-    wallId: wall._id,
-    door: wall.door,
-    previousState,
-    newState: params.state
+    try {
+      const result = await service.setDoorState(command);
+      return {
+        wallId: result.wall.id,
+        door: doorTypeToWireCode(result.wall.door),
+        previousState: doorStateToWireCode(result.previousState),
+        newState: doorStateToWireCode(command.state)
+      };
+    } catch (error) {
+      // Legacy wire text of this command is shorter than the domain wording.
+      if (error instanceof NoActiveSceneError) {
+        throw new Error('No active scene');
+      }
+      throw error;
+    }
   };
 }
+
+export const setDoorStateHandler = createSetDoorStateHandler();

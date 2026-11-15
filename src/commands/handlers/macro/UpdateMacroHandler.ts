@@ -1,47 +1,22 @@
 import type { UpdateMacroParams, UpdateMacroResult } from '@/commands/types';
-import { getGame, mapMacroToDetail } from './macroTypes';
-import { ensureScriptMacroAllowed } from './permissions';
+import {
+  createFoundryMacroService,
+  toUpdateMacroCommand,
+  updateMacroRequestSchema,
+  type MacroWiring
+} from '@/core/macros';
+import { parseRequest } from '@/core/shared';
+import { toWireMacroDetail } from './macroWireMappers';
 
-export async function updateMacroHandler(params: UpdateMacroParams): Promise<UpdateMacroResult> {
-  const macro = getGame().macros.get(params.macroId);
-  if (!macro) {
-    throw new Error(`Macro not found: ${params.macroId}`);
-  }
+export function createUpdateMacroHandler(
+  wiring: MacroWiring = {}
+): (params: UpdateMacroParams) => Promise<UpdateMacroResult> {
+  const service = createFoundryMacroService(wiring);
 
-  if (macro.type === 'script') {
-    ensureScriptMacroAllowed('script');
-  }
-
-  if (params.type !== undefined) {
-    ensureScriptMacroAllowed(params.type);
-  }
-
-  const updateData: Record<string, unknown> = {};
-
-  if (params.name !== undefined) {
-    updateData['name'] = params.name;
-  }
-
-  if (params.type !== undefined) {
-    updateData['type'] = params.type;
-  }
-
-  if (params.command !== undefined) {
-    updateData['command'] = params.command;
-  }
-
-  if (params.scope !== undefined) {
-    updateData['scope'] = params.scope;
-  }
-
-  if (params.img !== undefined) {
-    updateData['img'] = params.img;
-  }
-
-  if (params.folder !== undefined) {
-    updateData['folder'] = params.folder;
-  }
-
-  await macro.update(updateData);
-  return mapMacroToDetail(macro);
+  return async function updateMacroHandler(params: UpdateMacroParams): Promise<UpdateMacroResult> {
+    const command = toUpdateMacroCommand(parseRequest(updateMacroRequestSchema, params));
+    return toWireMacroDetail(await service.updateMacro(command));
+  };
 }
+
+export const updateMacroHandler = createUpdateMacroHandler();

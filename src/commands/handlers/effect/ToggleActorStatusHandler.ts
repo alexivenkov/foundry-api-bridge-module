@@ -1,40 +1,26 @@
 import type { ToggleActorStatusParams, ToggleStatusResult } from '@/commands/types';
-import { resolveEffectActor } from './effectTypes';
+import { withShortNoActiveScene } from '@/commands/handlers/legacyWire';
+import {
+  createFoundryEffectService,
+  toToggleStatusCommand,
+  toggleActorStatusRequestSchema
+} from '@/core/effects';
+import { parseRequest } from '@/core/shared';
+import { toWireStatusToggle, type EffectHandlerDependencies } from './effectWireMappers';
 
-export async function toggleActorStatusHandler(
-  params: ToggleActorStatusParams
-): Promise<ToggleStatusResult> {
-  const actor = resolveEffectActor(params);
+export function createToggleActorStatusHandler(
+  deps: EffectHandlerDependencies = {}
+): (params: ToggleActorStatusParams) => Promise<ToggleStatusResult> {
+  const service = createFoundryEffectService(deps.gameProvider, deps);
 
-  const options: { active?: boolean; overlay?: boolean } = {};
-
-  if (params.active !== undefined) {
-    options.active = params.active;
-  }
-
-  if (params.overlay !== undefined) {
-    options.overlay = params.overlay;
-  }
-
-  const result = await actor.toggleStatusEffect(
-    params.statusId,
-    Object.keys(options).length > 0 ? options : undefined
-  );
-
-  const toggleResult: ToggleStatusResult = {
-    actorId: actor.id,
-    statusId: params.statusId,
-    active: false
+  return async function toggleActorStatusHandler(params: ToggleActorStatusParams): Promise<ToggleStatusResult> {
+    const command = toToggleStatusCommand(parseRequest(toggleActorStatusRequestSchema, params));
+    try {
+      return toWireStatusToggle(await service.toggleStatus(command));
+    } catch (error) {
+      throw withShortNoActiveScene(error);
+    }
   };
-
-  if (result === true) {
-    toggleResult.active = true;
-  } else if (result === false || result === undefined) {
-    toggleResult.active = false;
-  } else {
-    toggleResult.active = true;
-    toggleResult.effectId = result._id;
-  }
-
-  return toggleResult;
 }
+
+export const toggleActorStatusHandler = createToggleActorStatusHandler();

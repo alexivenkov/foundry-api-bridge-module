@@ -16,10 +16,10 @@ const makeMockWall = (overrides: Partial<FoundryWallDocument> = {}): FoundryWall
   c: [10, 20, 30, 40],
   door: 0,
   ds: 0,
-  move: 1,
-  sense: 1,
-  sound: 1,
-  light: 1,
+  move: 20,
+  sight: 20,
+  sound: 20,
+  light: 20,
   dir: 0,
   update: jest.fn(),
   ...overrides
@@ -80,9 +80,9 @@ describe('createWallHandler', () => {
       door: 2,
       ds: 2,
       move: 0,
-      sense: 2,
-      sound: 2,
-      light: 1,
+      sight: 10,
+      sound: 10,
+      light: 20,
       dir: 1
     });
     mockGame.scenes.active!.createEmbeddedDocuments.mockResolvedValue([created]);
@@ -104,9 +104,9 @@ describe('createWallHandler', () => {
         door: 2,
         ds: 2,
         move: 0,
-        sense: 2,
-        sound: 2,
-        light: 1,
+        sight: 10,
+        sound: 10,
+        light: 20,
         dir: 1
       }
     ]);
@@ -139,6 +139,40 @@ describe('createWallHandler', () => {
       door: 1,
       ds: 1
     });
+  });
+
+  it.each([
+    ['none', 0],
+    ['limited', 10],
+    ['normal', 20]
+  ] as const)('maps restriction %s to the core sense type %i', async (restriction, expected) => {
+    mockGame.scenes.active!.createEmbeddedDocuments.mockResolvedValue([makeMockWall()]);
+
+    await createWallHandler({ c: [0, 0, 10, 10], sense: restriction, sound: restriction, light: restriction });
+
+    const payload = mockGame.scenes.active!.createEmbeddedDocuments.mock.calls[0]?.[1] as Record<string, unknown>[];
+    expect(payload[0]).toEqual({
+      c: [0, 0, 10, 10],
+      sight: expected,
+      sound: expected,
+      light: expected
+    });
+  });
+
+  it('maps normal movement to 20', async () => {
+    mockGame.scenes.active!.createEmbeddedDocuments.mockResolvedValue([makeMockWall()]);
+
+    await createWallHandler({ c: [0, 0, 10, 10], move: 'normal' });
+
+    const payload = mockGame.scenes.active!.createEmbeddedDocuments.mock.calls[0]?.[1] as Record<string, unknown>[];
+    expect(payload[0]).toEqual({ c: [0, 0, 10, 10], move: 20 });
+  });
+
+  it('rejects limited movement, which the core does not support', async () => {
+    await expect(createWallHandler({ c: [0, 0, 10, 10], move: 'limited' }))
+      .rejects.toThrow("Wall move must be 'none' or 'normal'");
+
+    expect(mockGame.scenes.active!.createEmbeddedDocuments).not.toHaveBeenCalled();
   });
 
   it('uses scene specified by sceneId', async () => {
@@ -188,7 +222,7 @@ describe('createWallHandler', () => {
     expect(sent).not.toHaveProperty('door');
     expect(sent).not.toHaveProperty('ds');
     expect(sent).not.toHaveProperty('move');
-    expect(sent).not.toHaveProperty('sense');
+    expect(sent).not.toHaveProperty('sight');
     expect(sent).not.toHaveProperty('sound');
     expect(sent).not.toHaveProperty('light');
     expect(sent).not.toHaveProperty('dir');

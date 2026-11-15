@@ -1,15 +1,17 @@
 import type { DeleteChatMessageParams, DeleteResult } from '@/commands/types';
-import type { FoundryChatGame } from './chatTypes';
+import { createFoundryChatService, deleteChatMessageRequestSchema, toDeleteChatMessageCommand } from '@/core/chat';
+import { parseRequest } from '@/core/shared';
+import type { ChatHandlerDependencies } from './chatWireMappers';
 
-declare const game: FoundryChatGame;
+export function createDeleteChatMessageHandler(
+  deps: ChatHandlerDependencies = {}
+): (params: DeleteChatMessageParams) => Promise<DeleteResult> {
+  const service = createFoundryChatService(deps.globals);
 
-export async function deleteChatMessageHandler(params: DeleteChatMessageParams): Promise<DeleteResult> {
-  const message = game.messages.get(params.messageId);
-  if (!message) {
-    throw new Error(`Chat message not found: ${params.messageId}`);
-  }
-
-  await message.delete();
-
-  return { deleted: true };
+  return async function deleteChatMessageHandler(params: DeleteChatMessageParams): Promise<DeleteResult> {
+    await service.deleteMessage(toDeleteChatMessageCommand(parseRequest(deleteChatMessageRequestSchema, params)));
+    return { deleted: true };
+  };
 }
+
+export const deleteChatMessageHandler = createDeleteChatMessageHandler();

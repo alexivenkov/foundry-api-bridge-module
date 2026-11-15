@@ -1,35 +1,30 @@
-import type { GetWorldInfoParams, WorldInfoResult, CompendiumMetaSummary } from '@/commands/types';
-import { getGame, MODULE_ID } from './worldTypes';
+import type { GetWorldInfoParams, WorldInfoResult } from '@/commands/types';
+import { asError } from '@/commands/handlers/legacyWire';
+import {
+  createFoundryWorldInfoService,
+  createFoundryWorldSessionService,
+  type WorldInfoGameProvider
+} from '@/core/world';
+import { toWireWorldInfo } from './worldInfoWireMapper';
 
-export function getWorldInfoHandler(_params: GetWorldInfoParams): Promise<WorldInfoResult> {
-  const game = getGame();
-
-  const compendiumMeta: CompendiumMetaSummary[] = [];
-  game.packs?.forEach(pack => {
-    compendiumMeta.push({
-      id: pack.collection,
-      label: pack.metadata.label,
-      type: pack.metadata.type,
-      system: pack.metadata.system ?? '',
-      count: pack.index.size
-    });
-  });
-
-  return Promise.resolve({
-    world: {
-      id: game.world?.id ?? '',
-      title: game.world?.title ?? '',
-      system: game.system?.id ?? '',
-      systemVersion: game.system?.version ?? '',
-      foundryVersion: game.version ?? '',
-      moduleVersion: game.modules?.get(MODULE_ID)?.version ?? ''
-    },
-    counts: {
-      journals: game.journal?.size ?? 0,
-      actors: game.actors?.size ?? 0,
-      items: game.items?.size ?? 0,
-      scenes: game.scenes?.size ?? 0
-    },
-    compendiumMeta
-  });
+export interface WorldInfoHandlerDependencies {
+  gameProvider?: WorldInfoGameProvider;
 }
+
+export function createGetWorldInfoHandler(
+  deps: WorldInfoHandlerDependencies = {}
+): (params: GetWorldInfoParams) => Promise<WorldInfoResult> {
+  const service = createFoundryWorldInfoService(deps.gameProvider);
+  const session = createFoundryWorldSessionService(deps.gameProvider);
+
+  // The command takes no parameters, so there is nothing to validate.
+  return function getWorldInfoHandler(_params: GetWorldInfoParams): Promise<WorldInfoResult> {
+    try {
+      return Promise.resolve(toWireWorldInfo(service.getWorldInfo(), session.getSession()));
+    } catch (error) {
+      return Promise.reject(asError(error));
+    }
+  };
+}
+
+export const getWorldInfoHandler = createGetWorldInfoHandler();

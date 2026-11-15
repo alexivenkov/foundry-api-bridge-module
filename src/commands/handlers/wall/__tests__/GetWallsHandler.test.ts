@@ -16,10 +16,10 @@ const makeMockWall = (overrides: Partial<FoundryWallDocument> = {}): FoundryWall
   c: [0, 0, 100, 100],
   door: 0,
   ds: 0,
-  move: 1,
-  sense: 1,
-  sound: 1,
-  light: 1,
+  move: 20,
+  sight: 20,
+  sound: 20,
+  light: 20,
   dir: 0,
   update: jest.fn(),
   ...overrides
@@ -53,9 +53,9 @@ describe('getWallsHandler', () => {
 
   it('returns mapped walls from active scene when no sceneId provided', async () => {
     const walls = [
-      makeMockWall({ _id: 'w1', c: [0, 0, 50, 50], door: 1, ds: 1, move: 1, sense: 2, sound: 0, light: 1, dir: 0 }),
-      makeMockWall({ _id: 'w2', c: [50, 50, 100, 100], door: 0, ds: 0, move: 1, sense: 1, sound: 1, light: 1, dir: 1 }),
-      makeMockWall({ _id: 'w3', c: [100, 100, 200, 200], door: 2, ds: 2, move: 0, sense: 0, sound: 0, light: 0, dir: 2 })
+      makeMockWall({ _id: 'w1', c: [0, 0, 50, 50], door: 1, ds: 1, move: 20, sight: 10, sound: 0, light: 20, dir: 0 }),
+      makeMockWall({ _id: 'w2', c: [50, 50, 100, 100], door: 0, ds: 0, move: 20, sight: 20, sound: 20, light: 20, dir: 1 }),
+      makeMockWall({ _id: 'w3', c: [100, 100, 200, 200], door: 2, ds: 2, move: 0, sight: 0, sound: 0, light: 0, dir: 2 })
     ];
     mockGame.scenes.active = makeMockScene('active-scene', walls);
 
@@ -134,14 +134,23 @@ describe('getWallsHandler', () => {
     expect(result.walls[1]?.c).toEqual([0, 0, 0, 0]);
   });
 
-  it('falls back to defaults when ds/move/sense/sound/light/dir are undefined on the wall doc', async () => {
+  it('reads the threshold-based sense types (proximity 30, distance 40) as normal', async () => {
+    const thresholdWall = makeMockWall({ _id: 'w-t', sight: 30, sound: 40, light: 30 });
+    mockGame.scenes.active = makeMockScene('s', [thresholdWall]);
+
+    const result = await getWallsHandler({});
+
+    expect(result.walls[0]).toMatchObject({ sense: 'normal', sound: 'normal', light: 'normal' });
+  });
+
+  it('falls back to defaults when ds/move/sight/sound/light/dir are undefined on the wall doc', async () => {
     const sparseWall: import('../wallTypes').FoundryWallDocument = {
       _id: 'w-sparse',
       c: [0, 0, 1, 1],
       door: 0,
       ds: undefined,
       move: undefined,
-      sense: undefined,
+      sight: undefined,
       sound: undefined,
       light: undefined,
       dir: undefined,
@@ -170,7 +179,7 @@ describe('getWallsHandler', () => {
       door: 99,
       ds: 99,
       move: 99,
-      sense: 99,
+      sight: 99,
       sound: 99,
       light: 99,
       dir: 99

@@ -1,41 +1,17 @@
 import type { CreateJournalParams, JournalResult } from '@/commands/types';
-import {
-  mapJournalToResult,
-  type JournalEntryConstructor,
-  type FoundryJournalCreateData,
-  type FoundryPageCreateData
-} from './journalTypes';
+import { createFoundryJournalService, createJournalRequestSchema, toCreateJournalCommand } from '@/core/journals';
+import { parseRequest } from '@/core/shared';
+import { toWireJournalResult, type JournalHandlerDependencies } from './journalWireMappers';
 
-declare const JournalEntry: JournalEntryConstructor;
+export function createCreateJournalHandler(
+  deps: JournalHandlerDependencies = {}
+): (params: CreateJournalParams) => Promise<JournalResult> {
+  const service = createFoundryJournalService(deps.globals);
 
-export async function createJournalHandler(params: CreateJournalParams): Promise<JournalResult> {
-  const journalData: FoundryJournalCreateData = {
-    name: params.name
+  return async function createJournalHandler(params: CreateJournalParams): Promise<JournalResult> {
+    const command = toCreateJournalCommand(parseRequest(createJournalRequestSchema, params));
+    return toWireJournalResult(await service.createJournal(command));
   };
-
-  if (params.folder !== undefined) {
-    journalData.folder = params.folder;
-  }
-
-  if (params.content !== undefined) {
-    const pageType = params.pageType ?? 'text';
-    const pageData: FoundryPageCreateData = {
-      name: params.name,
-      type: pageType
-    };
-
-    if (pageType === 'text') {
-      pageData.text = { content: params.content };
-    }
-
-    journalData.pages = [pageData];
-  }
-
-  const journal = await JournalEntry.create(journalData);
-
-  if (!journal) {
-    throw new Error('Journal creation was cancelled by Foundry (a module hook may have vetoed it)');
-  }
-
-  return mapJournalToResult(journal);
 }
+
+export const createJournalHandler = createCreateJournalHandler();

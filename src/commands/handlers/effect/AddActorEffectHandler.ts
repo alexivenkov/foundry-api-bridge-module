@@ -1,50 +1,22 @@
 import type { AddActorEffectParams, AddEffectResult } from '@/commands/types';
-import { resolveEffectActor, type ActiveEffectCreateData } from './effectTypes';
+import { withShortNoActiveScene } from '@/commands/handlers/legacyWire';
+import { addActorEffectRequestSchema, createFoundryEffectService, toAddEffectCommand } from '@/core/effects';
+import { parseRequest } from '@/core/shared';
+import { toWireEffectWrite, type EffectHandlerDependencies } from './effectWireMappers';
 
-export async function addActorEffectHandler(
-  params: AddActorEffectParams
-): Promise<AddEffectResult> {
-  const actor = resolveEffectActor(params);
+export function createAddActorEffectHandler(
+  deps: EffectHandlerDependencies = {}
+): (params: AddActorEffectParams) => Promise<AddEffectResult> {
+  const service = createFoundryEffectService(deps.gameProvider, deps);
 
-  const effectData: ActiveEffectCreateData = {
-    name: params.name
-  };
-
-  if (params.img !== undefined) {
-    effectData.img = params.img;
-  }
-
-  if (params.disabled !== undefined) {
-    effectData.disabled = params.disabled;
-  }
-
-  if (params.origin !== undefined) {
-    effectData.origin = params.origin;
-  }
-
-  if (params.statuses !== undefined) {
-    effectData.statuses = params.statuses;
-  }
-
-  if (params.changes !== undefined) {
-    effectData.changes = params.changes;
-  }
-
-  if (params.duration !== undefined) {
-    effectData.duration = params.duration;
-  }
-
-  const createdEffects = await actor.createEmbeddedDocuments('ActiveEffect', [effectData]);
-
-  const createdEffect = createdEffects?.[0];
-
-  if (!createdEffect) {
-    throw new Error('Failed to create effect');
-  }
-
-  return {
-    actorId: actor.id,
-    effectId: createdEffect._id,
-    name: createdEffect.name
+  return async function addActorEffectHandler(params: AddActorEffectParams): Promise<AddEffectResult> {
+    const command = toAddEffectCommand(parseRequest(addActorEffectRequestSchema, params));
+    try {
+      return toWireEffectWrite(await service.addEffect(command));
+    } catch (error) {
+      throw withShortNoActiveScene(error);
+    }
   };
 }
+
+export const addActorEffectHandler = createAddActorEffectHandler();

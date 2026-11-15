@@ -1,51 +1,29 @@
-import type { GetActorItemsParams, ActorItemsResult, ItemDetailSummary } from '@/commands/types';
-import { getGame, type FoundryItem } from './itemTypes';
+import type { ActorItemsResult, GetActorItemsParams } from '@/commands/types';
+import { asError } from '@/commands/handlers/legacyWire';
+import {
+  createFoundryActorItemService,
+  getActorItemsRequestSchema,
+  getTokenActorItemsRequestSchema,
+  parseActorItemRequest,
+  toListActorItemsQuery
+} from '@/core/items';
+import { toWireActorItems, type ItemHandlerDependencies } from './itemWireMappers';
 
-function mapItemToSummary(item: FoundryItem): ItemDetailSummary {
-  const activities = item.system.activities?.contents ?? [];
+export function createGetActorItemsHandler(
+  deps: ItemHandlerDependencies = {}
+): (params: GetActorItemsParams) => Promise<ActorItemsResult> {
+  const service = createFoundryActorItemService(deps.gameProvider);
 
-  return {
-    id: item.id,
-    name: item.name,
-    type: item.type,
-    img: item.img,
-    equipped: item.system.equipped ?? false,
-    quantity: item.system.quantity ?? 1,
-    hasActivities: activities.length > 0,
-    activityTypes: activities.map(a => a.type),
-    description: item.system.description?.value ?? '',
-    damage: item.system.damage ?? null,
-    range: item.system.range ?? null
+  return function getActorItemsHandler(params: GetActorItemsParams): Promise<ActorItemsResult> {
+    try {
+      const query = toListActorItemsQuery(
+        parseActorItemRequest(getActorItemsRequestSchema, getTokenActorItemsRequestSchema, params)
+      );
+      return Promise.resolve(toWireActorItems(service.listItems(query)));
+    } catch (error) {
+      return Promise.reject(asError(error));
+    }
   };
 }
 
-export function getActorItemsHandler(params: GetActorItemsParams): Promise<ActorItemsResult> {
-  const actor = getGame().actors.get(params.actorId);
-
-  if (!actor) {
-    return Promise.reject(new Error(`Actor not found: ${params.actorId}`));
-  }
-
-  let items = actor.items.contents;
-
-  if (params.type) {
-    items = items.filter(item => item.type === params.type);
-  }
-
-  if (params.equipped !== undefined) {
-    items = items.filter(item => (item.system.equipped ?? false) === params.equipped);
-  }
-
-  if (params.hasActivities !== undefined) {
-    items = items.filter(item => {
-      const hasActs = (item.system.activities?.contents.length ?? 0) > 0;
-      return hasActs === params.hasActivities;
-    });
-  }
-
-  return Promise.resolve({
-    actorId: actor.id,
-    actorName: actor.name,
-    items: items.map(mapItemToSummary)
-  });
-}
+export const getActorItemsHandler = createGetActorItemsHandler();

@@ -1,19 +1,14 @@
 import type { ClearChatResult } from '@/commands/types';
-import type { FoundryChatGame, FoundryChatMessageConstructor } from './chatTypes';
+import { createFoundryChatService } from '@/core/chat';
+import type { ChatHandlerDependencies } from './chatWireMappers';
 
-declare const game: FoundryChatGame;
-declare const ChatMessage: FoundryChatMessageConstructor;
+export function createClearChatHandler(deps: ChatHandlerDependencies = {}): () => Promise<ClearChatResult> {
+  const service = createFoundryChatService(deps.globals);
 
-export async function clearChatHandler(): Promise<ClearChatResult> {
-  const messages = game.messages.contents;
-  const count = messages.length;
-
-  if (count === 0) {
-    return { deletedCount: 0 };
-  }
-
-  const ids = messages.map(m => m.id);
-  await ChatMessage.deleteDocuments(ids);
-
-  return { deletedCount: count };
+  // The command takes no parameters, so there is nothing to validate.
+  return async function clearChatHandler(): Promise<ClearChatResult> {
+    return { deletedCount: await service.clearChat() };
+  };
 }
+
+export const clearChatHandler = createClearChatHandler();

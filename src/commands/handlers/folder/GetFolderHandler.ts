@@ -1,32 +1,22 @@
-import type { GetFolderParams, GetFolderResult, FolderTreeEntry } from '@/commands/types';
-import { getGame, mapFolderToSummary, type FoundryFolderDoc } from './folderTypes';
+import type { GetFolderParams, GetFolderResult } from '@/commands/types';
+import { asError } from '@/commands/handlers/legacyWire';
+import { parseRequest } from '@/core/shared';
+import { createFoundryFolderService, getFolderRequestSchema, toGetFolderQuery } from '@/core/folders';
+import { toWireFolderTree, type FolderHandlerDependencies } from './folderWireMappers';
 
-function buildTree(folder: FoundryFolderDoc, includeSubfolders: boolean, includeContents: boolean): FolderTreeEntry {
-  const summary = mapFolderToSummary(folder);
-  const subfolders: FolderTreeEntry[] = includeSubfolders
-    ? folder.children.map(child => buildTree(child, true, includeContents))
-    : [];
+export function createGetFolderHandler(
+  deps: FolderHandlerDependencies = {}
+): (params: GetFolderParams) => Promise<GetFolderResult> {
+  const service = createFoundryFolderService(deps.globals);
 
-  const entry: FolderTreeEntry = {
-    ...summary,
-    subfolders
+  return function getFolderHandler(params: GetFolderParams): Promise<GetFolderResult> {
+    try {
+      const query = toGetFolderQuery(parseRequest(getFolderRequestSchema, params));
+      return Promise.resolve(toWireFolderTree(service.getFolder(query)));
+    } catch (error) {
+      return Promise.reject(asError(error));
+    }
   };
-
-  if (includeContents) {
-    entry.contentIds = folder.contents.map(d => d.id);
-  }
-
-  return entry;
 }
 
-export function getFolderHandler(params: GetFolderParams): Promise<GetFolderResult> {
-  const folder = getGame().folders.get(params.folderId);
-  if (!folder) {
-    return Promise.reject(new Error(`Folder not found: ${params.folderId}`));
-  }
-
-  const includeSubfolders = params.includeSubfolders !== false;
-  const includeContents = params.includeContents === true;
-
-  return Promise.resolve(buildTree(folder, includeSubfolders, includeContents));
-}
+export const getFolderHandler = createGetFolderHandler();

@@ -1,12 +1,18 @@
 import type { PingLocationParams, PingLocationResult } from '@/commands/types';
-import { getCanvas } from './systemTypes';
+import { parseRequest } from '@/core/shared';
+import { createFoundryCanvasViewService, pingLocationRequestSchema, toPingLocationCommand } from '@/core/ui';
+import type { CanvasViewHandlerDependencies } from './PanCanvasHandler';
 
-export async function pingLocationHandler(params: PingLocationParams): Promise<PingLocationResult> {
-  const opts: Record<string, unknown> = {};
-  if (params.style !== undefined) opts['style'] = params.style;
-  if (params.color !== undefined) opts['color'] = params.color;
-  if (params.duration !== undefined) opts['duration'] = params.duration;
+export function createPingLocationHandler(
+  deps: CanvasViewHandlerDependencies = {}
+): (params: PingLocationParams) => Promise<PingLocationResult> {
+  const service = createFoundryCanvasViewService(deps.canvas);
 
-  await getCanvas().ping({ x: params.x, y: params.y }, opts);
-  return { pinged: true, x: params.x, y: params.y };
+  return async function pingLocationHandler(params: PingLocationParams): Promise<PingLocationResult> {
+    const command = toPingLocationCommand(parseRequest(pingLocationRequestSchema, params));
+    const pinged = await service.pingLocation(command);
+    return { pinged, x: command.ping.x, y: command.ping.y };
+  };
 }
+
+export const pingLocationHandler = createPingLocationHandler();

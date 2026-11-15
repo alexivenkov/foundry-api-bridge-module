@@ -1,17 +1,24 @@
-import type { ToggleCombatantVisibilityParams, CombatantResult } from '@/commands/types';
+import type { CombatantResult, ToggleCombatantVisibilityParams } from '@/commands/types';
+import { parseRequest } from '@/core/shared';
 import {
-  getActiveCombat,
-  getCombatant,
-  mapCombatantToResult,
-  type FoundryGame
-} from './combatTypes';
+  combatantAddressRequestSchema,
+  createFoundryCombatantService,
+  toCombatantAddress,
+  type CombatWiring
+} from '@/core/combat';
+import { toWireCombatant } from './combatWireMappers';
 
-declare const game: FoundryGame;
+export function createToggleCombatantVisibilityHandler(
+  wiring: CombatWiring = {}
+): (params: ToggleCombatantVisibilityParams) => Promise<CombatantResult> {
+  const service = createFoundryCombatantService(wiring);
 
-export async function toggleCombatantVisibilityHandler(params: ToggleCombatantVisibilityParams): Promise<CombatantResult> {
-  const combat = getActiveCombat(game, params.combatId);
-  const combatant = getCombatant(combat, params.combatantId);
-
-  await combatant.update({ hidden: !combatant.hidden });
-  return mapCombatantToResult(combatant);
+  return async function toggleCombatantVisibilityHandler(
+    params: ToggleCombatantVisibilityParams
+  ): Promise<CombatantResult> {
+    const command = toCombatantAddress(parseRequest(combatantAddressRequestSchema, params));
+    return toWireCombatant(await service.toggleVisibility(command));
+  };
 }
+
+export const toggleCombatantVisibilityHandler = createToggleCombatantVisibilityHandler();

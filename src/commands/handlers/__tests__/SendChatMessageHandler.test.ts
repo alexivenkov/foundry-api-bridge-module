@@ -4,8 +4,12 @@ const mockMessage = { id: 'msg-123' };
 
 const mockChatMessage = {
   create: jest.fn().mockResolvedValue(mockMessage),
-  getSpeaker: jest.fn().mockReturnValue({ alias: 'Gamemaster', actor: undefined, scene: 'scene-1' }),
-  STYLE: { IC: 1, OOC: 2, EMOTE: 3 }
+  getSpeaker: jest.fn().mockReturnValue({ alias: 'Gamemaster', actor: undefined, scene: 'scene-1' })
+};
+
+// The core keeps the style codes in CONST.CHAT_MESSAGE_STYLES (Foundry 13.351 / 14.368); ChatMessage has no STYLE.
+const mockConst = {
+  CHAT_MESSAGE_STYLES: { OTHER: 0, OOC: 1, IC: 2, EMOTE: 3 }
 };
 
 const mockGame = {
@@ -16,6 +20,7 @@ const mockGame = {
 
 (global as Record<string, unknown>)['ChatMessage'] = mockChatMessage;
 (global as Record<string, unknown>)['game'] = mockGame;
+(global as Record<string, unknown>)['CONST'] = mockConst;
 
 describe('sendChatMessageHandler', () => {
   beforeEach(() => {
@@ -84,14 +89,14 @@ describe('sendChatMessageHandler', () => {
     await sendChatMessageHandler({ content: 'In character speech', type: 'ic' });
 
     const callArgs = mockChatMessage.create.mock.calls[0] as [Record<string, unknown>];
-    expect(callArgs[0]['style']).toBe(1);
+    expect(callArgs[0]['style']).toBe(2);
   });
 
   it('sets OOC style', async () => {
     await sendChatMessageHandler({ content: 'Out of character', type: 'ooc' });
 
     const callArgs = mockChatMessage.create.mock.calls[0] as [Record<string, unknown>];
-    expect(callArgs[0]['style']).toBe(2);
+    expect(callArgs[0]['style']).toBe(1);
   });
 
   it('sets emote style', async () => {
@@ -164,7 +169,7 @@ describe('sendChatMessageHandler', () => {
     expect(speaker['actor']).toBe('innkeeper-id');
     expect(callArgs[0]['flavor']).toBe('The Rusty Dragon Inn');
     expect(callArgs[0]['whisper']).toEqual(['user-1']);
-    expect(callArgs[0]['style']).toBe(1);
+    expect(callArgs[0]['style']).toBe(2);
     expect(result.sent).toBe(true);
   });
 });

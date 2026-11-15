@@ -1,34 +1,17 @@
 import type { UpdateFolderParams, UpdateFolderResult } from '@/commands/types';
-import { getGame, mapFolderToSummary } from './folderTypes';
+import { parseRequest } from '@/core/shared';
+import { createFoundryFolderService, toUpdateFolderCommand, updateFolderRequestSchema } from '@/core/folders';
+import { toWireFolder, type FolderHandlerDependencies } from './folderWireMappers';
 
-export async function updateFolderHandler(params: UpdateFolderParams): Promise<UpdateFolderResult> {
-  const folder = getGame().folders.get(params.folderId);
-  if (!folder) {
-    throw new Error(`Folder not found: ${params.folderId}`);
-  }
+export function createUpdateFolderHandler(
+  deps: FolderHandlerDependencies = {}
+): (params: UpdateFolderParams) => Promise<UpdateFolderResult> {
+  const service = createFoundryFolderService(deps.globals);
 
-  const updateData: Record<string, unknown> = {};
-
-  if (params.name !== undefined) {
-    updateData['name'] = params.name;
-  }
-
-  if (params.parentId !== undefined) {
-    updateData['folder'] = params.parentId;
-  }
-
-  if (params.color !== undefined) {
-    updateData['color'] = params.color;
-  }
-
-  if (params.description !== undefined) {
-    updateData['description'] = params.description;
-  }
-
-  if (params.sort !== undefined) {
-    updateData['sort'] = params.sort;
-  }
-
-  await folder.update(updateData);
-  return mapFolderToSummary(folder);
+  return async function updateFolderHandler(params: UpdateFolderParams): Promise<UpdateFolderResult> {
+    const command = toUpdateFolderCommand(parseRequest(updateFolderRequestSchema, params));
+    return toWireFolder(await service.updateFolder(command));
+  };
 }
+
+export const updateFolderHandler = createUpdateFolderHandler();

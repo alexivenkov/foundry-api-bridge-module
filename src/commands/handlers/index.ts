@@ -56,7 +56,13 @@ export {
   deleteJournalPageHandler,
   getJournalsHandler,
   getJournalHandler,
-  showJournalHandler
+  showJournalHandler,
+  createJournalCategoryHandler,
+  updateJournalCategoryHandler,
+  deleteJournalCategoryHandler,
+  showImageHandler,
+  panToNoteHandler,
+  searchJournalsHandler
 } from '@/commands/handlers/journal';
 
 // Combat handlers
@@ -78,7 +84,19 @@ export {
   setCombatantDefeatedHandler,
   toggleCombatantVisibilityHandler,
   getCombatTurnContextHandler,
-  swadeGetActionCardsHandler
+  swadeGetActionCardsHandler,
+  getCombatsHandler,
+  activateCombatHandler,
+  toggleCombatSceneLinkHandler,
+  nextRoundHandler,
+  previousRoundHandler,
+  resetInitiativeHandler,
+  getCombatantGroupsHandler,
+  createCombatantGroupHandler,
+  updateCombatantGroupHandler,
+  deleteCombatantGroupHandler,
+  getCombatTrackerConfigHandler,
+  updateCombatTrackerConfigHandler
 } from '@/commands/handlers/combat';
 
 // Token handlers
@@ -92,7 +110,24 @@ export {
   getTokenByActorHandler,
   setTokenTargetHandler,
   clearTargetsHandler,
-  getTokensInRangeHandler
+  getTokensInRangeHandler,
+  getPrototypeTokenHandler,
+  updatePrototypeTokenHandler,
+  getActorTokensHandler,
+  getTokenImagesHandler,
+  moveTokenPathHandler,
+  stopTokenMovementHandler,
+  pauseTokenMovementHandler,
+  resumeTokenMovementHandler,
+  measureTokenPathHandler,
+  findTokenPathHandler,
+  getTokenMovementHistoryHandler,
+  revertTokenMovementHandler,
+  clearTokenMovementHistoryHandler,
+  selectTokensHandler,
+  getSelectedTokensHandler,
+  setTargetsHandler,
+  showSpeechBubbleHandler
 } from '@/commands/handlers/token';
 
 // Item handlers
@@ -128,7 +163,16 @@ export {
   updateSceneHandler,
   deleteSceneHandler,
   cloneSceneHandler,
-  viewSceneHandler
+  viewSceneHandler,
+  getWeatherEffectsHandler,
+  pullUsersToSceneHandler,
+  preloadSceneHandler,
+  regenerateSceneThumbnailHandler,
+  resetFogHandler,
+  getSceneLevelsHandler,
+  createSceneLevelHandler,
+  updateSceneLevelHandler,
+  deleteSceneLevelHandler
 } from '@/commands/handlers/scene';
 
 // World handlers
@@ -153,12 +197,19 @@ export {
   resetTableHandler,
   createRollTableHandler,
   updateRollTableHandler,
-  deleteRollTableHandler
+  deleteRollTableHandler,
+  previewTableRollHandler,
+  normalizeRollTableHandler,
+  createRollTableFromFolderHandler,
+  createTableResultHandler,
+  updateTableResultHandler,
+  deleteTableResultHandler
 } from '@/commands/handlers/table';
 
 // Door handlers
 export {
-  setDoorStateHandler
+  setDoorStateHandler,
+  getDoorSoundsHandler
 } from '@/commands/handlers/door';
 
 // Wall handlers
@@ -183,7 +234,9 @@ export {
   deleteChatMessageHandler,
   updateChatMessageHandler,
   clearChatHandler,
-  exportChatHandler
+  exportChatHandler,
+  validateRollFormulaHandler,
+  simulateRollHandler
 } from '@/commands/handlers/chat';
 
 // Effect handlers
@@ -192,7 +245,12 @@ export {
   toggleActorStatusHandler,
   addActorEffectHandler,
   removeActorEffectHandler,
-  updateActorEffectHandler
+  updateActorEffectHandler,
+  getActorEffectHandler,
+  getItemEffectsHandler,
+  createItemEffectHandler,
+  updateItemEffectHandler,
+  deleteItemEffectHandler
 } from '@/commands/handlers/effect';
 
 // Folder handlers
@@ -211,7 +269,11 @@ export {
   createMacroHandler,
   updateMacroHandler,
   deleteMacroHandler,
-  executeMacroHandler
+  executeMacroHandler,
+  getHotbarHandler,
+  assignHotbarSlotHandler,
+  moveHotbarSlotHandler,
+  clearHotbarSlotHandler
 } from '@/commands/handlers/macro';
 
 // Playlist handlers
@@ -223,7 +285,14 @@ export {
   playSoundInPlaylistHandler,
   stopSoundInPlaylistHandler,
   playSoundOnceHandler,
-  addSoundToPlaylistHandler
+  addSoundToPlaylistHandler,
+  createPlaylistHandler,
+  updatePlaylistHandler,
+  deletePlaylistHandler,
+  updatePlaylistSoundHandler,
+  deletePlaylistSoundHandler,
+  playNextInPlaylistHandler,
+  importPlaylistSoundsHandler
 } from '@/commands/handlers/playlist';
 
 // System runtime handlers (world time, pause/resume, UI helpers)
@@ -236,7 +305,16 @@ export {
   getPauseStateHandler,
   notifyHandler,
   panCanvasHandler,
-  pingLocationHandler
+  pingLocationHandler,
+  getCalendarHandler,
+  getTimeDifferenceHandler,
+  createProgressNotificationHandler,
+  updateProgressNotificationHandler,
+  removeNotificationHandler,
+  measureGridPathHandler,
+  snapToGridHandler,
+  getCanvasViewHandler,
+  showScrollingTextHandler
 } from '@/commands/handlers/system';
 // PF2e condition handlers
 export {
@@ -266,3 +344,120 @@ export {
   pf2eCastSpellHandler,
   pf2ePostItemHandler
 } from '@/commands/handlers/item-use';
+
+// Ambient light handlers
+export { getLightsHandler, createLightHandler, updateLightHandler, deleteLightHandler } from '@/commands/handlers/light';
+
+// Ambient sound handlers
+export {
+  getAmbientSoundsHandler,
+  createAmbientSoundHandler,
+  updateAmbientSoundHandler,
+  deleteAmbientSoundHandler,
+  playSoundAtPositionHandler,
+  preloadSoundHandler
+} from '@/commands/handlers/ambient-sound';
+
+// Tile handlers
+export { getTilesHandler, createTileHandler, updateTileHandler, deleteTileHandler } from '@/commands/handlers/tile';
+
+// Drawing handlers
+export {
+  getDrawingsHandler,
+  createDrawingHandler,
+  updateDrawingHandler,
+  deleteDrawingHandler
+} from '@/commands/handlers/drawing';
+
+// Measured template handlers
+export {
+  getTemplatesHandler,
+  createTemplateHandler,
+  updateTemplateHandler,
+  deleteTemplateHandler
+} from '@/commands/handlers/template';
+
+// Region handlers
+export {
+  getRegionsHandler,
+  getRegionHandler,
+  createRegionHandler,
+  updateRegionHandler,
+  deleteRegionHandler,
+  createRegionBehaviorHandler,
+  updateRegionBehaviorHandler,
+  deleteRegionBehaviorHandler,
+  getRegionTokensHandler,
+  testRegionPointHandler
+} from '@/commands/handlers/region';
+
+// Card handlers
+export {
+  getCardStacksHandler,
+  getCardStackHandler,
+  createCardStackHandler,
+  updateCardStackHandler,
+  deleteCardStackHandler,
+  createCardHandler,
+  updateCardHandler,
+  deleteCardHandler,
+  shuffleCardsHandler,
+  dealCardsHandler,
+  drawCardsHandler,
+  passCardsHandler,
+  playCardHandler,
+  discardCardHandler,
+  recallCardsHandler,
+  flipCardHandler,
+  showCardHandler
+} from '@/commands/handlers/card';
+
+// User handlers
+export { getUsersHandler, getUserHandler, updateUserHandler } from '@/commands/handlers/user';
+
+// Setting handlers
+export { getSettingsHandler, getSettingHandler, setSettingHandler } from '@/commands/handlers/setting';
+
+// Document handlers
+export {
+  getDocumentOwnershipHandler,
+  setDocumentOwnershipHandler,
+  getDocumentFlagsHandler,
+  setDocumentFlagHandler,
+  unsetDocumentFlagHandler,
+  sortDocumentHandler,
+  searchDocumentsHandler,
+  exportDocumentHandler,
+  importDocumentHandler
+} from '@/commands/handlers/document';
+
+// Compendium management handlers
+export {
+  getCompendiumInfoHandler,
+  createCompendiumHandler,
+  duplicateCompendiumHandler,
+  configureCompendiumHandler,
+  deleteCompendiumHandler,
+  exportToCompendiumHandler,
+  exportFolderToCompendiumHandler,
+  updateCompendiumDocumentHandler,
+  deleteCompendiumDocumentHandler,
+  importCompendiumHandler,
+  importCompendiumFolderHandler,
+  getAdventureHandler,
+  importAdventureHandler
+} from '@/commands/handlers/compendium';
+
+// File handlers
+export { browseFilesHandler, createDirectoryHandler, uploadFileHandler } from '@/commands/handlers/file';
+
+// Player dialog handlers
+export { askUserHandler, getUserAnswerHandler, cancelUserQuestionHandler } from '@/commands/handlers/dialog';
+
+// Event push handlers
+export {
+  subscribeEventsHandler,
+  unsubscribeEventsHandler,
+  getEventSubscriptionsHandler,
+  getEventTypesHandler
+} from '@/commands/handlers/event';

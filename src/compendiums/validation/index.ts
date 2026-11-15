@@ -41,3 +41,46 @@ export {
   toSearchInPackQuery,
   toSearchJournalPagesQuery
 } from './requestMappers';
+export {
+  COMPENDIUM_PACK_TYPE_CODES,
+  SELECTABLE_ADVENTURE_CONTENT_CODES,
+  configureCompendiumRequestSchema,
+  createCompendiumRequestSchema,
+  duplicateCompendiumRequestSchema,
+  exportFolderToCompendiumRequestSchema,
+  exportToCompendiumRequestSchema,
+  getAdventureRequestSchema,
+  importAdventureRequestSchema,
+  importCompendiumFolderRequestSchema,
+  importCompendiumRequestSchema,
+  packDocumentRequestSchema,
+  packIdRequestSchema,
+  updateCompendiumDocumentRequestSchema
+} from './managementSchemas';
+export type {
+  ConfigureCompendiumRequest,
+  CreateCompendiumRequest,
+  DuplicateCompendiumRequest,
+  ExportFolderToCompendiumRequest,
+  ExportToCompendiumRequest,
+  GetAdventureRequest,
+  ImportAdventureRequest,
+  ImportCompendiumFolderRequest,
+  ImportCompendiumRequest,
+  PackDocumentRequest,
+  PackIdRequest,
+  UpdateCompendiumDocumentRequest
+} from './managementSchemas';
+export {
+  toConfigurePackCommand,
+  toCreatePackCommand,
+  toDeletePackDocumentCommand,
+  toDuplicatePackCommand,
+  toExportDocumentCommand,
+  toExportFolderCommand,
+  toGetAdventureQuery,
+  toImportAdventureCommand,
+  toImportPackCommand,
+  toImportPackFolderCommand,
+  toUpdatePackDocumentCommand
+} from './managementMappers';

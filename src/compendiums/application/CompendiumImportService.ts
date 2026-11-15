@@ -2,9 +2,13 @@ import {
   AdventureImportUnsupportedError,
   EmbeddedItemCreationFailedError,
   ImportCreationFailedError,
+  MACRO_DOCUMENT_TYPE,
+  NO_SCRIPT_CONSENT,
   PackNotFoundError,
   PackTypeMismatchError,
-  WorldActorNotFoundError
+  ScriptMacroImportDisabledError,
+  WorldActorNotFoundError,
+  isScriptMacroSource
 } from '@/compendiums/domain';
 import type {
   ActorInventory,
@@ -13,6 +17,7 @@ import type {
   PackCatalog,
   PackDescriptor,
   PackDocumentReader,
+  ScriptMacroImportPolicy,
   WorldImporter
 } from '@/compendiums/domain';
 import type {
@@ -28,6 +33,8 @@ export interface CompendiumImportServiceDependencies {
   readonly documentReader: PackDocumentReader;
   readonly worldImporter: WorldImporter;
   readonly actorInventory: ActorInventory;
+  /** Absent: script macros are refused. */
+  readonly scripts?: ScriptMacroImportPolicy | undefined;
 }
 
 export class CompendiumImportService {
@@ -44,6 +51,9 @@ export class CompendiumImportService {
       command.packId,
       command.documentId
     );
+    if (pack.type === MACRO_DOCUMENT_TYPE && isScriptMacroSource(data)) {
+      this.requireScriptConsent();
+    }
     delete data['_id'];
     if (command.name !== undefined) {
       data['name'] = command.name;
@@ -150,6 +160,13 @@ export class CompendiumImportService {
     }
 
     return { item: created, actor };
+  }
+
+  /** A script macro in the world needs the opt-in `create-macro` asks for. */
+  private requireScriptConsent(): void {
+    if (!(this.deps.scripts ?? NO_SCRIPT_CONSENT).allowsScripts()) {
+      throw new ScriptMacroImportDisabledError();
+    }
   }
 
   private requirePack(packId: string): PackDescriptor {

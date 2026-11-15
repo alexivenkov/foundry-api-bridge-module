@@ -96,22 +96,20 @@ describe('getPlaylistsHandler', () => {
     expect(result).toEqual([]);
   });
 
-  it('should map every mode value (-1, 0, 1, 2, 3) to wire string', async () => {
+  it('should map every mode value (-1, 0, 1, 2) to wire string', async () => {
     setGame([
       createMockPlaylist({ id: 'p-soundboard', name: 'SB', mode: -1 }),
-      createMockPlaylist({ id: 'p-disabled', name: 'D', mode: 0 }),
-      createMockPlaylist({ id: 'p-seq', name: 'S', mode: 1 }),
-      createMockPlaylist({ id: 'p-shuffle', name: 'SH', mode: 2 }),
-      createMockPlaylist({ id: 'p-sim', name: 'SI', mode: 3 })
+      createMockPlaylist({ id: 'p-seq', name: 'S', mode: 0 }),
+      createMockPlaylist({ id: 'p-shuffle', name: 'SH', mode: 1 }),
+      createMockPlaylist({ id: 'p-sim', name: 'SI', mode: 2 })
     ]);
 
     const result = await getPlaylistsHandler({});
 
     expect(result[0]?.mode).toBe('soundboard');
-    expect(result[1]?.mode).toBe('disabled');
-    expect(result[2]?.mode).toBe('sequential');
-    expect(result[3]?.mode).toBe('shuffle');
-    expect(result[4]?.mode).toBe('simultaneous');
+    expect(result[1]?.mode).toBe('sequential');
+    expect(result[2]?.mode).toBe('shuffle');
+    expect(result[3]?.mode).toBe('simultaneous');
   });
 
   it('should map folder name when present and null when absent', async () => {

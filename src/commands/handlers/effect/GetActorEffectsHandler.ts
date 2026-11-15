@@ -1,28 +1,22 @@
-import type { GetActorEffectsParams, ActorEffectsResult } from '@/commands/types';
-import { mapEffectToSummary, resolveEffectActor } from './effectTypes';
+import type { ActorEffectsResult, GetActorEffectsParams } from '@/commands/types';
+import { asError, withShortNoActiveScene } from '@/commands/handlers/legacyWire';
+import { createFoundryEffectService, getActorEffectsRequestSchema, toListEffectsQuery } from '@/core/effects';
+import { parseRequest } from '@/core/shared';
+import { toWireActorEffects, type EffectHandlerDependencies } from './effectWireMappers';
 
-export function getActorEffectsHandler(
-  params: GetActorEffectsParams
-): Promise<ActorEffectsResult> {
-  let actor;
-  try {
-    actor = resolveEffectActor(params);
-  } catch (error) {
-    return Promise.reject(error instanceof Error ? error : new Error(String(error)));
-  }
+export function createGetActorEffectsHandler(
+  deps: EffectHandlerDependencies = {}
+): (params: GetActorEffectsParams) => Promise<ActorEffectsResult> {
+  const service = createFoundryEffectService(deps.gameProvider, deps);
 
-  const includeDisabled = params.includeDisabled ?? true;
-
-  let effects = actor.effects.contents;
-
-  if (!includeDisabled) {
-    effects = effects.filter(e => !e.disabled);
-  }
-
-  return Promise.resolve({
-    actorId: actor.id,
-    actorName: actor.name,
-    effects: effects.map(mapEffectToSummary),
-    activeStatuses: Array.from(actor.statuses)
-  });
+  return function getActorEffectsHandler(params: GetActorEffectsParams): Promise<ActorEffectsResult> {
+    try {
+      const query = toListEffectsQuery(parseRequest(getActorEffectsRequestSchema, params));
+      return Promise.resolve(toWireActorEffects(service.listEffects(query)));
+    } catch (error) {
+      return Promise.reject(asError(withShortNoActiveScene(error)));
+    }
+  };
 }
+
+export const getActorEffectsHandler = createGetActorEffectsHandler();

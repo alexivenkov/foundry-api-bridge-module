@@ -1,11 +1,19 @@
 import type { SetWorldTimeParams, SetWorldTimeResult } from '@/commands/types';
-import { getGame } from './systemTypes';
+import { parseRequest } from '@/core/shared';
+import { createFoundryWorldTimeService, setWorldTimeSchemaFor, toSetWorldTimeCommand } from '@/core/world';
+import { withWireDate } from './calendarWireMappers';
+import type { RunningGameHandlerDependencies } from './GetWorldTimeHandler';
 
-export async function setWorldTimeHandler(params: SetWorldTimeParams): Promise<SetWorldTimeResult> {
-  if (params.worldTime < 0) {
-    throw new Error('worldTime must be >= 0');
-  }
-  const time = getGame().time;
-  await time.set(params.worldTime);
-  return { worldTime: time.worldTime };
+export function createSetWorldTimeHandler(
+  deps: RunningGameHandlerDependencies = {}
+): (params: SetWorldTimeParams) => Promise<SetWorldTimeResult> {
+  const service = createFoundryWorldTimeService(deps.gameProvider);
+
+  return async function setWorldTimeHandler(params: SetWorldTimeParams): Promise<SetWorldTimeResult> {
+    const command = toSetWorldTimeCommand(parseRequest(setWorldTimeSchemaFor(params), params));
+    const reading = await service.setTime(command);
+    return withWireDate({ worldTime: reading.worldTime }, reading.date);
+  };
 }
+
+export const setWorldTimeHandler = createSetWorldTimeHandler();

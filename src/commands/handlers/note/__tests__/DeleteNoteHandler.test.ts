@@ -19,7 +19,7 @@ const makeMockNote = (id = 'note-1'): FoundryNoteDocument => ({
   entryId: null,
   pageId: null,
   text: null,
-  icon: { src: 'icons/svg/book.svg' },
+  texture: { src: 'icons/svg/book.svg' },
   iconSize: 40,
   fontSize: 32,
   textAnchor: 1,

@@ -1,16 +1,22 @@
 import type { DeleteSceneParams, DeleteSceneResult } from '@/commands/types';
-import { getGameCrud } from './sceneTypes';
+import { parseRequest } from '@/core/shared';
+import {
+  createFoundrySceneService,
+  sceneIdRequestSchema,
+  toDeleteSceneCommand,
+  type SceneWiring
+} from '@/core/scenes';
 
-export async function deleteSceneHandler(params: DeleteSceneParams): Promise<DeleteSceneResult> {
-  const scene = getGameCrud().scenes.get(params.sceneId);
-  if (!scene) {
-    throw new Error(`Scene not found: ${params.sceneId}`);
-  }
+export function createDeleteSceneHandler(
+  wiring: SceneWiring = {}
+): (params: DeleteSceneParams) => Promise<DeleteSceneResult> {
+  const service = createFoundrySceneService(wiring);
 
-  await scene.delete();
-
-  return {
-    deleted: true,
-    sceneId: params.sceneId
+  return async function deleteSceneHandler(params: DeleteSceneParams): Promise<DeleteSceneResult> {
+    const command = toDeleteSceneCommand(parseRequest(sceneIdRequestSchema, params));
+    await service.deleteScene(command);
+    return { deleted: true, sceneId: command.sceneId };
   };
 }
+
+export const deleteSceneHandler = createDeleteSceneHandler();

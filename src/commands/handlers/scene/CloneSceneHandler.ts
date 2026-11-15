@@ -1,20 +1,31 @@
 import type { CloneSceneParams, CloneSceneResult } from '@/commands/types';
-import { getGameCrud, mapSceneToCrudSummary } from './sceneTypes';
+import { SceneNotFoundError, parseRequest } from '@/core/shared';
+import {
+  cloneSceneRequestSchema,
+  createFoundrySceneService,
+  toCloneSceneCommand,
+  type SceneWiring
+} from '@/core/scenes';
+import { toWireScene } from './sceneWireMappers';
 
-export async function cloneSceneHandler(params: CloneSceneParams): Promise<CloneSceneResult> {
-  const source = getGameCrud().scenes.get(params.sourceId);
-  if (!source) {
-    throw new Error(`Source scene not found: ${params.sourceId}`);
-  }
+export function createCloneSceneHandler(
+  wiring: SceneWiring = {}
+): (params: CloneSceneParams) => Promise<CloneSceneResult> {
+  const service = createFoundrySceneService(wiring);
 
-  const cloneData: Record<string, unknown> = {};
-  if (params.name !== undefined) {
-    cloneData['name'] = params.name;
-  }
-  if (params.folder !== undefined) {
-    cloneData['folder'] = params.folder;
-  }
+  return async function cloneSceneHandler(params: CloneSceneParams): Promise<CloneSceneResult> {
+    const command = toCloneSceneCommand(parseRequest(cloneSceneRequestSchema, params));
 
-  const cloned = await source.clone(cloneData, { save: true });
-  return mapSceneToCrudSummary(cloned);
+    try {
+      return toWireScene(await service.cloneScene(command));
+    } catch (error) {
+      // Legacy wire text of this command: it names the missing scene as the source.
+      if (error instanceof SceneNotFoundError) {
+        throw new Error(`Source scene not found: ${error.sceneId}`);
+      }
+      throw error;
+    }
+  };
 }
+
+export const cloneSceneHandler = createCloneSceneHandler();

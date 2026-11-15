@@ -16,10 +16,10 @@ const makeMockWall = (id = 'wall-1'): FoundryWallDocument => ({
   c: [0, 0, 100, 100],
   door: 0,
   ds: 0,
-  move: 1,
-  sense: 1,
-  sound: 1,
-  light: 1,
+  move: 20,
+  sight: 20,
+  sound: 20,
+  light: 20,
   dir: 0,
   update: jest.fn()
 });

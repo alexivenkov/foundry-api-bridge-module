@@ -1,43 +1,22 @@
-import type { RollInitiativeParams, InitiativeRollResult } from '@/commands/types';
+import type { InitiativeRollResult, RollInitiativeParams } from '@/commands/types';
+import { parseRequest } from '@/core/shared';
 import {
-  getActiveCombat,
-  type FoundryGame,
-  type RollInitiativeOptions
-} from './combatTypes';
+  createFoundryCombatantService,
+  rollInitiativeRequestSchema,
+  toRollInitiativeCommand,
+  type CombatWiring
+} from '@/core/combat';
+import { toWireInitiativeRolls } from './combatWireMappers';
 
-declare const game: FoundryGame;
+export function createRollInitiativeHandler(
+  wiring: CombatWiring = {}
+): (params: RollInitiativeParams) => Promise<InitiativeRollResult> {
+  const service = createFoundryCombatantService(wiring);
 
-export async function rollInitiativeHandler(params: RollInitiativeParams): Promise<InitiativeRollResult> {
-  const combat = getActiveCombat(game, params.combatId);
-
-  if (params.combatantIds.length === 0) {
-    throw new Error('No combatant IDs provided');
-  }
-
-  // Verify all combatants exist
-  for (const id of params.combatantIds) {
-    const combatant = combat.combatants.get(id);
-    if (!combatant) {
-      throw new Error(`Combatant not found: ${id}`);
-    }
-  }
-
-  const options: RollInitiativeOptions = {};
-  if (params.formula !== undefined) {
-    options.formula = params.formula;
-  }
-
-  await combat.rollInitiative(params.combatantIds, options);
-
-  // Collect results
-  const results = params.combatantIds.map(id => {
-    const combatant = combat.combatants.get(id);
-    return {
-      combatantId: id,
-      name: combatant?.name ?? 'Unknown',
-      initiative: combatant?.initiative ?? 0
-    };
-  });
-
-  return { results };
+  return async function rollInitiativeHandler(params: RollInitiativeParams): Promise<InitiativeRollResult> {
+    const command = toRollInitiativeCommand(parseRequest(rollInitiativeRequestSchema, params));
+    return toWireInitiativeRolls(await service.rollInitiative(command));
+  };
 }
+
+export const rollInitiativeHandler = createRollInitiativeHandler();

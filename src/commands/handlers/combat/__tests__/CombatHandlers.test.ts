@@ -816,10 +816,16 @@ describe('Combat Handlers', () => {
     });
 
     it('rolls initiative for all combatants', async () => {
-      const combatant1 = createMockCombatant({ id: 'c1', name: 'Fighter', initiative: 15 });
-      const combatant2 = createMockCombatant({ id: 'c2', name: 'Wizard', initiative: 12 });
+      const combatant1 = createMockCombatant({ id: 'c1', name: 'Fighter', initiative: null });
+      const combatant2 = createMockCombatant({ id: 'c2', name: 'Wizard', initiative: null });
       const mockCombat = createMockCombat();
       mockCombat.combatants.contents = [combatant1, combatant2];
+      // Combat#rollAll rolls for the combatants that have no initiative yet.
+      mockCombat.rollAll.mockImplementation(() => {
+        combatant1.initiative = 15;
+        combatant2.initiative = 12;
+        return Promise.resolve(mockCombat);
+      });
       mockGame.combat = mockCombat;
 
       const result = await rollAllInitiativeHandler({});
@@ -854,10 +860,15 @@ describe('Combat Handlers', () => {
     });
 
     it('filters out combatants without initiative', async () => {
-      const combatant1 = createMockCombatant({ id: 'c1', name: 'Fighter', initiative: 15 });
+      const combatant1 = createMockCombatant({ id: 'c1', name: 'Fighter', initiative: null });
       const combatant2 = createMockCombatant({ id: 'c2', name: 'Wizard', initiative: null });
       const mockCombat = createMockCombat();
       mockCombat.combatants.contents = [combatant1, combatant2];
+      // The roll reaches the Fighter only; the Wizard is left without initiative.
+      mockCombat.rollAll.mockImplementation(() => {
+        combatant1.initiative = 15;
+        return Promise.resolve(mockCombat);
+      });
       mockGame.combat = mockCombat;
 
       const result = await rollAllInitiativeHandler({});

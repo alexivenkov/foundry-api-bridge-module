@@ -3,3 +3,8 @@ export { toggleActorStatusHandler } from './ToggleActorStatusHandler';
 export { addActorEffectHandler } from './AddActorEffectHandler';
 export { removeActorEffectHandler } from './RemoveActorEffectHandler';
 export { updateActorEffectHandler } from './UpdateActorEffectHandler';
+export { getActorEffectHandler } from './GetActorEffectHandler';
+export { getItemEffectsHandler } from './GetItemEffectsHandler';
+export { createItemEffectHandler } from './CreateItemEffectHandler';
+export { updateItemEffectHandler } from './UpdateItemEffectHandler';
+export { deleteItemEffectHandler } from './DeleteItemEffectHandler';

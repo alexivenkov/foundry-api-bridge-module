@@ -1,30 +1,17 @@
 import type { DeleteActorParams, DeleteResult } from '@/commands/types';
+import { createFoundryActorService, deleteActorRequestSchema, toDeleteActorCommand } from '@/core/actors';
+import { parseRequest } from '@/core/shared';
+import type { ActorHandlerDependencies } from './actorWireMappers';
 
-interface FoundryActor {
-  id: string;
-  delete(): Promise<FoundryActor>;
-}
+export function createDeleteActorHandler(
+  deps: ActorHandlerDependencies = {}
+): (params: DeleteActorParams) => Promise<DeleteResult> {
+  const service = createFoundryActorService(deps.gameProvider);
 
-interface ActorsCollection {
-  get(id: string): FoundryActor | undefined;
-}
-
-interface FoundryGame {
-  actors: ActorsCollection;
-}
-
-declare const game: FoundryGame;
-
-export async function deleteActorHandler(params: DeleteActorParams): Promise<DeleteResult> {
-  const actor = game.actors.get(params.actorId);
-
-  if (!actor) {
-    throw new Error(`Actor not found: ${params.actorId}`);
-  }
-
-  await actor.delete();
-
-  return {
-    deleted: true
+  return async function deleteActorHandler(params: DeleteActorParams): Promise<DeleteResult> {
+    await service.deleteActor(toDeleteActorCommand(parseRequest(deleteActorRequestSchema, params)));
+    return { deleted: true };
   };
 }
+
+export const deleteActorHandler = createDeleteActorHandler();

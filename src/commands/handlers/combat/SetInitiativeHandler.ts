@@ -1,27 +1,22 @@
-import type { SetInitiativeParams, CombatantResult } from '@/commands/types';
+import type { CombatantResult, SetInitiativeParams } from '@/commands/types';
+import { parseRequest } from '@/core/shared';
 import {
-  getActiveCombat,
-  mapCombatantToResult,
-  type FoundryGame
-} from './combatTypes';
+  createFoundryCombatantService,
+  setInitiativeRequestSchema,
+  toSetInitiativeCommand,
+  type CombatWiring
+} from '@/core/combat';
+import { toWireCombatant } from './combatWireMappers';
 
-declare const game: FoundryGame;
+export function createSetInitiativeHandler(
+  wiring: CombatWiring = {}
+): (params: SetInitiativeParams) => Promise<CombatantResult> {
+  const service = createFoundryCombatantService(wiring);
 
-export async function setInitiativeHandler(params: SetInitiativeParams): Promise<CombatantResult> {
-  const combat = getActiveCombat(game, params.combatId);
-
-  const combatant = combat.combatants.get(params.combatantId);
-  if (!combatant) {
-    throw new Error(`Combatant not found: ${params.combatantId}`);
-  }
-
-  await combat.setInitiative(params.combatantId, params.initiative);
-
-  // Get updated combatant
-  const updatedCombatant = combat.combatants.get(params.combatantId);
-  if (!updatedCombatant) {
-    throw new Error('Failed to get updated combatant');
-  }
-
-  return mapCombatantToResult(updatedCombatant);
+  return async function setInitiativeHandler(params: SetInitiativeParams): Promise<CombatantResult> {
+    const command = toSetInitiativeCommand(parseRequest(setInitiativeRequestSchema, params));
+    return toWireCombatant(await service.setInitiative(command));
+  };
 }
+
+export const setInitiativeHandler = createSetInitiativeHandler();

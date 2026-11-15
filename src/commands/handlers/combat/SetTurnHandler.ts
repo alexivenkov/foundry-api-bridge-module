@@ -1,22 +1,22 @@
-import type { SetTurnParams, CombatResult } from '@/commands/types';
-import { getActiveCombat, mapCombatToResult, type FoundryGame } from './combatTypes';
+import type { CombatResult, SetTurnParams } from '@/commands/types';
+import { parseRequest } from '@/core/shared';
+import {
+  combatantAddressRequestSchema,
+  createFoundryCombatService,
+  toSetTurnCommand,
+  type CombatWiring
+} from '@/core/combat';
+import { toWireCombat } from './combatWireMappers';
 
-declare const game: FoundryGame;
+export function createSetTurnHandler(
+  wiring: CombatWiring = {}
+): (params: SetTurnParams) => Promise<CombatResult> {
+  const service = createFoundryCombatService(wiring);
 
-export async function setTurnHandler(params: SetTurnParams): Promise<CombatResult> {
-  const combat = getActiveCombat(game, params.combatId);
-
-  if (!combat.started) {
-    throw new Error('Combat not started');
-  }
-
-  const turnIndex = combat.turns.findIndex(t => t.id === params.combatantId);
-
-  if (turnIndex === -1) {
-    throw new Error(`Combatant not found in turn order: ${params.combatantId}`);
-  }
-
-  await combat.update({ turn: turnIndex });
-
-  return mapCombatToResult(combat);
+  return async function setTurnHandler(params: SetTurnParams): Promise<CombatResult> {
+    const command = toSetTurnCommand(parseRequest(combatantAddressRequestSchema, params));
+    return toWireCombat(await service.setTurn(command));
+  };
 }
+
+export const setTurnHandler = createSetTurnHandler();

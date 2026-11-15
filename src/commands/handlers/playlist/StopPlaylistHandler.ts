@@ -1,16 +1,18 @@
 import type { StopPlaylistParams, StopPlaylistResult } from '@/commands/types';
-import { getGame } from './playlistTypes';
+import { parseRequest } from '@/core/shared';
+import { createFoundryPlaylistService, stopPlaylistRequestSchema, toStopPlaylistCommand } from '@/core/playlists';
+import type { PlaylistHandlerDependencies } from './playlistWireMappers';
 
-export async function stopPlaylistHandler(params: StopPlaylistParams): Promise<StopPlaylistResult> {
-  const playlist = getGame().playlists.get(params.playlistId);
-  if (!playlist) {
-    throw new Error(`Playlist not found: ${params.playlistId}`);
-  }
+export function createStopPlaylistHandler(
+  deps: PlaylistHandlerDependencies = {}
+): (params: StopPlaylistParams) => Promise<StopPlaylistResult> {
+  const service = createFoundryPlaylistService(deps.gameProvider);
 
-  await playlist.stopAll();
-
-  return {
-    stopped: true,
-    playlistId: params.playlistId
+  return async function stopPlaylistHandler(params: StopPlaylistParams): Promise<StopPlaylistResult> {
+    const command = toStopPlaylistCommand(parseRequest(stopPlaylistRequestSchema, params));
+    await service.stopPlaylist(command);
+    return { stopped: true, playlistId: command.playlistId };
   };
 }
+
+export const stopPlaylistHandler = createStopPlaylistHandler();

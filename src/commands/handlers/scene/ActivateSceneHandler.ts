@@ -1,19 +1,22 @@
 import type { ActivateSceneParams, ActivateSceneResult } from '@/commands/types';
-import type { FoundryGame } from './sceneTypes';
+import { parseRequest } from '@/core/shared';
+import {
+  createFoundrySceneService,
+  sceneIdRequestSchema,
+  toActivateSceneCommand,
+  type SceneWiring
+} from '@/core/scenes';
 
-declare const game: FoundryGame;
+export function createActivateSceneHandler(
+  wiring: SceneWiring = {}
+): (params: ActivateSceneParams) => Promise<ActivateSceneResult> {
+  const service = createFoundrySceneService(wiring);
 
-export async function activateSceneHandler(params: ActivateSceneParams): Promise<ActivateSceneResult> {
-  const scene = game.scenes.get(params.sceneId);
-  if (!scene) {
-    throw new Error(`Scene not found: ${params.sceneId}`);
-  }
-
-  await scene.activate();
-
-  return {
-    id: scene.id,
-    name: scene.name,
-    active: true
+  return async function activateSceneHandler(params: ActivateSceneParams): Promise<ActivateSceneResult> {
+    const command = toActivateSceneCommand(parseRequest(sceneIdRequestSchema, params));
+    const scene = await service.activateScene(command);
+    return { id: scene.id, name: scene.name, active: true };
   };
 }
+
+export const activateSceneHandler = createActivateSceneHandler();

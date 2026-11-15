@@ -23,3 +23,37 @@ export type {
 export type { ResolvedUuidRecord } from './ResolvedUuidRecord';
 export type { PackContentsFilter } from './PackContentsFilter';
 export type { JournalPageMatch } from './JournalPageMatch';
+export type {
+  PackConfigurationChange,
+  PackFolderNode,
+  PackInfo,
+  PackOwnership,
+  PackOwnershipLevel,
+  PackOwnershipRole,
+  WorldPackDraft
+} from './PackInfo';
+export type {
+  FolderExportOptions,
+  FolderExportOutcome,
+  PackDocumentChanges,
+  PackDocumentRef,
+  WorldDocumentExport
+} from './PackDocumentRef';
+export type {
+  PackDocumentPlacement,
+  PackFolderImportOutcome,
+  PackFolderImportPlan,
+  PackImportOptions,
+  PackImportOutcome,
+  WorldDocumentRef,
+  WorldFolderRef
+} from './worldDirectory';
+export type {
+  AdventureContent,
+  AdventureDocumentGroup,
+  AdventureEntry,
+  AdventureHeader,
+  AdventureImportOutcome,
+  AdventureImportPlan,
+  AdventureImportRequest
+} from './adventure';

@@ -1,35 +1,21 @@
 import type { ActorSummary } from '@/commands/types';
+import { asError } from '@/commands/handlers/legacyWire';
+import { createFoundryActorService } from '@/core/actors';
+import { toWireActorSummary, type ActorHandlerDependencies } from './actorWireMappers';
 
-interface ActorEntry {
-  id: string;
-  name: string;
-  type: string;
-  img: string | undefined;
+export function createGetActorsHandler(
+  deps: ActorHandlerDependencies = {}
+): (params: Record<string, never>) => Promise<ActorSummary[]> {
+  const service = createFoundryActorService(deps.gameProvider);
+
+  // The command takes no parameters, so there is nothing to validate.
+  return function getActorsHandler(_params: Record<string, never>): Promise<ActorSummary[]> {
+    try {
+      return Promise.resolve(service.listActors().map(toWireActorSummary));
+    } catch (error) {
+      return Promise.reject(asError(error));
+    }
+  };
 }
 
-interface ActorsCollection {
-  forEach(fn: (actor: ActorEntry) => void): void;
-}
-
-interface FoundryGame {
-  actors: ActorsCollection;
-}
-
-function getGame(): FoundryGame {
-  return (globalThis as unknown as { game: FoundryGame }).game;
-}
-
-export function getActorsHandler(_params: Record<string, never>): Promise<ActorSummary[]> {
-  const actors: ActorSummary[] = [];
-
-  getGame().actors.forEach(actor => {
-    actors.push({
-      id: actor.id,
-      name: actor.name,
-      type: actor.type,
-      img: actor.img ?? ''
-    });
-  });
-
-  return Promise.resolve(actors);
-}
+export const getActorsHandler = createGetActorsHandler();

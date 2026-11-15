@@ -9,6 +9,21 @@ export { FolderReference } from './domain/value-objects/FolderReference';
 export { DomainError } from './domain/errors/DomainError';
 export { ValidationError } from './domain/errors/ValidationError';
 
+// Domain — script carriers (NOT system-neutral: data layouts of DAE, Midi-QOL, Item Macro, dnd5e flags)
+export {
+  ScriptCarrierRefusedError,
+  findEffectChangeCarriers,
+  findFlagCarriers,
+  findFormulaScriptMarkers,
+  findScriptCarriers,
+  introducedScriptCarriers,
+  refuseNewScriptCarriers,
+  refuseScriptCarriers,
+  scriptCarrierRefusal,
+  splitOverTimeSpec
+} from './domain/script-carriers';
+export type { AutomationModule, CarrierPayload, ScriptCarrier } from './domain/script-carriers';
+
 // Domain — specification
 export type { ISpecification } from './domain/specification/Specification';
 export { CompositeSpecification } from './domain/specification/CompositeSpecification';

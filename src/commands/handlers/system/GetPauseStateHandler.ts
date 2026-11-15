@@ -1,6 +1,21 @@
 import type { GetPauseStateParams, GetPauseStateResult } from '@/commands/types';
-import { getGame } from './systemTypes';
+import { asError } from '@/commands/handlers/legacyWire';
+import { createFoundryGamePauseService } from '@/core/world';
+import type { RunningGameHandlerDependencies } from './GetWorldTimeHandler';
 
-export function getPauseStateHandler(_params: GetPauseStateParams): Promise<GetPauseStateResult> {
-  return Promise.resolve({ paused: getGame().paused });
+export function createGetPauseStateHandler(
+  deps: RunningGameHandlerDependencies = {}
+): (params: GetPauseStateParams) => Promise<GetPauseStateResult> {
+  const service = createFoundryGamePauseService(deps.gameProvider);
+
+  // The command takes no parameters, so there is nothing to validate.
+  return function getPauseStateHandler(_params: GetPauseStateParams): Promise<GetPauseStateResult> {
+    try {
+      return Promise.resolve({ paused: service.isPaused() });
+    } catch (error) {
+      return Promise.reject(asError(error));
+    }
+  };
 }
+
+export const getPauseStateHandler = createGetPauseStateHandler();

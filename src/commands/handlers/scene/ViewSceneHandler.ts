@@ -1,16 +1,24 @@
 import type { ViewSceneParams, ViewSceneResult } from '@/commands/types';
-import { getGameCrud } from './sceneTypes';
+import { parseRequest } from '@/core/shared';
+import {
+  createFoundrySceneTableService,
+  toViewSceneCommand,
+  viewSceneRequestSchema,
+  type SceneWiring
+} from '@/core/scenes';
 
-export async function viewSceneHandler(params: ViewSceneParams): Promise<ViewSceneResult> {
-  const scene = getGameCrud().scenes.get(params.sceneId);
-  if (!scene) {
-    throw new Error(`Scene not found: ${params.sceneId}`);
-  }
+export function createViewSceneHandler(
+  wiring: SceneWiring = {}
+): (params: ViewSceneParams) => Promise<ViewSceneResult> {
+  const service = createFoundrySceneTableService(wiring);
 
-  await scene.view();
-
-  return {
-    viewed: true,
-    sceneId: params.sceneId
+  return async function viewSceneHandler(params: ViewSceneParams): Promise<ViewSceneResult> {
+    const command = toViewSceneCommand(parseRequest(viewSceneRequestSchema, params));
+    const viewed = await service.viewScene(command);
+    return viewed.levelId === undefined
+      ? { viewed: true, sceneId: command.sceneId }
+      : { viewed: true, sceneId: command.sceneId, levelId: viewed.levelId };
   };
 }
+
+export const viewSceneHandler = createViewSceneHandler();

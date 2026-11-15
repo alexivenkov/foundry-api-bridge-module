@@ -1,30 +1,17 @@
 import type { UpdateJournalParams, JournalResult } from '@/commands/types';
-import {
-  mapJournalToResult,
-  type FoundryGame,
-  type FoundryJournalUpdateData
-} from './journalTypes';
+import { createFoundryJournalService, toUpdateJournalCommand, updateJournalRequestSchema } from '@/core/journals';
+import { parseRequest } from '@/core/shared';
+import { toWireJournalResult, type JournalHandlerDependencies } from './journalWireMappers';
 
-declare const game: FoundryGame;
+export function createUpdateJournalHandler(
+  deps: JournalHandlerDependencies = {}
+): (params: UpdateJournalParams) => Promise<JournalResult> {
+  const service = createFoundryJournalService(deps.globals);
 
-export async function updateJournalHandler(params: UpdateJournalParams): Promise<JournalResult> {
-  const journal = game.journal.get(params.journalId);
-
-  if (!journal) {
-    throw new Error(`Journal not found: ${params.journalId}`);
-  }
-
-  const updateData: FoundryJournalUpdateData = {};
-
-  if (params.name !== undefined) {
-    updateData.name = params.name;
-  }
-
-  if (params.folder !== undefined) {
-    updateData.folder = params.folder;
-  }
-
-  await journal.update(updateData);
-
-  return mapJournalToResult(journal);
+  return async function updateJournalHandler(params: UpdateJournalParams): Promise<JournalResult> {
+    const command = toUpdateJournalCommand(parseRequest(updateJournalRequestSchema, params));
+    return toWireJournalResult(await service.updateJournal(command));
+  };
 }
+
+export const updateJournalHandler = createUpdateJournalHandler();

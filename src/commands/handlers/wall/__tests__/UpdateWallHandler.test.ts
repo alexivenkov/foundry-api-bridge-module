@@ -17,10 +17,10 @@ const makeMockWall = (overrides: Partial<FoundryWallDocument> = {}): FoundryWall
     c: [0, 0, 100, 100],
     door: 1,
     ds: 0,
-    move: 1,
-    sense: 1,
-    sound: 1,
-    light: 1,
+    move: 20,
+    sight: 20,
+    sound: 20,
+    light: 20,
     dir: 0,
     update: jest.fn(),
     ...overrides
@@ -87,7 +87,7 @@ describe('updateWallHandler', () => {
       door: 2,
       ds: 2,
       move: 0,
-      sense: 2,
+      sight: 10,
       sound: 0,
       light: 0,
       dir: 1
@@ -97,6 +97,35 @@ describe('updateWallHandler', () => {
     expect(result.move).toBe('none');
     expect(result.sense).toBe('limited');
     expect(result.dir).toBe('left');
+  });
+
+  it('maps normal and limited restrictions to the core sense types 20 and 10', async () => {
+    const wall = makeMockWall({ _id: 'w1', move: 0, sight: 0, sound: 0, light: 0 });
+    mockGame.scenes.active = makeMockScene('active', wall);
+
+    const result = await updateWallHandler({
+      wallId: 'w1',
+      move: 'normal',
+      sense: 'normal',
+      sound: 'limited',
+      light: 'limited'
+    });
+
+    expect(wall.update).toHaveBeenCalledWith({ move: 20, sight: 20, sound: 10, light: 10 });
+    expect(result.move).toBe('normal');
+    expect(result.sense).toBe('normal');
+    expect(result.sound).toBe('limited');
+    expect(result.light).toBe('limited');
+  });
+
+  it('rejects limited movement, which the core does not support', async () => {
+    const wall = makeMockWall({ _id: 'w1' });
+    mockGame.scenes.active = makeMockScene('active', wall);
+
+    await expect(updateWallHandler({ wallId: 'w1', move: 'limited' }))
+      .rejects.toThrow("Wall move must be 'none' or 'normal'");
+
+    expect(wall.update).not.toHaveBeenCalled();
   });
 
   it('partial update: only door type', async () => {

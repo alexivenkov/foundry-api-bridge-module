@@ -25,3 +25,29 @@ export type {
   PackIndexResult,
   PackSearchResult
 } from './results';
+export { CompendiumManagementService } from './CompendiumManagementService';
+export type { CompendiumManagementServiceDependencies } from './CompendiumManagementService';
+export { CompendiumWritingService } from './CompendiumWritingService';
+export type { CompendiumWritingServiceDependencies } from './CompendiumWritingService';
+export { CompendiumBulkImportService } from './CompendiumBulkImportService';
+export type { CompendiumBulkImportServiceDependencies } from './CompendiumBulkImportService';
+export { AdventureImportService } from './AdventureImportService';
+export type { AdventureImportServiceDependencies } from './AdventureImportService';
+export type {
+  AdventureDetails,
+  ConfigurePackCommand,
+  CreatePackCommand,
+  DeletePackDocumentCommand,
+  DeletedPack,
+  DeletedPackDocument,
+  DuplicatePackCommand,
+  ExportDocumentCommand,
+  ExportFolderCommand,
+  ExportedDocument,
+  GetAdventureQuery,
+  ImportAdventureCommand,
+  ImportPackCommand,
+  ImportPackFolderCommand,
+  ImportedAdventure,
+  UpdatePackDocumentCommand
+} from './managementCommands';

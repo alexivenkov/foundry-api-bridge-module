@@ -3,18 +3,21 @@ import {
   createFoundryCompendiumImportService,
   importFromCompendiumRequestSchema,
   toImportDocumentCommand,
-  type CompendiumGameProvider
+  type CompendiumGameProvider,
+  type ScriptMacroImportPolicy
 } from '@/compendiums';
 import { formatZodError } from '@/kernel';
 
 export interface ImportFromCompendiumHandlerDependencies {
   gameProvider?: CompendiumGameProvider;
+  /** The script opt-in; defaults to the module's "Allow Script Macros" setting. */
+  scripts?: ScriptMacroImportPolicy;
 }
 
 export function createImportFromCompendiumHandler(
   deps: ImportFromCompendiumHandlerDependencies = {}
 ): (params: ImportFromCompendiumParams) => Promise<ImportFromCompendiumResult> {
-  const service = createFoundryCompendiumImportService(deps.gameProvider);
+  const service = createFoundryCompendiumImportService(deps.gameProvider, deps.scripts);
 
   return async function importFromCompendiumHandler(
     params: ImportFromCompendiumParams

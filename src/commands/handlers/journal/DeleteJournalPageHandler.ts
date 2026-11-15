@@ -1,24 +1,21 @@
 import type { DeleteJournalPageParams, DeleteResult } from '@/commands/types';
-import type { FoundryGame } from './journalTypes';
+import {
+  createFoundryJournalService,
+  deleteJournalPageRequestSchema,
+  toDeleteJournalPageCommand
+} from '@/core/journals';
+import { parseRequest } from '@/core/shared';
+import type { JournalHandlerDependencies } from './journalWireMappers';
 
-declare const game: FoundryGame;
+export function createDeleteJournalPageHandler(
+  deps: JournalHandlerDependencies = {}
+): (params: DeleteJournalPageParams) => Promise<DeleteResult> {
+  const service = createFoundryJournalService(deps.globals);
 
-export async function deleteJournalPageHandler(
-  params: DeleteJournalPageParams
-): Promise<DeleteResult> {
-  const journal = game.journal.get(params.journalId);
-
-  if (!journal) {
-    throw new Error(`Journal not found: ${params.journalId}`);
-  }
-
-  const page = journal.pages.get(params.pageId);
-
-  if (!page) {
-    throw new Error(`Page not found: ${params.pageId}`);
-  }
-
-  await journal.deleteEmbeddedDocuments('JournalEntryPage', [params.pageId]);
-
-  return { deleted: true };
+  return async function deleteJournalPageHandler(params: DeleteJournalPageParams): Promise<DeleteResult> {
+    await service.deletePage(toDeleteJournalPageCommand(parseRequest(deleteJournalPageRequestSchema, params)));
+    return { deleted: true };
+  };
 }
+
+export const deleteJournalPageHandler = createDeleteJournalPageHandler();

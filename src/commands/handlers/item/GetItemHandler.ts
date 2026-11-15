@@ -1,25 +1,23 @@
-import type { ItemData } from '@/types/foundry';
 import type { GetItemParams } from '@/commands/types';
-import { mapWorldItemToData, type FoundryWorldItem } from './GetItemsHandler';
+import { asError } from '@/commands/handlers/legacyWire';
+import { createFoundryWorldItemService, getItemRequestSchema, toGetItemQuery } from '@/core/items';
+import { parseRequest } from '@/core/shared';
+import type { ItemData } from '@/types/foundry';
+import { toWireItemData, type ItemHandlerDependencies } from './itemWireMappers';
 
-interface FoundryWorldItemsCollection {
-  get(id: string): FoundryWorldItem | undefined;
+export function createGetItemHandler(
+  deps: ItemHandlerDependencies = {}
+): (params: GetItemParams) => Promise<ItemData> {
+  const service = createFoundryWorldItemService(deps.gameProvider);
+
+  return function getItemHandler(params: GetItemParams): Promise<ItemData> {
+    try {
+      const query = toGetItemQuery(parseRequest(getItemRequestSchema, params));
+      return Promise.resolve(toWireItemData(service.getItem(query)));
+    } catch (error) {
+      return Promise.reject(asError(error));
+    }
+  };
 }
 
-interface FoundryGame {
-  items: FoundryWorldItemsCollection;
-}
-
-function getGame(): FoundryGame {
-  return (globalThis as unknown as { game: FoundryGame }).game;
-}
-
-export function getItemHandler(params: GetItemParams): Promise<ItemData> {
-  const item = getGame().items.get(params.itemId);
-
-  if (!item) {
-    return Promise.reject(new Error(`Item not found: ${params.itemId}`));
-  }
-
-  return Promise.resolve(mapWorldItemToData(item));
-}
+export const getItemHandler = createGetItemHandler();

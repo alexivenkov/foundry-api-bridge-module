@@ -1,30 +1,18 @@
 import type { UpdateChatMessageParams, SendChatMessageResult } from '@/commands/types';
-import type { FoundryChatGame } from './chatTypes';
+import { createFoundryChatService, toUpdateChatMessageCommand, updateChatMessageRequestSchema } from '@/core/chat';
+import { parseRequest } from '@/core/shared';
+import type { ChatHandlerDependencies } from './chatWireMappers';
 
-declare const game: FoundryChatGame;
+export function createUpdateChatMessageHandler(
+  deps: ChatHandlerDependencies = {}
+): (params: UpdateChatMessageParams) => Promise<SendChatMessageResult> {
+  const service = createFoundryChatService(deps.globals);
 
-export async function updateChatMessageHandler(params: UpdateChatMessageParams): Promise<SendChatMessageResult> {
-  const message = game.messages.get(params.messageId);
-  if (!message) {
-    throw new Error(`Chat message not found: ${params.messageId}`);
-  }
-
-  const updateData: Record<string, unknown> = {};
-  if (params.content !== undefined) {
-    updateData['content'] = params.content;
-  }
-  if (params.flavor !== undefined) {
-    updateData['flavor'] = params.flavor;
-  }
-
-  if (Object.keys(updateData).length === 0) {
-    throw new Error('No updates provided');
-  }
-
-  await message.update(updateData);
-
-  return {
-    messageId: message.id,
-    sent: true
+  return async function updateChatMessageHandler(params: UpdateChatMessageParams): Promise<SendChatMessageResult> {
+    const command = toUpdateChatMessageCommand(parseRequest(updateChatMessageRequestSchema, params));
+    await service.updateMessage(command);
+    return { messageId: command.messageId, sent: true };
   };
 }
+
+export const updateChatMessageHandler = createUpdateChatMessageHandler();
