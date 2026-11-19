@@ -239,7 +239,7 @@ The core command set is system-agnostic. `dnd5e/*`, `pf2e/*`, `swade/*`, `coc7/*
 | v12 | Verified |
 | v11 | Minimum supported |
 
-Module version 8.18.0. The core command set works with any game system; `dnd5e/*`, `pf2e/*`, `swade/*`, `coc7/*` and `pf1/*` require the respective system.
+Module version 8.20.0. The core command set works with any game system; `dnd5e/*`, `pf2e/*`, `swade/*`, `coc7/*` and `pf1/*` require the respective system.
 
 ## Development
 
