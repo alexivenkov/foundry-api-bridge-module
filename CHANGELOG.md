@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- `roll-initiative` and `roll-all-initiative` pass `skipDialog`, so a system that prompts before rolling initiative (pf1) no longer waits for a click on the GM's screen. Core Foundry ignores the option.
+- `roll-initiative` and `roll-all-initiative` pass `skipDialog` in every game system, not only pf1: a system that prompts before rolling initiative no longer waits for a click on the GM's screen. Systems that read the option (pf1, pf2e) now roll initiative without their dialog; core Foundry ignores it.
 - `filter-actors` reads the pf1 forms of CR (`details.cr.total`), AC (`attributes.ac.normal.total`) and level (`details.level.value`), which were null before; compendium NPCs fall back to `details.cr.base`.
 
 ## [8.19.0] - 2026-11-15

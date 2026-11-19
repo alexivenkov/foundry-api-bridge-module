@@ -1,16 +1,17 @@
 import { PF1_ABILITY_KEYS, PF1_SAVE_KEYS, type Pf1ActorTarget } from '@/systems/pf1/shared/domain';
 import {
   activePf1Conditions,
+  readPf1Health,
   resolvePf1Actor,
   skillIdsOf,
   skillInfoOf,
   skillNameOf,
+  usesWoundsAndVigor,
   type FoundryPf1Actor,
   type FoundryPf1Game,
   type FoundryPf1Registry,
   type FoundryPf1SkillData
 } from '@/systems/pf1/shared/infrastructure';
-import { readPf1Health, usesWoundsAndVigor } from '@/systems/pf1/damage';
 import type {
   Pf1AbilitySummary,
   Pf1ActorSummary,

@@ -1511,7 +1511,7 @@ export interface Pf1UseItemParams extends Pf1ActorTargetParams {
   item: string;
   /** Defaults to the item's first action. */
   actionId?: string;
-  /** Charge / spell slot cost override. */
+  /** Charge / spell slot cost override; 0 spends nothing, a negative cost restores charges (the system's own rule). */
   cost?: number;
   rollMode?: Pf1RollModeWire;
   showInChat?: boolean;
@@ -1523,7 +1523,7 @@ export interface Pf1UseItemParams extends Pf1ActorTargetParams {
   charge?: boolean;
   /** Roll a caster level check with the spell. */
   clCheck?: boolean;
-  /** Ammo item id. */
+  /** Ammo item id; the system saves it as the weapon's default ammunition before attacking. */
   ammo?: string;
 }
 

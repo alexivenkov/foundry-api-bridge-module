@@ -1,4 +1,5 @@
-import { Pf1DamageGateway, readPf1Health, usesWoundsAndVigor } from '../Pf1DamageGateway';
+import { Pf1DamageGateway } from '../Pf1DamageGateway';
+import { readPf1Health, usesWoundsAndVigor } from '@/systems/pf1/shared/infrastructure';
 import type { ApplyDamageOptions } from '@/systems/pf1/damage/domain';
 import { byActor, fullSystem, makeActor, makeGame } from '@/systems/pf1/shared/__tests__/pf1TestFixtures';
 

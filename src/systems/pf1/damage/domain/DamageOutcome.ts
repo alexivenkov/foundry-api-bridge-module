@@ -1,14 +1,6 @@
-export interface Pf1HealthState {
-  readonly hp: {
-    readonly value: number;
-    readonly max: number;
-    readonly temp: number;
-    readonly nonlethal: number;
-  };
-  /** Only when the Wounds & Vigor variant rule tracks the actor. */
-  readonly vigor?: { readonly value: number; readonly max: number; readonly temp: number };
-  readonly wounds?: { readonly value: number; readonly max: number };
-}
+import type { Pf1HealthState } from '@/systems/pf1/shared/domain';
+
+export type { Pf1HealthState };
 
 export interface Pf1ApplyDamageOutcome {
   readonly actorId: string;

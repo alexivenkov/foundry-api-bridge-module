@@ -1,4 +1,4 @@
-export { Pf1DamageGateway, readPf1Health, usesWoundsAndVigor, getPf1DamageGame } from './infrastructure';
+export { Pf1DamageGateway, getPf1DamageGame } from './infrastructure';
 export type { FoundryPf1DamageGame } from './infrastructure';
 export { createPf1DamageService, Pf1DamageService } from './application';
 export type { Pf1DamageServiceDependencies, ApplyDamageCommand } from './application';

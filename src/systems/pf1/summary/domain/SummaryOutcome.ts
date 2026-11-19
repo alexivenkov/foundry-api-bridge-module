@@ -1,5 +1,4 @@
-import type { Pf1AbilityKey, Pf1SaveKey } from '@/systems/pf1/shared/domain';
-import type { Pf1HealthState } from '@/systems/pf1/damage/domain';
+import type { Pf1AbilityKey, Pf1HealthState, Pf1SaveKey } from '@/systems/pf1/shared/domain';
 
 export interface Pf1AbilitySummary {
   readonly total: number | null;
