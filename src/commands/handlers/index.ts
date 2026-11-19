@@ -43,7 +43,14 @@ export {
   coc7SanityCheckHandler,
   coc7BoutOfMadnessHandler,
   coc7LuckHandler,
-  coc7GetActorSummaryHandler
+  coc7GetActorSummaryHandler,
+  pf1RollAbilityHandler,
+  pf1RollSkillHandler,
+  pf1RollSaveHandler,
+  pf1RollCasterLevelHandler,
+  pf1RollConcentrationHandler,
+  pf1ApplyDamageHandler,
+  pf1GetActorSummaryHandler
 } from '@/commands/handlers/actor';
 
 // Journal handlers
@@ -330,6 +337,10 @@ export { swadeSetStatusHandler } from '@/commands/handlers/condition';
 
 // CoC7 condition handlers
 export { coc7SetConditionHandler } from '@/commands/handlers/condition';
+
+// PF1 condition and item-use handlers
+export { pf1SetConditionHandler } from '@/commands/handlers/condition';
+export { pf1UseItemHandler } from '@/commands/handlers/item-use';
 
 // PF2e strike handlers
 export {

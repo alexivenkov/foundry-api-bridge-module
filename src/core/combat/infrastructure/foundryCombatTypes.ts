@@ -44,6 +44,8 @@ export interface FoundryCombatantsCollection {
 
 export interface FoundryInitiativeOptions {
   formula?: string | null;
+  /** pf1 (and pf2e) skip their initiative dialog; core Foundry ignores it. */
+  skipDialog?: boolean;
 }
 
 /** The Combat fields and methods the context uses (`BaseCombat` schema and the client `Combat`, Foundry 13–14). */

@@ -12,7 +12,8 @@ import type {
 //   - number  (legacy dnd5e versions)
 //   - { value: number }  (dnd5e v3+)
 //   - null  (raw compendium source data)
-export type FoundryCrField = number | { value: number } | null | undefined;
+// Pathfinder 1e prepares { base, total }; compendium source data only has { base }.
+export type FoundryCrField = number | { value: number } | { total?: number; base?: number } | null | undefined;
 
 export interface FoundryActorAbility {
   value: number | null;
@@ -29,14 +30,16 @@ export interface FoundryActorAbilities {
 
 export interface FoundryActorAttributes {
   hp?: { value?: number | null; max?: number | null } | null;
-  ac?: { value?: number | null } | null;
+  // Pathfinder 1e: `ac.normal.total` instead of `ac.value`
+  ac?: { value?: number | null; normal?: { total?: number | null } | null } | null;
   // dnd5e legacy may store level here as a fallback
   level?: number | null;
 }
 
 export interface FoundryActorDetails {
   cr?: FoundryCrField;
-  level?: number | null;
+  // Pathfinder 1e: `{ value }`
+  level?: number | { value?: number | null } | null;
   // creatureType may be `{ value: 'humanoid' }` (dnd5e v3+) or plain string (legacy)
   type?: { value?: string | null } | string | null;
 }

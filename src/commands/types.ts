@@ -66,6 +66,15 @@ export type CommandType =
   | 'coc7/luck'
   | 'coc7/set-condition'
   | 'coc7/get-actor-summary'
+  | 'pf1/roll-ability'
+  | 'pf1/roll-skill'
+  | 'pf1/roll-save'
+  | 'pf1/roll-caster-level'
+  | 'pf1/roll-concentration'
+  | 'pf1/use-item'
+  | 'pf1/apply-damage'
+  | 'pf1/set-condition'
+  | 'pf1/get-actor-summary'
   | 'get-world-info'
   | 'get-actors'
   | 'filter-actors'
@@ -1415,6 +1424,216 @@ export interface Coc7ActorSummary {
   creditRating?: number;
   creature?: Coc7CreatureSummary;
   vehicle?: Coc7VehicleSummary;
+}
+
+// Pathfinder 1st edition (pf1/*) — ability, skill, save, caster level and
+// concentration checks, item use (attacks with damage and critical
+// confirmation, spells, consumables), damage and healing, conditions and the
+// sheet summary. Every actor-bound command addresses a world actor by
+// `actorId` or one token's actor by `tokenId` (+ optional `sceneId`).
+export type Pf1AbilityKeyWire = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
+export type Pf1SaveKeyWire = 'fort' | 'ref' | 'will';
+export type Pf1RollModeWire = 'publicroll' | 'gmroll' | 'blindroll' | 'selfroll';
+export type Pf1CheckKindWire = 'ability' | 'skill' | 'save' | 'caster-level' | 'concentration';
+
+export interface Pf1ActorTargetParams {
+  actorId?: string;
+  tokenId?: string;
+  sceneId?: string;
+}
+
+export interface Pf1CheckOptionsParams extends Pf1ActorTargetParams {
+  /** Extra formula added to the check: `2`, `1d4[Bless]`. */
+  bonus?: string | number;
+  /** Fills `isSuccess`. */
+  dc?: number;
+  /** Take 10 or Take 20. */
+  takeX?: 10 | 20;
+  rollMode?: Pf1RollModeWire;
+  /** Post the system's chat card (default false). */
+  showInChat?: boolean;
+}
+
+export interface Pf1RollAbilityParams extends Pf1CheckOptionsParams {
+  ability: Pf1AbilityKeyWire;
+}
+
+export interface Pf1RollSkillParams extends Pf1CheckOptionsParams {
+  /** Skill id (`per`, `crf.alchemy`) or its sheet name (`Perception`, `Craft (Alchemy)`). */
+  skill: string;
+}
+
+export interface Pf1RollSaveParams extends Pf1CheckOptionsParams {
+  save: Pf1SaveKeyWire;
+}
+
+export interface Pf1RollSpellbookCheckParams extends Pf1CheckOptionsParams {
+  /** `primary` (default), `secondary`, `tertiary` or `spelllike`. */
+  spellbook?: string;
+}
+
+export interface Pf1DieResult {
+  type: string;
+  count: number;
+  /** Kept results only. */
+  results: number[];
+}
+
+export interface Pf1RollResult {
+  total: number;
+  formula: string;
+  dice: Pf1DieResult[];
+}
+
+export interface Pf1D20RollResult extends Pf1RollResult {
+  /** The kept d20 (or the Take 10/20 value); null when the roll had no d20. */
+  natural: number | null;
+  /** Take 10 / Take 20. */
+  isStatic: boolean;
+}
+
+export interface Pf1CheckResult extends Pf1D20RollResult {
+  actorId: string;
+  tokenId?: string;
+  kind: Pf1CheckKindWire;
+  id: string;
+  name: string;
+  dc?: number;
+  /** total ≥ dc; saves also succeed on a natural 20 and fail on a natural 1. */
+  isSuccess?: boolean;
+  isNat20: boolean;
+  isNat1: boolean;
+  messageId?: string;
+}
+
+export interface Pf1UseItemParams extends Pf1ActorTargetParams {
+  /** Item id or name. */
+  item: string;
+  /** Defaults to the item's first action. */
+  actionId?: string;
+  /** Charge / spell slot cost override. */
+  cost?: number;
+  rollMode?: Pf1RollModeWire;
+  showInChat?: boolean;
+  powerAttack?: boolean;
+  primaryAttack?: boolean;
+  pointBlankShot?: boolean;
+  flanking?: boolean;
+  highGround?: boolean;
+  charge?: boolean;
+  /** Roll a caster level check with the spell. */
+  clCheck?: boolean;
+  /** Ammo item id. */
+  ammo?: string;
+}
+
+export interface Pf1DamageRollResult extends Pf1RollResult {
+  /** Damage type ids: `slashing`, `fire`, … */
+  types: string[];
+}
+
+export interface Pf1AttackRollResult extends Pf1D20RollResult {
+  /** Natural roll inside the critical range; only a threat when the system also rolled `critConfirm` (never for maneuvers). */
+  isThreat: boolean;
+  isNat1: boolean;
+}
+
+export interface Pf1AttackResult {
+  label: string | null;
+  attack?: Pf1AttackRollResult;
+  /** Rolled by the system on a threat. */
+  critConfirm?: Pf1D20RollResult;
+  damage: Pf1DamageRollResult[];
+  /** Normal damage, minimum 1. */
+  damageTotal: number;
+  critDamage: Pf1DamageRollResult[];
+  /** The whole damage of a confirmed critical hit, normal damage included. */
+  critDamageTotal?: number;
+  nonlethal: boolean;
+}
+
+export interface Pf1UseItemResult {
+  actorId: string;
+  tokenId?: string;
+  item: { id: string; name: string; type: string };
+  action?: { id: string; name: string };
+  attacks: Pf1AttackResult[];
+  save?: { dc: number; type?: string };
+  messageId?: string;
+}
+
+export interface Pf1ApplyDamageParams extends Pf1ActorTargetParams {
+  /** Exactly one of `damage` and `heal`. */
+  damage?: number;
+  heal?: number;
+  nonlethal?: boolean;
+  /** Wounds & Vigor: damage goes straight to Wounds. */
+  asWounds?: boolean;
+  /** DR / energy resistance subtracted from the damage. */
+  reduction?: number;
+  /** Damage multiplier applied first: 0.5 half, 1.5 vulnerable. */
+  ratio?: number;
+}
+
+export interface Pf1HealthStateWire {
+  hp: { value: number; max: number; temp: number; nonlethal: number };
+  vigor?: { value: number; max: number; temp: number };
+  wounds?: { value: number; max: number };
+}
+
+export interface Pf1ApplyDamageResult {
+  actorId: string;
+  tokenId?: string;
+  /** False when the health did not change (ratio and reduction left nothing, or healing at full HP). */
+  applied: boolean;
+  before: Pf1HealthStateWire;
+  after: Pf1HealthStateWire;
+}
+
+export interface Pf1SetConditionParams extends Pf1ActorTargetParams {
+  /** A `pf1.registry.conditions` id (`shaken`, `flatFooted`, `prone`, …); case-insensitive. */
+  condition: string;
+  active: boolean;
+}
+
+export interface Pf1SetConditionResult {
+  actorId: string;
+  tokenId?: string;
+  condition: string;
+  /** Still false after enabling: the actor is immune. */
+  active: boolean;
+  changed: boolean;
+  conditions: string[];
+}
+
+export type Pf1GetActorSummaryParams = Pf1ActorTargetParams;
+
+export interface Pf1ActorSummary {
+  actorId: string;
+  tokenId?: string;
+  name: string;
+  type: string;
+  level: number | null;
+  cr: number | null;
+  alignment: string | null;
+  abilities: Partial<Record<Pf1AbilityKeyWire, { total: number | null; mod: number | null; damage: number; drain: number }>>;
+  health: Pf1HealthStateWire | null;
+  ac: { normal: number | null; touch: number | null; flatFooted: number | null };
+  cmb: number | null;
+  cmd: number | null;
+  cmdFlatFooted: number | null;
+  bab: number | null;
+  initiative: number | null;
+  sr: number | null;
+  saves: Partial<Record<Pf1SaveKeyWire, number | null>>;
+  speed: Record<string, number>;
+  conditions: string[];
+  classes: { id: string; name: string; level: number | null }[];
+  skills: { id: string; name: string; mod: number | null; rank: number; classSkill: boolean; trainedOnly: boolean }[];
+  spellbooks: { id: string; name: string; class: string; casterLevel: number | null; concentration: number | null }[];
+  spells: { id: string; name: string; level: number | null; spellbook: string; prepared: number | null; preparedMax: number | null }[];
+  usableItems: { id: string; name: string; type: string; actions: { id: string; name: string }[] }[];
+  activeBuffs: { id: string; name: string; level: number | null }[];
 }
 
 // Hit points (dnd5e): damage and healing through Actor5e#applyDamage
@@ -8775,6 +8994,15 @@ export interface CommandParamsMap {
   'coc7/luck': Coc7LuckParams;
   'coc7/set-condition': Coc7SetConditionParams;
   'coc7/get-actor-summary': Coc7GetActorSummaryParams;
+  'pf1/roll-ability': Pf1RollAbilityParams;
+  'pf1/roll-skill': Pf1RollSkillParams;
+  'pf1/roll-save': Pf1RollSaveParams;
+  'pf1/roll-caster-level': Pf1RollSpellbookCheckParams;
+  'pf1/roll-concentration': Pf1RollSpellbookCheckParams;
+  'pf1/use-item': Pf1UseItemParams;
+  'pf1/apply-damage': Pf1ApplyDamageParams;
+  'pf1/set-condition': Pf1SetConditionParams;
+  'pf1/get-actor-summary': Pf1GetActorSummaryParams;
   'get-world-info': GetWorldInfoParams;
   'get-actors': Record<string, never>;
   'filter-actors': FilterActorsParams;
@@ -9132,6 +9360,15 @@ export interface CommandResultMap {
   'coc7/luck': Coc7LuckResult;
   'coc7/set-condition': Coc7SetConditionResult;
   'coc7/get-actor-summary': Coc7ActorSummary;
+  'pf1/roll-ability': Pf1CheckResult;
+  'pf1/roll-skill': Pf1CheckResult;
+  'pf1/roll-save': Pf1CheckResult;
+  'pf1/roll-caster-level': Pf1CheckResult;
+  'pf1/roll-concentration': Pf1CheckResult;
+  'pf1/use-item': Pf1UseItemResult;
+  'pf1/apply-damage': Pf1ApplyDamageResult;
+  'pf1/set-condition': Pf1SetConditionResult;
+  'pf1/get-actor-summary': Pf1ActorSummary;
   'get-world-info': WorldInfoResult;
   'get-actors': ActorSummary[];
   'filter-actors': FilterActorsResult;

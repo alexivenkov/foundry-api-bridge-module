@@ -156,13 +156,13 @@ describe('FoundryCombatantStore', () => {
       ]);
     });
 
-    it('rolls for the named combatants with no options by default', async () => {
+    it('rolls for the named combatants without a dialog and no other options by default', async () => {
       const { document, rollInitiative } = combatDocument();
 
       await storeFor(document).rollInitiative('fight', ['c1', 'c2'], {});
 
-      expect(rollInitiative).toHaveBeenCalledWith(['c1', 'c2'], {});
-      expect(Object.keys((rollInitiative.mock.calls[0] as [string[], object])[1])).toEqual([]);
+      expect(rollInitiative).toHaveBeenCalledWith(['c1', 'c2'], { skipDialog: true });
+      expect(Object.keys((rollInitiative.mock.calls[0] as [string[], object])[1])).toEqual(['skipDialog']);
     });
 
     it('rolls with a custom formula', async () => {
@@ -170,7 +170,7 @@ describe('FoundryCombatantStore', () => {
 
       await storeFor(document).rollInitiative('fight', ['c1'], { formula: '2d6+5' });
 
-      expect(rollInitiative).toHaveBeenCalledWith(['c1'], { formula: '2d6+5' });
+      expect(rollInitiative).toHaveBeenCalledWith(['c1'], { formula: '2d6+5', skipDialog: true });
     });
 
     it('sends a null formula as it is', async () => {
@@ -179,8 +179,8 @@ describe('FoundryCombatantStore', () => {
       await storeFor(document).rollInitiative('fight', ['c1'], { formula: null });
       await storeFor(document).rollAll('fight', { formula: null });
 
-      expect(rollInitiative).toHaveBeenCalledWith(['c1'], { formula: null });
-      expect(rollAll).toHaveBeenCalledWith({ formula: null });
+      expect(rollInitiative).toHaveBeenCalledWith(['c1'], { formula: null, skipDialog: true });
+      expect(rollAll).toHaveBeenCalledWith({ formula: null, skipDialog: true });
     });
 
     it('rolls for everyone with the core `rollAll`', async () => {
@@ -188,7 +188,7 @@ describe('FoundryCombatantStore', () => {
 
       await storeFor(document).rollAll('fight', { formula: '1d20' });
 
-      expect(rollAll).toHaveBeenCalledWith({ formula: '1d20' });
+      expect(rollAll).toHaveBeenCalledWith({ formula: '1d20', skipDialog: true });
       expect(rollNPC).not.toHaveBeenCalled();
     });
 
@@ -197,7 +197,7 @@ describe('FoundryCombatantStore', () => {
 
       await storeFor(document).rollNpcs('fight', {});
 
-      expect(rollNPC).toHaveBeenCalledWith({});
+      expect(rollNPC).toHaveBeenCalledWith({ skipDialog: true });
       expect(rollAll).not.toHaveBeenCalled();
     });
 

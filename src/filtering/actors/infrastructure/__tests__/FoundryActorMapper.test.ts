@@ -356,6 +356,20 @@ describe('FoundryActorMapper', () => {
       expect(mapper.toSnapshot(raw).cr).toBeNull();
     });
 
+    it('extracts cr from the pf1 prepared form { base, total }', () => {
+      const raw = createMockFoundryActor({
+        system: { ...fullSystem(), details: { ...fullSystem().details, cr: { base: 3, total: 4 } } }
+      });
+      expect(mapper.toSnapshot(raw).cr).toBe(4);
+    });
+
+    it('falls back to the pf1 source form { base } of compendium data', () => {
+      const raw = createMockFoundryActor({
+        system: { ...fullSystem(), details: { ...fullSystem().details, cr: { base: 0.5 } } }
+      });
+      expect(mapper.toSnapshot(raw).cr).toBe(0.5);
+    });
+
     it('returns null when cr object lacks value field', () => {
       const raw = createMockFoundryActor({
         system: {
@@ -388,6 +402,14 @@ describe('FoundryActorMapper', () => {
         }
       });
       expect(mapper.toSnapshot(raw).level).toBe(8);
+    });
+
+    it('extracts the pf1 object form details.level.value', () => {
+      const raw = createMockFoundryActor({
+        type: 'character',
+        system: { ...fullSystem(), details: { ...fullSystem().details, level: { value: 6 } } }
+      });
+      expect(mapper.toSnapshot(raw).level).toBe(6);
     });
 
     it('returns null for non-character actor types (e.g. npc)', () => {
@@ -479,6 +501,13 @@ describe('FoundryActorMapper', () => {
         system: { ...fullSystem(), attributes: { ac: { value: 19 } } }
       });
       expect(mapper.toSnapshot(raw).ac).toBe(19);
+    });
+
+    it('falls back to the pf1 ac.normal.total', () => {
+      const raw = createMockFoundryActor({
+        system: { ...fullSystem(), attributes: { ac: { normal: { total: 21 } } } }
+      });
+      expect(mapper.toSnapshot(raw).ac).toBe(21);
     });
 
     it('returns null when ac is missing', () => {

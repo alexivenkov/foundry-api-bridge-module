@@ -111,6 +111,8 @@ export class FoundryActorMapper {
       crValue = crField;
     } else if ('value' in crField) {
       crValue = crField.value;
+    } else {
+      crValue = crField.total ?? crField.base;
     }
 
     if (typeof crValue !== 'number' || !Number.isFinite(crValue)) {
@@ -125,7 +127,8 @@ export class FoundryActorMapper {
     if (type !== ActorType.Character) {
       return null;
     }
-    const detailsLevel = raw.system.details?.level;
+    const levelField = raw.system.details?.level;
+    const detailsLevel = typeof levelField === 'object' && levelField !== null ? levelField.value : levelField;
     if (typeof detailsLevel === 'number' && Number.isFinite(detailsLevel)) {
       return detailsLevel;
     }
@@ -153,7 +156,7 @@ export class FoundryActorMapper {
   }
 
   private extractAc(raw: FoundryActor): number | null {
-    const ac = raw.system.attributes?.ac?.value;
+    const ac = raw.system.attributes?.ac?.value ?? raw.system.attributes?.ac?.normal?.total;
     if (typeof ac !== 'number' || !Number.isFinite(ac)) {
       return null;
     }
